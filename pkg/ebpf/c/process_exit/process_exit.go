@@ -1,4 +1,4 @@
-package process_entry
+package process_exit
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 	"github.com/cilium/ebpf/ringbuf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data entry entry.bpf.c -- -I../../../../headers
-func getEbpfObject() (*entryObjects, error) {
-	var bpfObj entryObjects
-	err := loadEntryObjects(&bpfObj, nil)
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data exit exit.bpf.c -- -I../../../../headers
+func getEbpfObject() (*exitObjects, error) {
+	var bpfObj exitObjects
+	err := loadExitObjects(&bpfObj, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -20,26 +20,26 @@ func getEbpfObject() (*entryObjects, error) {
 	return &bpfObj, nil
 }
 
-type EntryEventData struct {
-	entryEventData
+type ExitEventData struct {
+	exitEventData
 }
 
-type ProcessEntryDetector struct {
+type ProcessExitDetector struct {
 	ebpfLink      link.Link
 	ringbufReader *ringbuf.Reader
 }
 
-func NewProcessEntryDetector() *ProcessEntryDetector {
-	return &ProcessEntryDetector{}
+func NewProcessExitDetector() *ProcessExitDetector {
+	return &ProcessExitDetector{}
 }
 
-func (p *ProcessEntryDetector) Start() error {
+func (p *ProcessExitDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
 		return err
 	}
 
-	l, err := link.Tracepoint("syscalls", "sys_enter_execve", bpfObjs.ExecveEntry, nil)
+	l, err := link.Tracepoint("syscalls", "sys_exit_execve", bpfObjs.ExecveExit, nil)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (p *ProcessEntryDetector) Start() error {
 	return nil
 }
 
-func (p *ProcessEntryDetector) Close() error {
+func (p *ProcessExitDetector) Close() error {
 	err := p.ebpfLink.Close()
 	if err != nil {
 		return err
@@ -66,8 +66,8 @@ func (p *ProcessEntryDetector) Close() error {
 	return p.ringbufReader.Close()
 }
 
-func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
-	var event EntryEventData
+func (p *ProcessExitDetector) Read() (ExitEventData, error) {
+	var event ExitEventData
 	record, err := p.ringbufReader.Read()
 	if err != nil {
 		if errors.Is(err, ringbuf.ErrClosed) {
@@ -76,7 +76,7 @@ func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
 		return event, err
 	}
 
-	// Parse the ringbuf event entry into a bpfEvent structure.
+	// Parse the ringbuf event exit into a bpfEvent structure.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &event); err != nil {
 		return event, err
 	}
@@ -84,6 +84,6 @@ func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
 	return event, nil
 }
 
-func (p *ProcessEntryDetector) ReadAsInterface() (any, error) {
+func (p *ProcessExitDetector) ReadAsInterface() (any, error) {
 	return p.Read()
 }
