@@ -1,4 +1,4 @@
-package process_entry
+package file_read
 
 import (
 	"bytes"
@@ -9,10 +9,10 @@ import (
 	"github.com/cilium/ebpf/ringbuf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH entry entry.bpf.c -- -I../../../../headers
-func getEbpfObject() (*entryObjects, error) {
-	var bpfObj entryObjects
-	err := loadEntryObjects(&bpfObj, nil)
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH read read.bpf.c -- -I../../../../headers
+func getEbpfObject() (*readObjects, error) {
+	var bpfObj readObjects
+	err := loadReadObjects(&bpfObj, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -20,26 +20,26 @@ func getEbpfObject() (*entryObjects, error) {
 	return &bpfObj, nil
 }
 
-type EntryEventData struct {
-	entryEventData
+type ReadEventData struct {
+	readEventData
 }
 
-type ProcessEntryDetector struct {
+type ReadDetector struct {
 	ebpfLink      link.Link
 	ringbufReader *ringbuf.Reader
 }
 
-func NewProcessEntryDetector() *ProcessEntryDetector {
-	return &ProcessEntryDetector{}
+func NewReadDetector() *ReadDetector {
+	return &ReadDetector{}
 }
 
-func (p *ProcessEntryDetector) Start() error {
+func (p *ReadDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
 		return err
 	}
 
-	l, err := link.Kprobe("__x64_sys_execve", bpfObjs.KprobeExecve, nil)
+	l, err := link.Kprobe("__x64_sys_read", bpfObjs.KprobeRead, nil)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (p *ProcessEntryDetector) Start() error {
 	return nil
 }
 
-func (p *ProcessEntryDetector) Close() error {
+func (p *ReadDetector) Close() error {
 	err := p.ebpfLink.Close()
 	if err != nil {
 		return err
@@ -66,8 +66,8 @@ func (p *ProcessEntryDetector) Close() error {
 	return p.ringbufReader.Close()
 }
 
-func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
-	var event EntryEventData
+func (p *ReadDetector) Read() (ReadEventData, error) {
+	var event ReadEventData
 	record, err := p.ringbufReader.Read()
 	if err != nil {
 		if errors.Is(err, ringbuf.ErrClosed) {
@@ -84,6 +84,6 @@ func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
 	return event, nil
 }
 
-func (p *ProcessEntryDetector) ReadAsInterface() (any, error) {
+func (p *ReadDetector) ReadAsInterface() (any, error) {
 	return p.Read()
 }

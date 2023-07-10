@@ -1,7 +1,9 @@
 //go:build ignore
 
 #include "vmlinux.h"
+#include "bpf_tracing.h"
 #include "bpf_helpers.h"
+#include "bpf_core_read.h"
 
 #define MAX_SIZE 256
 
@@ -11,12 +13,11 @@ struct event_data{
     __u32 tgid;
     __u32 uid;
     __u32 gid;
-    __s32 syscall_nr;
 
     __u8 comm[16];
     __u8 cwd[32];
     __u8 binary_filepath[MAX_SIZE];
-    __u8 user_comm[MAX_SIZE][MAX_SIZE];
+    // __u8 user_comm[MAX_SIZE][MAX_SIZE];
 };
 
 //Force emits struct event_data into the elf.
@@ -25,17 +26,17 @@ const struct event_data *unused __attribute__((unused));
 //sys_enter_execve data structure
 //can be found at below path
 // /sys/kernel/debug/tracing/events/syscalls/sys_enter_execve/format
-struct execve_entry_struct{
-    __u16 common_type;
-    __u8 common_flags;
-    __u8 common_preempt_count;
-    __s32 common_pid;
+// struct execve_entry_struct{
+//     __u16 common_type;
+//     __u8 common_flags;
+//     __u8 common_preempt_count;
+//     __s32 common_pid;
 
-    __s32 syscall_nr;
-    __u8 const *filename;
-    __u8 *const argv;
-    __u8 *const envp;
-};
+//     __s32 syscall_nr;
+//     __u8 const *filename;
+//     __u8 *const argv;
+//     __u8 *const envp;
+// };
 
 //Map Definition
 struct{
@@ -43,11 +44,8 @@ struct{
     __uint(max_entries, 1 << 24);
 } event SEC(".maps");
 
-//Null bytes
-static char zero[MAX_SIZE] SEC(".rodata") = {0};
-
-SEC("tracepoint/syscalls/sys_enter_execve")
-int execve_entry(struct execve_entry_struct *ctx){
+SEC("kprobe/__x64_sys_execve")
+int kprobe_execve(struct pt_regs *ctx){
 
     struct event_data *ed;
     ed = bpf_ringbuf_reserve(&event, sizeof(struct event_data), 0);
@@ -57,9 +55,6 @@ int execve_entry(struct execve_entry_struct *ctx){
     
     s64 res;
     
-    //Syscall number
-    ed->syscall_nr = ctx->syscall_nr;
-
     //Process Id and Thread Group Id
     __u64 pid_tgid = bpf_get_current_pid_tgid();
     ed->pid = pid_tgid >> 32;
@@ -74,7 +69,9 @@ int execve_entry(struct execve_entry_struct *ctx){
     bpf_get_current_comm(&ed->comm, sizeof(ed->comm));
 
     //Binary File path
-    res = bpf_probe_read_user_str(&ed->binary_filepath, sizeof(ed->binary_filepath), ctx->filename);
+    struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
+
+    res = bpf_probe_read_user_str(&ed->binary_filepath, sizeof(ed->binary_filepath), (char *)PT_REGS_PARM1_CORE(ctx2));
     if(res < 0){
         bpf_ringbuf_discard(ed, 0);
         return 1;
@@ -93,26 +90,23 @@ int execve_entry(struct execve_entry_struct *ctx){
         return 1;
     }
 
+    char *user_comm = (char *)PT_REGS_PARM2_CORE(ctx2);
+    bpf_printk("test %s", user_comm);
+    
     //command 
-    __u8 *currPtr;
-    int i = 0;
+    // __u8 *currPtr;
+    // int i = 0;
 
-    while(i < MAX_SIZE){
-        bpf_probe_read(&currPtr, sizeof(currPtr), &ctx->argv[i]);
-        if(currPtr == NULL){
-            break;
-        }
+    // while(i < MAX_SIZE){
+    //     bpf_probe_read(&currPtr, sizeof(currPtr), &ctx->argv[i]);
+    //     if(currPtr == NULL){
+    //         break;
+    //     }
 
-        res = bpf_probe_read_kernel_str(&ed->user_comm[i], sizeof(zero), &zero);
-        if(res < 0){
-            bpf_ringbuf_discard(ed, 0);
-            return 1;
-        }
+    //     res = bpf_probe_read_user_str(&ed->user_comm[i], sizeof(ed->user_comm[i]), currPtr);
 
-        res = bpf_probe_read_user_str(&ed->user_comm[i], sizeof(ed->user_comm[i]), currPtr);
-
-        i++;
-    };
+    //     i++;
+    // };
 
     //pushes the information to ringbuf event mamp
     bpf_ringbuf_submit(ed, 0);
