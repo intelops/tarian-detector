@@ -1,5 +1,10 @@
 EXECUTABLE=bin
 
+# CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
+ARCH := $(shell uname -m | sed 's/x86_64/amd64/g; s/aarch64/arm64/g')
+
+gen: export CURR_ARCH := $(ARCH)
+gen: export BPF_CFLAGS := $(CFLAGS)
 gen:
 	go generate ./...
 
