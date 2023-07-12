@@ -1,0 +1,21 @@
+name: Main Branch Pull Request Validation
+
+on: 
+  pull_request:
+    branches:
+      -main
+  
+jobs:
+  verify-pull-request:
+    runs-on: ubuntu-latest
+  
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    
+    - name: Validate The Source Branch
+      run: |
+        if [[ "${{ github.head_ref }}" != "pre-main" ]]; then
+          echo "Pull requests to the 'main' branch should come from the 'pre-main' branch."
+          exit 1
+        fi
