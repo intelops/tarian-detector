@@ -7,6 +7,7 @@ import (
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
+	"golang.org/x/sys/unix"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data entry entry.bpf.c -- -I../../../../headers
@@ -20,8 +21,43 @@ func getEbpfObject() (*entryObjects, error) {
 	return &bpfObj, nil
 }
 
+// EntryEventData is the exported data from the eBPF struct counterpart
+// The intention is to use the proper Go string instead of byte arrays from C.
+// It makes it simpler to use and can generate proper json.
 type EntryEventData struct {
-	entryEventData
+	Pid            uint32
+	Tgid           uint32
+	Uid            uint32
+	Gid            uint32
+	SyscallNr      int32
+	Comm           string
+	Cwd            string
+	BinaryFilepath string
+	UserComm       []string
+}
+
+func newEntryEventDataFromEbpf(e entryEventData) *EntryEventData {
+	evt := &EntryEventData{
+		Pid:            e.Pid,
+		Tgid:           e.Tgid,
+		Uid:            e.Uid,
+		Gid:            e.Gid,
+		SyscallNr:      e.SyscallNr,
+		Comm:           unix.ByteSliceToString(e.Comm[:]),
+		Cwd:            unix.ByteSliceToString(e.Cwd[:]),
+		BinaryFilepath: unix.ByteSliceToString(e.BinaryFilepath[:]),
+		UserComm:       []string{},
+	}
+
+	for _, v := range e.UserComm[:] {
+		s := unix.ByteSliceToString(v[:])
+
+		if s != "" {
+			evt.UserComm = append(evt.UserComm, s)
+		}
+	}
+
+	return evt
 }
 
 type ProcessEntryDetector struct {
@@ -66,22 +102,24 @@ func (p *ProcessEntryDetector) Close() error {
 	return p.ringbufReader.Close()
 }
 
-func (p *ProcessEntryDetector) Read() (EntryEventData, error) {
-	var event EntryEventData
+func (p *ProcessEntryDetector) Read() (*EntryEventData, error) {
+	var ebpfEvent entryEventData
 	record, err := p.ringbufReader.Read()
 	if err != nil {
 		if errors.Is(err, ringbuf.ErrClosed) {
-			return event, err
+			return nil, err
 		}
-		return event, err
+		return nil, err
 	}
 
 	// Parse the ringbuf event entry into a bpfEvent structure.
-	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &event); err != nil {
-		return event, err
+	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
+		return nil, err
 	}
 
-	return event, nil
+	exportedEvent := newEntryEventDataFromEbpf(ebpfEvent)
+
+	return exportedEvent, nil
 }
 
 func (p *ProcessEntryDetector) ReadAsInterface() (any, error) {

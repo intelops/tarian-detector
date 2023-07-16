@@ -7,6 +7,7 @@ import (
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
+	"golang.org/x/sys/unix"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data exit exit.bpf.c -- -I../../../../headers
@@ -21,7 +22,29 @@ func getEbpfObject() (*exitObjects, error) {
 }
 
 type ExitEventData struct {
-	exitEventData
+	Pid       uint32
+	Tgid      uint32
+	Uid       uint32
+	Gid       uint32
+	SyscallNr int32
+	Ret       int64
+	Comm      string
+	Cwd       string
+}
+
+func newExitEventDataFromEbpf(e exitEventData) *ExitEventData {
+	evt := &ExitEventData{
+		Pid:       e.Pid,
+		Tgid:      e.Tgid,
+		Uid:       e.Uid,
+		Gid:       e.Gid,
+		SyscallNr: e.SyscallNr,
+		Ret:       e.Ret,
+		Comm:      unix.ByteSliceToString(e.Comm[:]),
+		Cwd:       unix.ByteSliceToString(e.Cwd[:]),
+	}
+
+	return evt
 }
 
 type ProcessExitDetector struct {
@@ -66,22 +89,24 @@ func (p *ProcessExitDetector) Close() error {
 	return p.ringbufReader.Close()
 }
 
-func (p *ProcessExitDetector) Read() (ExitEventData, error) {
-	var event ExitEventData
+func (p *ProcessExitDetector) Read() (*ExitEventData, error) {
+	var ebpfEvent exitEventData
 	record, err := p.ringbufReader.Read()
 	if err != nil {
 		if errors.Is(err, ringbuf.ErrClosed) {
-			return event, err
+			return nil, err
 		}
-		return event, err
+		return nil, err
 	}
 
 	// Parse the ringbuf event exit into a bpfEvent structure.
-	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &event); err != nil {
-		return event, err
+	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
+		return nil, err
 	}
 
-	return event, nil
+	exportedEvent := newExitEventDataFromEbpf(ebpfEvent)
+
+	return exportedEvent, nil
 }
 
 func (p *ProcessExitDetector) ReadAsInterface() (any, error) {

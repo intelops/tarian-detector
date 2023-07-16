@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -35,12 +36,13 @@ func main() {
 			e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
 				fmt.Println(err)
+				continue
 			}
 
 			switch event := e.(type) {
-			case process_entry.EntryEventData:
+			case *process_entry.EntryEventData:
 				printProcessEntryEventData(event)
-			case process_exit.ExitEventData:
+			case *process_exit.ExitEventData:
 				printProcessExitEventData(event)
 			}
 		}
@@ -52,17 +54,21 @@ func main() {
 	}
 }
 
-func printProcessEntryEventData(event process_entry.EntryEventData) {
+func printProcessEntryEventData(event *process_entry.EntryEventData) {
 	fmt.Println("# process_entry.EntryEventData:")
 	fmt.Printf("Pid: %d\n", event.Pid)
-	fmt.Printf("BinaryFilePath: %s\n", event.BinaryFilepath[:])
-	fmt.Printf("Comm: %s\n", event.Comm[:])
+	fmt.Printf("BinaryFilePath: %s\n", event.BinaryFilepath)
+	fmt.Printf("Comm: %s\n", event.Comm)
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
 	fmt.Println("")
 }
 
-func printProcessExitEventData(event process_exit.ExitEventData) {
+func printProcessExitEventData(event *process_exit.ExitEventData) {
 	fmt.Println("# process_exit.ExitEventData:")
 	fmt.Printf("Pid: %d\n", event.Pid)
-	fmt.Printf("Comm: %s\n", event.Comm[:])
+	fmt.Printf("Comm: %s\n", event.Comm)
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
 	fmt.Println("")
 }
