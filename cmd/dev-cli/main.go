@@ -21,6 +21,8 @@ import (
 	***/
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_socket"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_connect"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_listen"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_bind"
 )
 
 func main() {
@@ -39,7 +41,8 @@ func main() {
 	***/
 	networkSocketDetector := network_socket.NewNetworkSocketDetector()
 	networkConnectDetector := network_connect.NewNetworkConnectDetector()
-
+	networkListenDetector := network_listen.NewNetworkListenDetector()
+	networkBindDetector := network_bind.NewNetworkBindDetector()
 	// Register them to the events detector (composite)
 	eventsDetector := detector.NewEventsDetector()
 	/***
@@ -65,6 +68,8 @@ func main() {
 	//Network 
 	eventsDetector.Add(networkSocketDetector)
 	eventsDetector.Add(networkConnectDetector)
+	eventsDetector.Add(networkListenDetector)
+	eventsDetector.Add(networkBindDetector)
 
 	// Start and defer Close
 	err := eventsDetector.Start()
@@ -92,6 +97,10 @@ func main() {
 				printProcessSocketEventData(event)
 			case *network_connect.ConnectEventData:
 				printNetworkConnectEventData(event)
+			case *network_listen.ListenEventData:
+				printNetworkListenEventData(event)
+			case *network_bind.BindEventData:
+				printNetworkBindEventData(event)
 			default:
 				printEvent(event)
 			}
@@ -129,6 +138,20 @@ func printProcessSocketEventData(event *network_socket.SocketEventData) {
 
 func printNetworkConnectEventData(event *network_connect.ConnectEventData) {
 	fmt.Println("#  network_connect.ConnectEventData:")
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
+}
+
+func printNetworkListenEventData(event *network_listen.ListenEventData) {
+	fmt.Println("#  network_Listen.ListenEventData:")
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
+}
+
+func printNetworkBindEventData(event *network_bind.BindEventData) {
+	fmt.Println("#  network_bind.BindEventData:")
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
