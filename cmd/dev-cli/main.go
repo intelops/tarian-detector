@@ -1,11 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
+	/***
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_close"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_open"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_openat"
@@ -16,10 +18,13 @@ import (
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_writev"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_entry"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_exit"
+	***/
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_socket"
 )
 
 func main() {
 	// Instantiate event detectors
+	/***
 	processEntryDetector := process_entry.NewProcessEntryDetector()
 	processExitDetector := process_exit.NewProcessExitDetector()
 	fileOpenat2Detector := file_openat2.NewOpenat2Detector()
@@ -30,9 +35,13 @@ func main() {
 	fileReadvDetector := file_readv.NewReadvDetector()
 	fileWriteDetector := file_write.NewWriteDetector()
 	fileWritevDetector := file_writev.NewWritevDetector()
+	***/
+	networkSocketDetector := network_socket.NewNetworkSocketDetector()
+
 
 	// Register them to the events detector (composite)
 	eventsDetector := detector.NewEventsDetector()
+	/***
 	eventsDetector.Add(processEntryDetector)
 	eventsDetector.Add(processExitDetector)
 
@@ -51,6 +60,9 @@ func main() {
 	//File Write
 	eventsDetector.Add(fileWriteDetector)
 	eventsDetector.Add(fileWritevDetector)
+***/
+	//Network 
+	eventsDetector.Add(networkSocketDetector)
 
 	// Start and defer Close
 	err := eventsDetector.Start()
@@ -70,10 +82,12 @@ func main() {
 			}
 
 			switch event := e.(type) {
-			case process_entry.EntryEventData:
-				printProcessEntryEventData(event)
-			case process_exit.ExitEventData:
-				printProcessExitEventData(event)
+			//case process_entry.EntryEventData:
+			//	printProcessEntryEventData(event)
+			//case process_exit.ExitEventData:
+			//	printProcessExitEventData(event)
+			case *network_socket.SocketEventData:
+				printProcessSocketEventData(event)
 			default:
 				printEvent(event)
 			}
@@ -85,7 +99,7 @@ func main() {
 		time.Sleep(1 * time.Minute)
 	}
 }
-
+/***
 func printProcessEntryEventData(event process_entry.EntryEventData) {
 	fmt.Println("# process_entry.EntryEventData:")
 	fmt.Printf("Pid: %d\n", event.Pid)
@@ -100,6 +114,16 @@ func printProcessExitEventData(event process_exit.ExitEventData) {
 	fmt.Printf("Comm: %s\n", event.Comm[:])
 	fmt.Println("")
 }
+***/
+
+func printProcessSocketEventData(event *network_socket.SocketEventData) {
+	fmt.Println("#  network_socket.SocketEventData:")
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
+}
+
+
 
 func printEvent(data any) {
 	fmt.Printf("# %T:\n %v\n\n", data, data)
