@@ -20,6 +20,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_exit"
 	***/
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_socket"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_connect"
 )
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 	fileWritevDetector := file_writev.NewWritevDetector()
 	***/
 	networkSocketDetector := network_socket.NewNetworkSocketDetector()
-
+	networkConnectDetector := network_connect.NewNetworkConnectDetector()
 
 	// Register them to the events detector (composite)
 	eventsDetector := detector.NewEventsDetector()
@@ -63,6 +64,7 @@ func main() {
 ***/
 	//Network 
 	eventsDetector.Add(networkSocketDetector)
+	eventsDetector.Add(networkConnectDetector)
 
 	// Start and defer Close
 	err := eventsDetector.Start()
@@ -88,6 +90,8 @@ func main() {
 			//	printProcessExitEventData(event)
 			case *network_socket.SocketEventData:
 				printProcessSocketEventData(event)
+			case *network_connect.ConnectEventData:
+				printNetworkConnectEventData(event)
 			default:
 				printEvent(event)
 			}
@@ -122,6 +126,14 @@ func printProcessSocketEventData(event *network_socket.SocketEventData) {
 	fmt.Println(string(j))
 	fmt.Println("")
 }
+
+func printNetworkConnectEventData(event *network_connect.ConnectEventData) {
+	fmt.Println("#  network_connect.ConnectEventData:")
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
+}
+
 
 
 
