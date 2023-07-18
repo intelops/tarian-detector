@@ -19,23 +19,13 @@ struct{
 
 SEC("kprobe/__x64_sys_socket")
 int kprobe_socket(struct pt_regs * ctx){
-        struct event_data args = {};
-    
+    struct event_data args = {};
     struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1(ctx);
     bpf_probe_read(&args.domain, sizeof(args.domain), &PT_REGS_PARM1(ctx2));
     bpf_probe_read(&args.type, sizeof(args.type), &PT_REGS_PARM2(ctx2));
     bpf_probe_read(&args.protocol, sizeof(args.protocol), &PT_REGS_PARM3(ctx2));
-
-bpf_printk("Socket Domain: %d\n", args.domain);
-bpf_printk("Socket Type: %d\n", args.type);
-bpf_printk("Socket Protocol: %d\n", args.protocol);
-
     u32 tgid = bpf_get_current_pid_tgid();
-    
-    bpf_printk("tgid: %d\n",tgid);
-
-
-bpf_perf_event_output(ctx, &event, BPF_F_CURRENT_CPU, &args, sizeof(args));
+    bpf_perf_event_output(ctx, &event, BPF_F_CURRENT_CPU, &args, sizeof(args));
 return 0;
 }
 

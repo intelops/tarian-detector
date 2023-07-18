@@ -1,4 +1,3 @@
-export PATH := /usr/bin:$(PATH)
 EXECUTABLE=bin
 
 # CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)

@@ -17,20 +17,12 @@ struct{
 
 SEC("kprobe/__x64_sys_bind")
 int kprobe_bind(struct pt_regs * ctx){
-        struct event_data args = {};
-    
+    struct event_data args = {};
     struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1(ctx);
     bpf_probe_read(&args.args[0], sizeof(args.args[0]), &PT_REGS_PARM1(ctx2));
     bpf_probe_read(&args.args[1], sizeof(args.args[1]), &PT_REGS_PARM2(ctx2));
-  
-
     u32 tgid = bpf_get_current_pid_tgid();
-    bpf_printk("Bind Socket Fd : %d\n",args.args[0]);
-    bpf_printk("Bind Socket Address: %d\n", args.args[1]);
-    bpf_printk("tgid: %d\n",tgid);
-
-
-bpf_perf_event_output(ctx, &event, BPF_F_CURRENT_CPU, &args, sizeof(args));
+    bpf_perf_event_output(ctx, &event, BPF_F_CURRENT_CPU, &args, sizeof(args));
 return 0;
 }
 
