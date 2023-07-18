@@ -1,4 +1,4 @@
-package network_bind
+package network_accept
 
 import (
 	"bytes"
@@ -12,26 +12,26 @@ import (
 	"github.com/cilium/ebpf/perf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data bind bind.bpf.c -- -I../../../../headers
-func getEbpfObject() (*bindObjects, error) {
-	var bpfObj bindObjects
-	err := loadBindObjects(&bpfObj, nil)
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data accept accept.bpf.c -- -I../../../../headers
+func getEbpfObject() (*acceptObjects, error) {
+	var bpfObj acceptObjects
+	err := loadAcceptObjects(&bpfObj, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return &bpfObj, nil
 }
-// BindEventData is the exported data from the eBPF struct counterpart
+// AcceptEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
-type BindEventData struct {
+type AcceptEventData struct {
 	Args[3]   uint64
 
 }
 
-func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
-	evt := &BindEventData{
+func newAcceptEventDataFromEbpf(e acceptEventData) *AcceptEventData {
+	evt := &AcceptEventData{
 		Args: [3]uint64{
 			e.Args[0],
 			e.Args[1],
@@ -42,22 +42,22 @@ func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
 }
 
 
-type NetworkBindDetector struct {
+type NetworkAcceptDetector struct {
 	ebpfLink      link.Link
 	perfReader *perf.Reader
 }
 
-func NewNetworkBindDetector() *NetworkBindDetector {
-	return &NetworkBindDetector{}
+func NewNetworkAcceptDetector() *NetworkAcceptDetector {
+	return &NetworkAcceptDetector{}
 }
 
-func (o *NetworkBindDetector) Start() error {
+func (o *NetworkAcceptDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
 		return err
 	}
 
-	l, err := link.Kprobe("__x64_sys_bind", bpfObjs.KprobeBind, nil)
+	l, err := link.Kprobe("__x64_sys_accept", bpfObjs.KprobeAccept, nil)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (o *NetworkBindDetector) Start() error {
 	return nil
 }
 
-func (o *NetworkBindDetector) Close() error {
+func (o *NetworkAcceptDetector) Close() error {
 	err := o.ebpfLink.Close()
 	if err != nil {
 		return err
@@ -82,8 +82,8 @@ func (o *NetworkBindDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-func (o *NetworkBindDetector) Read() (*BindEventData, error) {
-	var ebpfEvent bindEventData
+func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
+	var ebpfEvent acceptEventData
 	record, err := o.perfReader.Read()
 	if err != nil {
 		if errors.Is(err, perf.ErrClosed) {
@@ -99,19 +99,19 @@ func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	printToScreen(ebpfEvent)
 
 
-	exportedEvent := newBindEventDataFromEbpf(ebpfEvent)
+	exportedEvent := newAcceptEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
-func (o *NetworkBindDetector) ReadAsInterface() (any, error) {
+func (o *NetworkAcceptDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
 
-func printToScreen(e bindEventData)  {
+func printToScreen(e acceptEventData)  {
 	fmt.Println("-----------------------------------------")
-	fmt.Printf("Bind_File_descriptor: %d\n", e.Args[0])
-	fmt.Printf("Bind_address : %s\n", IPv6(e.Args[1]))
+	fmt.Printf("Accept_File_descriptor: %d\n", e.Args[0])
+	fmt.Printf("Accept_address : %s\n", IPv6(e.Args[1]))
 
 	fmt.Println("-----------------------------------------")
 }

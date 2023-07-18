@@ -23,6 +23,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_connect"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_listen"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_bind"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_accept"
 )
 
 func main() {
@@ -43,6 +44,7 @@ func main() {
 	networkConnectDetector := network_connect.NewNetworkConnectDetector()
 	networkListenDetector := network_listen.NewNetworkListenDetector()
 	networkBindDetector := network_bind.NewNetworkBindDetector()
+	networkAcceptDetector := network_accept.NewNetworkAcceptDetector()
 	// Register them to the events detector (composite)
 	eventsDetector := detector.NewEventsDetector()
 	/***
@@ -70,7 +72,7 @@ func main() {
 	eventsDetector.Add(networkConnectDetector)
 	eventsDetector.Add(networkListenDetector)
 	eventsDetector.Add(networkBindDetector)
-
+	eventsDetector.Add(networkAcceptDetector)
 	// Start and defer Close
 	err := eventsDetector.Start()
 	if err != nil {
@@ -101,6 +103,8 @@ func main() {
 				printNetworkListenEventData(event)
 			case *network_bind.BindEventData:
 				printNetworkBindEventData(event)
+			case *network_accept.AcceptEventData:
+				printNetworkAcceptEventData(event)
 			default:
 				printEvent(event)
 			}
@@ -157,6 +161,12 @@ func printNetworkBindEventData(event *network_bind.BindEventData) {
 	fmt.Println("")
 }
 
+func printNetworkAcceptEventData(event *network_accept.AcceptEventData) {
+	fmt.Println("#  network_accept.AcceptEventData:")
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
+}
 
 
 
