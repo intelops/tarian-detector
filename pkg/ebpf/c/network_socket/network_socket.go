@@ -12,7 +12,8 @@ import (
 	"github.com/cilium/ebpf/perf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target amd64  -type event_data socket socket.bpf.c -- -I../../../../headers
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data socket socket.bpf.c -- -I../../../../headers
+
 func getEbpfObject() (*socketObjects, error) {
 	var bpfObj socketObjects
 	err := loadSocketObjects(&bpfObj, nil)
