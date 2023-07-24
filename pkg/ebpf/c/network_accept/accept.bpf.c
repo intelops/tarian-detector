@@ -21,11 +21,10 @@ struct
 
 SEC("kprobe/__x64_sys_accept")
 /**
-* Accept a kprobe. This is called by the BPF program to accept a kprobe. The event is emitted to perf events with the arguments passed in
-* 
-* @param ctx - * pointer to pt_regs structure
-* 
-* @return 0 on success < 0 on
+*This is the implementation of kretprobe to the __x64_sys_accept function 
+* sys_accept accept a connection. This is a blocking call. If there is no connection available it will block until one is available.
+* @param ctx - * context passed by the caller. Should contain a stack trace pointer
+* @return 0 if success - 1
 */
 int kprobe_accept(struct pt_regs *ctx)
 {
