@@ -20,6 +20,11 @@ struct
 } event SEC(".maps");
 
 SEC("kprobe/__x64_sys_listen")
+/**
+* This is the implementation of kretprobe to the  function __x64_sys_listen .This function is used to set the listen bit in sys_regs.
+* @param ctx - * Pointer to the structure containing registers set by the user.
+* @return Returns 0 on success non - zero on failure. In the case of failure the error code is returned
+*/
 int kprobe_listen(struct pt_regs *ctx)
 {
     struct event_data args = {};

@@ -20,6 +20,11 @@ struct
 } event SEC(".maps");
 
 SEC("kprobe/__x64_sys_bind")
+/**
+* This is the implementation of kprobe to the x64_sys_bind function. This function is called when the system binds to a process.
+* @param ctx - * Pointer to the context. 
+* @return Returns 0 on success non - zero on failure. 
+*/
 int kprobe_bind(struct pt_regs *ctx)
 {
     struct event_data args = {};

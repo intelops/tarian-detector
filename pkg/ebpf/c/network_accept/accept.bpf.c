@@ -20,6 +20,13 @@ struct
 } event SEC(".maps");
 
 SEC("kprobe/__x64_sys_accept")
+/**
+* Accept a kprobe. This is called by the BPF program to accept a kprobe. The event is emitted to perf events with the arguments passed in
+* 
+* @param ctx - * pointer to pt_regs structure
+* 
+* @return 0 on success < 0 on
+*/
 int kprobe_accept(struct pt_regs *ctx)
 {
     struct event_data args = {};

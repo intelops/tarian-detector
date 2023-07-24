@@ -23,6 +23,12 @@ struct
 } event SEC(".maps");
 
 SEC("kprobe/__x64_sys_socket")
+/**
+*This is the implementation of kretprobe to the __x64_sys_socket function 
+* sys_socket ( pt_regs * ctx ) Returns information about the socket.
+* @param ctx - * context from the trace call. A pointer to the struct pt_regs which contains the return value.
+* @return 0 if successful non - zero 
+*/
 int kprobe_socket(struct pt_regs *ctx)
 {
     struct event_data args = {};
