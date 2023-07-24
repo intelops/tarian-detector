@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
 package network_listen
 
 import (
@@ -6,8 +8,9 @@ import (
 	"errors"
 	"net"
 
-	"os"
 	"fmt"
+	"os"
+
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 )
@@ -22,12 +25,12 @@ func getEbpfObject() (*listenObjects, error) {
 
 	return &bpfObj, nil
 }
+
 // ListenEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
 type ListenEventData struct {
-	Args[3]   uint64
-
+	Args [3]uint64
 }
 
 func newListenEventDataFromEbpf(e listenEventData) *ListenEventData {
@@ -36,14 +39,13 @@ func newListenEventDataFromEbpf(e listenEventData) *ListenEventData {
 			e.Args[0],
 			e.Args[1],
 			e.Args[2],
-	},
-}
+		},
+	}
 	return evt
 }
 
-
 type NetworkListenDetector struct {
-	ebpfLink      link.Link
+	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
@@ -63,7 +65,7 @@ func (o *NetworkListenDetector) Start() error {
 	}
 
 	o.ebpfLink = l
-	rd, err := perf.NewReader(bpfObjs.Event,os.Getpagesize())
+	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
 	if err != nil {
 		return err
@@ -98,7 +100,6 @@ func (o *NetworkListenDetector) Read() (*ListenEventData, error) {
 
 	printToScreen(ebpfEvent)
 
-
 	exportedEvent := newListenEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
@@ -107,15 +108,13 @@ func (o *NetworkListenDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
-
-func printToScreen(e listenEventData)  {
+func printToScreen(e listenEventData) {
 	fmt.Println("-----------------------------------------")
 	fmt.Printf("Listen_File_descriptor: %d\n", e.Args[0])
 	fmt.Printf("Listen_backlog : %d\n", (e.Args[1]))
 
 	fmt.Println("-----------------------------------------")
 }
-
 
 func IP(in uint32) string {
 	ip := make(net.IP, net.IPv4len)
@@ -124,7 +123,7 @@ func IP(in uint32) string {
 }
 
 func IPv6(in uint64) string {
-	
+
 	ip := make(net.IP, net.IPv6len)
 	binary.BigEndian.PutUint64(ip, in)
 	return ip.String()

@@ -1,13 +1,16 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
 package network_socket
 
 import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"os"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 )
@@ -23,6 +26,7 @@ func getEbpfObject() (*socketObjects, error) {
 
 	return &bpfObj, nil
 }
+
 // EntryEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
@@ -34,17 +38,15 @@ type SocketEventData struct {
 
 func newSocketEventDataFromEbpf(e socketEventData) *SocketEventData {
 	evt := &SocketEventData{
-		Domain:          e.Domain,
-		Type:           e.Type,
-		Protocol:       e.Protocol,
-
+		Domain:   e.Domain,
+		Type:     e.Type,
+		Protocol: e.Protocol,
 	}
 	return evt
 }
 
-
 type NetworkSocketDetector struct {
-	ebpfLink      link.Link
+	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
@@ -64,7 +66,7 @@ func (o *NetworkSocketDetector) Start() error {
 	}
 
 	o.ebpfLink = l
-	rd, err := perf.NewReader(bpfObjs.Event,os.Getpagesize())
+	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
 	if err != nil {
 		return err
@@ -99,7 +101,6 @@ func (o *NetworkSocketDetector) Read() (*SocketEventData, error) {
 
 	printToScreen(ebpfEvent)
 
-
 	exportedEvent := newSocketEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
@@ -108,16 +109,13 @@ func (o *NetworkSocketDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
-
-func printToScreen(e socketEventData)  {
+func printToScreen(e socketEventData) {
 	fmt.Println("-----------------------------------------")
 	fmt.Printf("Domain: %s\n", Domain(e.Domain))
 	fmt.Printf("Type : %s\n", Type(e.Type))
 	fmt.Printf("Protocol: %s\n", Protocol(e.Protocol))
 	fmt.Println("-----------------------------------------")
 }
-
-
 
 func prompt(msg string) {
 	fmt.Printf("\n%s \r", msg)
