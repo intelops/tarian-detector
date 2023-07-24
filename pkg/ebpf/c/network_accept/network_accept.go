@@ -16,9 +16,11 @@ import (
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data accept accept.bpf.c -- -I../../../../headers
+// GetEbpfObject returns EBPF object and error if there is any. This is a wrapper around loadAcceptObjects
 func getEbpfObject() (*acceptObjects, error) {
 	var bpfObj acceptObjects
 	err := loadAcceptObjects(&bpfObj, nil)
+	// Returns nil err if any error occurs.
 	if err != nil {
 		return nil, err
 	}
@@ -33,6 +35,9 @@ type AcceptEventData struct {
 	Args [3]uint64
 }
 
+// newAcceptEventDataFromEbpf converts an EBPF accept event to an AcceptEventData. 
+//This is used to avoid having to copy the event data to a new EventData struct and to ensure that it is safe to modify the fields of the EventData struct before passing it to the event handler.
+// @param e - the EBPF accept event to convert to an Accept
 func newAcceptEventDataFromEbpf(e acceptEventData) *AcceptEventData {
 	evt := &AcceptEventData{
 		Args: [3]uint64{
@@ -49,17 +54,25 @@ type NetworkAcceptDetector struct {
 	perfReader *perf.Reader
 }
 
+// NewNetworkAcceptDetector creates a new instance of the accept detector. 
 func NewNetworkAcceptDetector() *NetworkAcceptDetector {
 	return &NetworkAcceptDetector{}
 }
 
+// Start initiates the NetworkAcceptDetector. This is the first function that you need to call in order to detect if you are listening on a BPF network.
+// 
+// @param o - The NetworkAcceptDetector to start. It must be stopped by calling Stop.
+// 
+// @return An error if any is encountered while starting the NetworkAcceptDetector or nil otherwise. If Start is called multiple times the first error is returned
 func (o *NetworkAcceptDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
 
 	l, err := link.Kprobe("__x64_sys_accept", bpfObjs.KprobeAccept, nil)
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
@@ -67,6 +80,7 @@ func (o *NetworkAcceptDetector) Start() error {
 	o.ebpfLink = l
 	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
@@ -75,8 +89,14 @@ func (o *NetworkAcceptDetector) Start() error {
 	return nil
 }
 
+// Close closes the EBPF link and perf reader. It is safe to call more than once.
+// 
+// @param o - The NetworkAcceptDetector to close. Must not be nil.
+// 
+// @return An error if any is encountered or nil otherwise. If a non nil error is encountered it is returned
 func (o *NetworkAcceptDetector) Close() error {
 	err := o.ebpfLink.Close()
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
@@ -84,16 +104,22 @@ func (o *NetworkAcceptDetector) Close() error {
 	return o.perfReader.Close()
 }
 
+// Read reads and returns the next EBPF event from the NetworkAcceptDetector. If Read encounters an error before reading the next event it will return the error.
+// 
+// @param o - The NetworkAcceptDetector to read from. Must be non nil
 func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
 	var ebpfEvent acceptEventData
 	record, err := o.perfReader.Read()
+	// Returns the error if any.
 	if err != nil {
+		// Returns the error if any.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
 	}
 
+	// Read the raw sample from the record. 
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
@@ -104,27 +130,21 @@ func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
 	return exportedEvent, nil
 }
 
+// ReadAsInterface reads the object as an interface. If you don t care about the interface it will return an error
+// 
+// @param o
 func (o *NetworkAcceptDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
+// Prints to screen the event. This is called by accept when it is time to accept a file.
+// 
+// @param e - Event that triggered the printToScreen event. AcceptEventData contains the file descriptor and address
 func printToScreen(e acceptEventData) {
 	fmt.Println("-----------------------------------------")
 	fmt.Printf("Accept_File_descriptor: %d\n", e.Args[0])
-	fmt.Printf("Accept_address : %s\n", IPv6(e.Args[1]))
+	fmt.Printf("Accept_address : %s\n", (e.Args[1]))
 
 	fmt.Println("-----------------------------------------")
 }
 
-func IP(in uint32) string {
-	ip := make(net.IP, net.IPv4len)
-	binary.BigEndian.PutUint32(ip, in)
-	return ip.String()
-}
-
-func IPv6(in uint64) string {
-
-	ip := make(net.IP, net.IPv6len)
-	binary.BigEndian.PutUint64(ip, in)
-	return ip.String()
-}
