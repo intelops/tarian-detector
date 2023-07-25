@@ -16,11 +16,12 @@ import (
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data connect connect.bpf.c -- -I../../../../headers
-// GetEbpfObject returns the bpf object
+
+// getEbpfObject loads the eBPF objects and returns a pointer to the connectObjects structure.
 func getEbpfObject() (*connectObjects, error) {
 	var bpfObj connectObjects
 	err := loadConnectObjects(&bpfObj, nil)
-	// Returns nil err if any error occurs.
+	// Return any error that occurs during loading.
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +29,7 @@ func getEbpfObject() (*connectObjects, error) {
 	return &bpfObj, nil
 }
 
+// ConnectEventData represents the data received from the eBPF program.
 // ConnectEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
@@ -35,8 +37,7 @@ type ConnectEventData struct {
 	Args [3]uint64
 }
 
-// newConnectEventDataFromEbpf converts a EBPF connect event to a Conn event. 
-// @param e - the EBPF connect event to convert to a Conn event
+// newConnectEventDataFromEbpf creates a new ConnectEventData instance from the given eBPF data.
 func newConnectEventDataFromEbpf(e connectEventData) *ConnectEventData {
 	evt := &ConnectEventData{
 		Args: [3]uint64{
@@ -48,33 +49,35 @@ func newConnectEventDataFromEbpf(e connectEventData) *ConnectEventData {
 	return evt
 }
 
+// NetworkConnectDetector represents the detector for network connect events using eBPF.
 type NetworkConnectDetector struct {
 	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
-// NewNetworkConnectDetector creates a new instance of the network connect detector. 
+// NewNetworkConnectDetector creates a new NetworkConnectDetector instance.
 func NewNetworkConnectDetector() *NetworkConnectDetector {
 	return &NetworkConnectDetector{}
 }
 
+// Start initializes the NetworkConnectDetector and starts monitoring network connect events.
 func (o *NetworkConnectDetector) Start() error {
+	// Load eBPF objects from the compiled C code.
 	bpfObjs, err := getEbpfObject()
-	// Returns the error if any.
+	// Return any error that occurs during loading.
 	if err != nil {
 		return err
 	}
 
 	l, err := link.Kprobe("__x64_sys_connect", bpfObjs.KprobeConnect, nil)
-	// Returns the error if any.
+	// Return any error that occurs during creating the Kprobe link.
 	if err != nil {
 		return err
 	}
 
 	o.ebpfLink = l
 	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
-
-	// Returns the error if any.
+	// Return any error that occurs during creating the perf event reader.
 	if err != nil {
 		return err
 	}
@@ -83,12 +86,10 @@ func (o *NetworkConnectDetector) Start() error {
 	return nil
 }
 
-// Close closes the EBPF link and perf reader. 
-// @param o - NetworkConnectDetector to be closed. Must not be nil.
-// @return Error returned by Open or any error encountered while closing the EBPF link and perf reader. nil if no error occurred
+// Close stops the NetworkConnectDetector and closes associated resources.
 func (o *NetworkConnectDetector) Close() error {
 	err := o.ebpfLink.Close()
-	// Returns the error if any.
+	// Return any error that occurs during closing the link.
 	if err != nil {
 		return err
 	}
@@ -96,21 +97,20 @@ func (o *NetworkConnectDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next ConnectEvent from the EBPF file. 
-// @param o
+// Read retrieves the ConnectEventData from the eBPF program.
 func (o *NetworkConnectDetector) Read() (*ConnectEventData, error) {
 	var ebpfEvent connectEventData
 	record, err := o.perfReader.Read()
-	// Returns the error if any.
+	// Return any error that occurs during reading from the perf event reader.
 	if err != nil {
-		// Returns the error if any.
+		// If the perf reader is closed, return the error as is.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
 	}
 
-	// Read the raw sample from the record. 
+	// Read the raw sample from the record using binary.Read.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
