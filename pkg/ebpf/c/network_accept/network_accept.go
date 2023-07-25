@@ -59,10 +59,8 @@ func NewNetworkAcceptDetector() *NetworkAcceptDetector {
 	return &NetworkAcceptDetector{}
 }
 
-// Start initiates the NetworkAcceptDetector. This is the first function that you need to call in order to detect if you are listening on a BPF network.
-// 
-// @param o - The NetworkAcceptDetector to start. It must be stopped by calling Stop.
-// 
+// Start initiates the NetworkAcceptDetector.
+// @param o - The NetworkAcceptDetector to start. 
 // @return An error if any is encountered while starting the NetworkAcceptDetector or nil otherwise. If Start is called multiple times the first error is returned
 func (o *NetworkAcceptDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
@@ -89,10 +87,8 @@ func (o *NetworkAcceptDetector) Start() error {
 	return nil
 }
 
-// Close closes the EBPF link and perf reader. It is safe to call more than once.
-// 
+// Close closes the EBPF link and perf reader. 
 // @param o - The NetworkAcceptDetector to close. Must not be nil.
-// 
 // @return An error if any is encountered or nil otherwise. If a non nil error is encountered it is returned
 func (o *NetworkAcceptDetector) Close() error {
 	err := o.ebpfLink.Close()
@@ -104,8 +100,7 @@ func (o *NetworkAcceptDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next EBPF event from the NetworkAcceptDetector. If Read encounters an error before reading the next event it will return the error.
-// 
+// Read reads and returns the next EBPF event from the NetworkAcceptDetector.
 // @param o - The NetworkAcceptDetector to read from. Must be non nil
 func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
 	var ebpfEvent acceptEventData
@@ -123,28 +118,13 @@ func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
-
-	printToScreen(ebpfEvent)
-
 	exportedEvent := newAcceptEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
-// ReadAsInterface reads the object as an interface. If you don t care about the interface it will return an error
-// 
-// @param o
+
 func (o *NetworkAcceptDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
-// Prints to screen the event. This is called by accept when it is time to accept a file.
-// 
-// @param e - Event that triggered the printToScreen event. AcceptEventData contains the file descriptor and address
-func printToScreen(e acceptEventData) {
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Accept_File_descriptor: %d\n", e.Args[0])
-	fmt.Printf("Accept_address : %s\n", (e.Args[1]))
-
-	fmt.Println("-----------------------------------------")
-}
 

@@ -21,9 +21,9 @@ struct
 
 SEC("kprobe/__x64_sys_accept")
 /**
-*This is the implementation of kretprobe to the __x64_sys_accept function 
+*This is the implementation of kprobe to the __x64_sys_accept function 
 * sys_accept accept a connection. This is a blocking call. If there is no connection available it will block until one is available.
-* @param ctx - * context passed by the caller. Should contain a stack trace pointer
+* @param ctx - * context passed by the caller.
 * @return 0 if success - 1
 */
 int kprobe_accept(struct pt_regs *ctx)
