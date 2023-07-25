@@ -17,7 +17,7 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data socket socket.bpf.c -- -I../../../../headers
 
-// Returns EBPF object. This is a wrapper around loadSocketObjects to avoid having to create a bpf object
+// getEbpfObject returns the eBPF object. It loads the eBPF objects from the compiled code into a Go struct.
 func getEbpfObject() (*socketObjects, error) {
 	var bpfObj socketObjects
 	err := loadSocketObjects(&bpfObj, nil)
@@ -29,9 +29,9 @@ func getEbpfObject() (*socketObjects, error) {
 	return &bpfObj, nil
 }
 
-// EntryEventData is the exported data from the eBPF struct counterpart
+// SocketEventData is the exported data from the eBPF struct counterpart.
 // The intention is to use the proper Go string instead of byte arrays from C.
-// It makes it simpler to use and can generate proper json.
+// It makes it simpler to use and can generate proper JSON.
 type SocketEventData struct {
 	Domain   uint32
 	Type     uint32
@@ -39,8 +39,6 @@ type SocketEventData struct {
 }
 
 // newSocketEventDataFromEbpf creates a new SocketEventData from an EventBPF event. This is used to implement event propagation.
-// 
-// @param e - the event to convert to a SocketEventData.
 func newSocketEventDataFromEbpf(e socketEventData) *SocketEventData {
 	evt := &SocketEventData{
 		Domain:   e.Domain,
@@ -50,6 +48,7 @@ func newSocketEventDataFromEbpf(e socketEventData) *SocketEventData {
 	return evt
 }
 
+// NetworkSocketDetector represents the network socket detector.
 type NetworkSocketDetector struct {
 	ebpfLink   link.Link
 	perfReader *perf.Reader
@@ -60,11 +59,7 @@ func NewNetworkSocketDetector() *NetworkSocketDetector {
 	return &NetworkSocketDetector{}
 }
 
-// Start detects network sockets. The caller must call Stop when finished with the detector. If Start returns an error NetworkSocketDetector will not be able to detect the socket and it will return that error.
-// 
-// @param o - An instance of NetworkSocketDetector. This is required for use as a Start function.
-// 
-// @return A non nil error if any error occurs during initialization or initialization. Otherwise nil is returned to indicate success
+// Start starts the network socket detector by attaching the eBPF program to the kprobe for the "__x64_sys_socket" function.
 func (o *NetworkSocketDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
 	// Returns the error if any.
@@ -90,11 +85,7 @@ func (o *NetworkSocketDetector) Start() error {
 	return nil
 }
 
-// Close closes the NetworkSocketDetector. If it is already closed it does nothing. 
-// 
-// @param o - The object to close.
-// 
-// @return An error if any occurred during closing or nil if everything was fine to close the detector. 
+// Close closes the network socket detector.
 func (o *NetworkSocketDetector) Close() error {
 	err := o.ebpfLink.Close()
 	// Returns the error if any.
@@ -105,9 +96,7 @@ func (o *NetworkSocketDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads a socket event from the perf reader and converts it to SocketEventData. This is a blocking function and should be called in a goroutine
-// 
-// @param o
+// Read reads the captured socket event data.
 func (o *NetworkSocketDetector) Read() (*SocketEventData, error) {
 	var ebpfEvent socketEventData
 	record, err := o.perfReader.Read()
@@ -120,39 +109,21 @@ func (o *NetworkSocketDetector) Read() (*SocketEventData, error) {
 		return nil, err
 	}
 
-	// Read the raw sample from the record. RawSample
+	// Read the raw sample from the record.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
-
-	printToScreen(ebpfEvent)
 
 	exportedEvent := newSocketEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
+// ReadAsInterface reads the captured socket event data as an interface.
 func (o *NetworkSocketDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
-// Prints to screen the event. This is a debugging function to be used in conjunction with printSocketEvents
-// 
-// @param e - the event to print
-func printToScreen(e socketEventData) {
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Domain: %s\n", Domain(e.Domain))
-	fmt.Printf("Type : %s\n", Type(e.Type))
-	fmt.Printf("Protocol: %s\n", Protocol(e.Protocol))
-	fmt.Println("-----------------------------------------")
-}
-
-// Prints a message to the user. This is a convenience function for prompting the user to enter a message.
-// 
-// @param msg - The message to print to the user before exiting
-func prompt(msg string) {
-	fmt.Printf("\n%s \r", msg)
-}
-
+// socketDomains contains the mapping of socket domain values to their names.
 var socketDomains = map[uint32]string{
 	0:  "AF_UNSPEC",
 	1:  "AF_UNIX",
@@ -201,12 +172,11 @@ var socketDomains = map[uint32]string{
 	44: "AF_XDP",
 }
 
-// getSocketDomain Function
-// Domain returns the name of the socket domain. This is used to distinguish between Unix domain names and Unix domain names that are stored in socket.
+// Domain returns the name of the socket domain based on the given value.
 // 
 // @param sd - The socket domain to lookup.
 // 
-// @return The name of the socket domain or the value of sd if it is not found in the map of socket
+// @return The name of the socket domain or the value of sd if it is not found in the map.
 func Domain(sd uint32) string {
 	// readSocketDomain prints the `domain` bitmask argument of the `socket` syscall
 	// http://man7.org/linux/man-pages/man2/socket.2.html
@@ -222,6 +192,7 @@ func Domain(sd uint32) string {
 	return res
 }
 
+// socketTypes contains the mapping of socket type values to their names.
 var socketTypes = map[uint32]string{
 	1:  "SOCK_STREAM",
 	2:  "SOCK_DGRAM",
@@ -232,11 +203,11 @@ var socketTypes = map[uint32]string{
 	10: "SOCK_PACKET",
 }
 
-// Type returns the string representation of the socket type. See socktype. go for details. This is a portable implementation of the socket. Type function.
+// Type returns the string representation of the socket type based on the given bitmask.
 // 
-// @param st - The socket type to convert. This must be a bitmask of the same length as the number of bits in the socket type.
+// @param st - The socket type to convert.
 // 
-// @return The string representation of the socket type as described in RFC 1918 section 2. 2. 1.
+// @return The string representation of the socket type.
 func Type(st uint32) string {
 	// readSocketType prints the `type` bitmask argument of the `socket` syscall
 	// http://man7.org/linux/man-pages/man2/socket.2.html
@@ -260,6 +231,7 @@ func Type(st uint32) string {
 	return strings.Join(f, "|")
 }
 
+// protocols contains the mapping of protocol values to their names.
 var protocols = map[int32]string{
 	1:  "ICMP",
 	6:  "TCP",
@@ -267,12 +239,11 @@ var protocols = map[int32]string{
 	58: "ICMPv6",
 }
 
-// getProtocol Function
-// Protocol returns the name of the protocol. e
+// Protocol returns the name of the protocol based on the given value.
 // 
-// @param proto - the protocol to look up
+// @param proto - The protocol to look up.
 // 
-// @return the name of the protocol 
+// @return The name of the protocol. 
 func Protocol(proto int32) string {
 	var res string
 
