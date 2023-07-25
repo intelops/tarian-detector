@@ -20,7 +20,7 @@ struct{
 SEC("kprobe/__x64_sys_connect")
 /**
 *This is the implementation of kprobe to __x64_sys_connect function.
-* This function is called when the system is about to connect. The purpose of this function is to establish a connection to the system on behalf of the caller.
+* This function is called when the system is about to connect. 
 * @param ctx - * Pointer to the thread context.
 * @return Returns 0 on success or - 1 on failure. 
 */
