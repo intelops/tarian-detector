@@ -27,9 +27,6 @@ SEC("kprobe/__x64_sys_accept")
  * kprobe_accept is the implementation of a kprobe attached to the __x64_sys_accept function.
  * The __x64_sys_accept function is used to accept a connection. This is a blocking call,
  * and if there is no connection available, it will block until one is available.
- *
- * @param ctx - Pointer to the structure containing registers set by the kernel.
- * @return Returns 0 on success and -1 on failure.
  */
 int kprobe_accept(struct pt_regs *ctx)
 {
