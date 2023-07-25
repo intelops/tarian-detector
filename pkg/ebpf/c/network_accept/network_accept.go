@@ -16,9 +16,11 @@ import (
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data accept accept.bpf.c -- -I../../../../headers
-// GetEbpfObject returns EBPF object and error if there is any. This is a wrapper around loadAcceptObjects
+
+// getEbpfObject loads the eBPF objects from the compiled code.
 func getEbpfObject() (*acceptObjects, error) {
 	var bpfObj acceptObjects
+	// Load eBPF objects from the compiled  code into bpfObj.
 	err := loadAcceptObjects(&bpfObj, nil)
 	// Returns nil err if any error occurs.
 	if err != nil {
@@ -49,26 +51,31 @@ func newAcceptEventDataFromEbpf(e acceptEventData) *AcceptEventData {
 	return evt
 }
 
+// NetworkAcceptDetector is a structure to manage eBPF interaction
 type NetworkAcceptDetector struct {
 	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
-// NewNetworkAcceptDetector creates a new instance of the accept detector. 
+// NewNetworkAcceptDetector creates a new instance of NetworkAcceptDetector.
 func NewNetworkAcceptDetector() *NetworkAcceptDetector {
 	return &NetworkAcceptDetector{}
 }
 
+// Start starts the NetworkAcceptDetector and sets up the required eBPF hooks.
+
+
 // Start initiates the NetworkAcceptDetector.
-// @param o - The NetworkAcceptDetector to start. 
-// @return An error if any is encountered while starting the NetworkAcceptDetector or nil otherwise. If Start is called multiple times the first error is returned
+// It returns an error if the start-up process encounters any issues.
 func (o *NetworkAcceptDetector) Start() error {
+	// Load eBPF objects from the compiled C code.
 	bpfObjs, err := getEbpfObject()
 	// Returns the error if any.
 	if err != nil {
 		return err
 	}
 
+	// Attach a kprobe to the function "__x64_sys_accept" with the provided eBPF object.
 	l, err := link.Kprobe("__x64_sys_accept", bpfObjs.KprobeAccept, nil)
 	// Returns the error if any.
 	if err != nil {
@@ -76,6 +83,8 @@ func (o *NetworkAcceptDetector) Start() error {
 	}
 
 	o.ebpfLink = l
+
+	// Create a perf reader for the eBPF event.
 	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
 	// Returns the error if any.
@@ -87,7 +96,7 @@ func (o *NetworkAcceptDetector) Start() error {
 	return nil
 }
 
-// Close closes the EBPF link and perf reader. 
+// Close closes the eBPF link and perf reader. 
 // @param o - The NetworkAcceptDetector to close. Must not be nil.
 // @return An error if any is encountered or nil otherwise. If a non nil error is encountered it is returned
 func (o *NetworkAcceptDetector) Close() error {
@@ -100,7 +109,7 @@ func (o *NetworkAcceptDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next EBPF event from the NetworkAcceptDetector.
+// Read reads and returns the next eBPF event from the NetworkAcceptDetector.
 // @param o - The NetworkAcceptDetector to read from. Must be non nil
 func (o *NetworkAcceptDetector) Read() (*AcceptEventData, error) {
 	var ebpfEvent acceptEventData
