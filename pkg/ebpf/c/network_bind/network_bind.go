@@ -35,7 +35,8 @@ type BindEventData struct {
 	Args [3]uint64
 }
 
-// newBindEventDataFromEbpf converts an EBPF event to a BIND event. This is used to create a copy of the event that can be sent to the network without copying it into the event buffer
+// newBindEventDataFromEbpf converts an EBPF event to a BIND event. 
+//This is used to create a copy of the event that can be sent to the network without copying it into the event buffer
 // 
 // @param e - EBPF event to convert
 func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
@@ -104,8 +105,7 @@ func (o *NetworkBindDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next EBPF event from the perf reader. It is expected that Read will be called before any other methods of NetworkBindDetector have been called.
-// 
+// Read reads and returns the next EBPF event from the perf reader. 
 // @param o - the instance of NetworkBindDetector to read from
 func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	var ebpfEvent bindEventData
@@ -123,38 +123,14 @@ func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
-
-	printToScreen(ebpfEvent)
-
 	exportedEvent := newBindEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
-// ReadAsInterface implements the BindDetector interface. This is a no op for NetworkBindDetector since it does not return anything
-// 
+// ReadAsInterface implements the BindDetector interface. 
 // @param o
 func (o *NetworkBindDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
 
-func printToScreen(e bindEventData) {
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Bind_File_descriptor: %d\n", e.Args[0])
-	fmt.Printf("Bind_address : %s\n", IPv6(e.Args[1]))
-
-	fmt.Println("-----------------------------------------")
-}
-
-
-// IPv6 converts an uint64 to string. The string is in big endian format
-// 
-// @param in - the uint64 to convert to string
-// 
-// @return the string representation of the uint64 in big endian format or empty string if not valid or not a
-func IPv6(in uint64) string {
-
-	ip := make(net.IP, net.IPv6len)
-	binary.BigEndian.PutUint64(ip, in)
-	return ip.String()
-}
