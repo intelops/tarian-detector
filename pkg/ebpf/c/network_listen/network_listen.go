@@ -17,7 +17,7 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data listen listen.bpf.c -- -I../../../../headers
 
-// getEbpfObject loads the eBPF objects from the compiled  code.
+// getEbpfObject loads the eBPF objects from the compiled code and returns a pointer to the listenObjects structure.
 func getEbpfObject() (*listenObjects, error) {
 	var bpfObj listenObjects
 	
@@ -31,7 +31,7 @@ func getEbpfObject() (*listenObjects, error) {
 	return &bpfObj, nil
 }
 
-// ListenEventData is the exported data from the eBPF struct counterpart.
+// ListenEventData represents the data received from the eBPF program.ListenEventData is the exported data from the eBPF struct counterpart.
 // The structure holds captured arguments of the probed function
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
@@ -39,8 +39,7 @@ type ListenEventData struct {
 	Args [3]uint64
 }
 
-// newListenEventDataFromEbpf converts a listen event to a struct. 
-// @param e - the event to convert to a struct which can be passed to EventProcessor
+// newListenEventDataFromEbpf creates a new ListenEventData instance from the given eBPF data.
 func newListenEventDataFromEbpf(e listenEventData) *ListenEventData {
 	evt := &ListenEventData{
 		Args: [3]uint64{
@@ -52,7 +51,7 @@ func newListenEventDataFromEbpf(e listenEventData) *ListenEventData {
 	return evt
 }
 
-
+// NetworkListenDetector represents the detector for network listen events using eBPF.
 type NetworkListenDetector struct {
 	ebpfLink   link.Link
 	perfReader *perf.Reader
@@ -66,6 +65,7 @@ func NewNetworkListenDetector() *NetworkListenDetector {
 // Start starts the NetworkListenDetector and sets up the required eBPF hooks. 
 // It returns an error if the start-up process encounters any issues.
 func (o *NetworkListenDetector) Start() error {
+	// Load eBPF objects from the compiled code.
 	bpfObjs, err := getEbpfObject()
 	// Returns the error if any.
 	if err != nil {
@@ -90,8 +90,7 @@ func (o *NetworkListenDetector) Start() error {
 	return nil
 }
 
-// Closes the NetworkListenDetector by stopping the eBPF hooks and releasing resources.
-// @return An error if any occurred during closing.
+// Close stops the NetworkListenDetector and closes associated resources.
 func (o *NetworkListenDetector) Close() error {
 	err := o.ebpfLink.Close()
 	// Returns the error if any.
@@ -102,14 +101,13 @@ func (o *NetworkListenDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next eBPF event from the network.
-// @param o - The NetworkListenDetector to read from. 
+// Read retrieves the ListenEventData from the eBPF program.
 func (o *NetworkListenDetector) Read() (*ListenEventData, error) {
 	var ebpfEvent listenEventData
 	record, err := o.perfReader.Read()
 	// Returns the error if any.
 	if err != nil {
-		// Returns the error if any.
+		// If the perf reader is closed, return the error as is.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
@@ -124,8 +122,7 @@ func (o *NetworkListenDetector) Read() (*ListenEventData, error) {
 	return exportedEvent, nil
 }
 
-// ReadAsInterface implements Interface.Reads data from a ring buffer and returns it as an interface.
-// @param o
+// ReadAsInterface implements Interface.
 func (o *NetworkListenDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }

@@ -23,9 +23,6 @@ SEC("kprobe/__x64_sys_listen")
 /**
  * kprobe_listen is a kprobe attached to the function __x64_sys_listen.
  * It captures the arguments of the function call and emits them as an event.
- *
- * @param ctx - Pointer to the structure containing registers set by the kernel.
- * @return Returns 0 to continue the execution of the probed function.
  */
 int kprobe_listen(struct pt_regs *ctx)
 {
