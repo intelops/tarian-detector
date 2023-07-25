@@ -16,11 +16,12 @@ import (
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data bind bind.bpf.c -- -I../../../../headers
-// GetEbpfObject returns the BPF object
+
+// getEbpfObject loads the eBPF objects and returns a pointer to the bindObjects structure.
 func getEbpfObject() (*bindObjects, error) {
 	var bpfObj bindObjects
 	err := loadBindObjects(&bpfObj, nil)
-	// Returns nil err if any error occurs.
+	// Return any error that occurs during loading.
 	if err != nil {
 		return nil, err
 	}
@@ -28,6 +29,7 @@ func getEbpfObject() (*bindObjects, error) {
 	return &bpfObj, nil
 }
 
+// BindEventData represents the data received from the eBPF program.
 // BindEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
@@ -35,10 +37,7 @@ type BindEventData struct {
 	Args [3]uint64
 }
 
-// newBindEventDataFromEbpf converts an EBPF event to a BIND event. 
-//This is used to create a copy of the event that can be sent to the network without copying it into the event buffer
-// 
-// @param e - EBPF event to convert
+// newBindEventDataFromEbpf creates a new BindEventData instance from the given eBPF data.
 func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
 	evt := &BindEventData{
 		Args: [3]uint64{
@@ -50,6 +49,7 @@ func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
 	return evt
 }
 
+// NetworkBindDetector represents the detector for network bind events using eBPF.
 type NetworkBindDetector struct {
 	ebpfLink   link.Link
 	perfReader *perf.Reader
@@ -60,20 +60,16 @@ func NewNetworkBindDetector() *NetworkBindDetector {
 	return &NetworkBindDetector{}
 }
 
-// Start the NetworkBindDetector. If Start returns an error the NetworkBindDetector will not be started and the error will be returned.
-// 
-// @param o - The object to start. Must not be nil.
-// 
-// @return Error from kprobes. Start or any error that occurs during initialization of the NetworkBindDetector.
+// Start initializes the NetworkBindDetector and starts monitoring network bind events.
 func (o *NetworkBindDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
-	// Returns the error if any.
+	// Return any error that occurs during loading.
 	if err != nil {
 		return err
 	}
 
 	l, err := link.Kprobe("__x64_sys_bind", bpfObjs.KprobeBind, nil)
-	// Returns the error if any.
+	// Return any error that occurs during creating the Kprobe link.
 	if err != nil {
 		return err
 	}
@@ -81,7 +77,7 @@ func (o *NetworkBindDetector) Start() error {
 	o.ebpfLink = l
 	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
-	// Returns the error if any.
+	// Return any error that occurs during creating the perf event reader.
 	if err != nil {
 		return err
 	}
@@ -90,14 +86,10 @@ func (o *NetworkBindDetector) Start() error {
 	return nil
 }
 
-// Close closes the EBPF link and perf reader. It is safe to call multiple times. If Close fails it will return the first error encountered.
-// 
-// @param o - The object to close. Must not be nil.
-// 
-// @return An error if any occurred during closing or nil otherwise. This may be non nil if the error was encountered while closing
+// Close stops the NetworkBindDetector and closes associated resources.
 func (o *NetworkBindDetector) Close() error {
 	err := o.ebpfLink.Close()
-	// Returns the error if any.
+	// Return any error that occurs during closing the link.
 	if err != nil {
 		return err
 	}
@@ -105,21 +97,20 @@ func (o *NetworkBindDetector) Close() error {
 	return o.perfReader.Close()
 }
 
-// Read reads and returns the next EBPF event from the perf reader. 
-// @param o - the instance of NetworkBindDetector to read from
+// Read retrieves the BindEventData from the eBPF program.
 func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	var ebpfEvent bindEventData
 	record, err := o.perfReader.Read()
-	// Returns the error if any.
+	// Return any error that occurs during reading from the perf event reader.
 	if err != nil {
-		// Returns the error if any.
+		// If the perf reader is closed, return the error as is.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
 	}
 
-	// Read the raw sample from the record. 
+	// Read the raw sample from the record using binary.Read.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
@@ -127,8 +118,8 @@ func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	return exportedEvent, nil
 }
 
-// ReadAsInterface implements the BindDetector interface. 
-// @param o
+// ReadAsInterface implements the ReadAsInterface method of the ebpf.Exporter interface.
+// It calls the Read method internally.
 func (o *NetworkBindDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
