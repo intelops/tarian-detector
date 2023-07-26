@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
 package network_bind
 
 import (
@@ -6,65 +8,76 @@ import (
 	"errors"
 	"net"
 
-	"os"
 	"fmt"
+	"os"
+
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data bind bind.bpf.c -- -I../../../../headers
+
+// getEbpfObject loads the eBPF objects and returns a pointer to the bindObjects structure.
 func getEbpfObject() (*bindObjects, error) {
 	var bpfObj bindObjects
 	err := loadBindObjects(&bpfObj, nil)
+	// Return any error that occurs during loading.
 	if err != nil {
 		return nil, err
 	}
 
 	return &bpfObj, nil
 }
+
+// BindEventData represents the data received from the eBPF program.
 // BindEventData is the exported data from the eBPF struct counterpart
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
 type BindEventData struct {
-	Args[3]   uint64
-
+	Args [3]uint64
 }
 
+// newBindEventDataFromEbpf creates a new BindEventData instance from the given eBPF data.
 func newBindEventDataFromEbpf(e bindEventData) *BindEventData {
 	evt := &BindEventData{
 		Args: [3]uint64{
 			e.Args[0],
 			e.Args[1],
 			e.Args[2],
-	},
-}
+		},
+	}
 	return evt
 }
 
-
+// NetworkBindDetector represents the detector for network bind events using eBPF.
 type NetworkBindDetector struct {
-	ebpfLink      link.Link
+	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
+// NewNetworkBindDetector creates a new instance of NetworkBindDetector.
 func NewNetworkBindDetector() *NetworkBindDetector {
 	return &NetworkBindDetector{}
 }
 
+// Start initializes the NetworkBindDetector and starts monitoring network bind events.
 func (o *NetworkBindDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
+	// Return any error that occurs during loading.
 	if err != nil {
 		return err
 	}
 
 	l, err := link.Kprobe("__x64_sys_bind", bpfObjs.KprobeBind, nil)
+	// Return any error that occurs during creating the Kprobe link.
 	if err != nil {
 		return err
 	}
 
 	o.ebpfLink = l
-	rd, err := perf.NewReader(bpfObjs.Event,os.Getpagesize())
+	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
+	// Return any error that occurs during creating the perf event reader.
 	if err != nil {
 		return err
 	}
@@ -73,8 +86,10 @@ func (o *NetworkBindDetector) Start() error {
 	return nil
 }
 
+// Close stops the NetworkBindDetector and closes associated resources.
 func (o *NetworkBindDetector) Close() error {
 	err := o.ebpfLink.Close()
+	// Return any error that occurs during closing the link.
 	if err != nil {
 		return err
 	}
@@ -82,50 +97,31 @@ func (o *NetworkBindDetector) Close() error {
 	return o.perfReader.Close()
 }
 
+// Read retrieves the BindEventData from the eBPF program.
 func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	var ebpfEvent bindEventData
 	record, err := o.perfReader.Read()
+	// Return any error that occurs during reading from the perf event reader.
 	if err != nil {
+		// If the perf reader is closed, return the error as is.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
 	}
 
+	// Read the raw sample from the record using binary.Read.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
-
-	printToScreen(ebpfEvent)
-
-
 	exportedEvent := newBindEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
+// ReadAsInterface implements the ReadAsInterface method of the ebpf.Exporter interface.
+// It calls the Read method internally.
 func (o *NetworkBindDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
 
-func printToScreen(e bindEventData)  {
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Bind_File_descriptor: %d\n", e.Args[0])
-	fmt.Printf("Bind_address : %s\n", IPv6(e.Args[1]))
-
-	fmt.Println("-----------------------------------------")
-}
-
-
-func IP(in uint32) string {
-	ip := make(net.IP, net.IPv4len)
-	binary.BigEndian.PutUint32(ip, in)
-	return ip.String()
-}
-
-func IPv6(in uint64) string {
-	
-	ip := make(net.IP, net.IPv6len)
-	binary.BigEndian.PutUint64(ip, in)
-	return ip.String()
-}

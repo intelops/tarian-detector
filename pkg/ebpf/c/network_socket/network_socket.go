@@ -1,71 +1,82 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
 package network_socket
 
 import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"os"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/perf"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data socket socket.bpf.c -- -I../../../../headers
 
+// getEbpfObject returns the eBPF object. It loads the eBPF objects from the compiled code into a Go struct.
 func getEbpfObject() (*socketObjects, error) {
 	var bpfObj socketObjects
 	err := loadSocketObjects(&bpfObj, nil)
+	// Returns nil err if any error occurs.
 	if err != nil {
 		return nil, err
 	}
 
 	return &bpfObj, nil
 }
-// EntryEventData is the exported data from the eBPF struct counterpart
+
+// SocketEventData is the exported data from the eBPF struct counterpart.
 // The intention is to use the proper Go string instead of byte arrays from C.
-// It makes it simpler to use and can generate proper json.
+// It makes it simpler to use and can generate proper JSON.
 type SocketEventData struct {
 	Domain   uint32
 	Type     uint32
 	Protocol int32
 }
 
+// newSocketEventDataFromEbpf creates a new SocketEventData from an EventBPF event. This is used to implement event propagation.
 func newSocketEventDataFromEbpf(e socketEventData) *SocketEventData {
 	evt := &SocketEventData{
-		Domain:          e.Domain,
-		Type:           e.Type,
-		Protocol:       e.Protocol,
-
+		Domain:   e.Domain,
+		Type:     e.Type,
+		Protocol: e.Protocol,
 	}
 	return evt
 }
 
-
+// NetworkSocketDetector represents the network socket detector.
 type NetworkSocketDetector struct {
-	ebpfLink      link.Link
+	ebpfLink   link.Link
 	perfReader *perf.Reader
 }
 
+// NewNetworkSocketDetector creates a new instance of network socket detector. 
 func NewNetworkSocketDetector() *NetworkSocketDetector {
 	return &NetworkSocketDetector{}
 }
 
+// Start starts the network socket detector by attaching the eBPF program to the kprobe for the "__x64_sys_socket" function.
 func (o *NetworkSocketDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
 
 	l, err := link.Kprobe("__x64_sys_socket", bpfObjs.KprobeSocket, nil)
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
 
 	o.ebpfLink = l
-	rd, err := perf.NewReader(bpfObjs.Event,os.Getpagesize())
+	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
 
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
@@ -74,8 +85,10 @@ func (o *NetworkSocketDetector) Start() error {
 	return nil
 }
 
+// Close closes the network socket detector.
 func (o *NetworkSocketDetector) Close() error {
 	err := o.ebpfLink.Close()
+	// Returns the error if any.
 	if err != nil {
 		return err
 	}
@@ -83,46 +96,34 @@ func (o *NetworkSocketDetector) Close() error {
 	return o.perfReader.Close()
 }
 
+// Read reads the captured socket event data.
 func (o *NetworkSocketDetector) Read() (*SocketEventData, error) {
 	var ebpfEvent socketEventData
 	record, err := o.perfReader.Read()
+	// Returns the error if any.
 	if err != nil {
+		// Returns the error if any.
 		if errors.Is(err, perf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
 	}
 
+	// Read the raw sample from the record.
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &ebpfEvent); err != nil {
 		return nil, err
 	}
-
-	printToScreen(ebpfEvent)
-
 
 	exportedEvent := newSocketEventDataFromEbpf(ebpfEvent)
 	return exportedEvent, nil
 }
 
+// ReadAsInterface reads the captured socket event data as an interface.
 func (o *NetworkSocketDetector) ReadAsInterface() (any, error) {
 	return o.Read()
 }
 
-
-func printToScreen(e socketEventData)  {
-	fmt.Println("-----------------------------------------")
-	fmt.Printf("Domain: %s\n", Domain(e.Domain))
-	fmt.Printf("Type : %s\n", Type(e.Type))
-	fmt.Printf("Protocol: %s\n", Protocol(e.Protocol))
-	fmt.Println("-----------------------------------------")
-}
-
-
-
-func prompt(msg string) {
-	fmt.Printf("\n%s \r", msg)
-}
-
+// socketDomains contains the mapping of socket domain values to their names.
 var socketDomains = map[uint32]string{
 	0:  "AF_UNSPEC",
 	1:  "AF_UNIX",
@@ -171,7 +172,11 @@ var socketDomains = map[uint32]string{
 	44: "AF_XDP",
 }
 
-// getSocketDomain Function
+// Domain returns the name of the socket domain based on the given value.
+// 
+// @param sd - The socket domain to lookup.
+// 
+// @return The name of the socket domain or the value of sd if it is not found in the map.
 func Domain(sd uint32) string {
 	// readSocketDomain prints the `domain` bitmask argument of the `socket` syscall
 	// http://man7.org/linux/man-pages/man2/socket.2.html
@@ -187,6 +192,7 @@ func Domain(sd uint32) string {
 	return res
 }
 
+// socketTypes contains the mapping of socket type values to their names.
 var socketTypes = map[uint32]string{
 	1:  "SOCK_STREAM",
 	2:  "SOCK_DGRAM",
@@ -197,6 +203,11 @@ var socketTypes = map[uint32]string{
 	10: "SOCK_PACKET",
 }
 
+// Type returns the string representation of the socket type based on the given bitmask.
+// 
+// @param st - The socket type to convert.
+// 
+// @return The string representation of the socket type.
 func Type(st uint32) string {
 	// readSocketType prints the `type` bitmask argument of the `socket` syscall
 	// http://man7.org/linux/man-pages/man2/socket.2.html
@@ -204,6 +215,7 @@ func Type(st uint32) string {
 
 	var f []string
 
+	
 	if stName, ok := socketTypes[st&0xf]; ok {
 		f = append(f, stName)
 	} else {
@@ -219,6 +231,7 @@ func Type(st uint32) string {
 	return strings.Join(f, "|")
 }
 
+// protocols contains the mapping of protocol values to their names.
 var protocols = map[int32]string{
 	1:  "ICMP",
 	6:  "TCP",
@@ -226,10 +239,15 @@ var protocols = map[int32]string{
 	58: "ICMPv6",
 }
 
-// getProtocol Function
+// Protocol returns the name of the protocol based on the given value.
+// 
+// @param proto - The protocol to look up.
+// 
+// @return The name of the protocol. 
 func Protocol(proto int32) string {
 	var res string
 
+	// get the protocol name or return the protocol name
 	if protoName, ok := protocols[proto]; ok {
 		res = protoName
 	} else {
