@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
