@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
+
 //go:build ignore
 
 #include "vmlinux.h"
@@ -7,7 +10,7 @@
 
 #define MAX_SIZE 256
 
-//Information being captured
+// data gathered by this program.
 struct event_data{
     __u32 pid;
     __u32 tgid;
@@ -38,16 +41,19 @@ const struct event_data *unused __attribute__((unused));
 //     __u8 *const envp;
 // };
 
-//Map Definition
+// ringbuffer map definition
 struct{
     __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 1 << 24);
 } event SEC(".maps");
 
+// program attaches to sys_execve syscall
 SEC("kprobe/__x64_sys_execve")
 int kprobe_execve(struct pt_regs *ctx){
 
     struct event_data *ed;
+    
+    // allocate space for an event in map.
     ed = bpf_ringbuf_reserve(&event, sizeof(struct event_data), 0);
     if (!ed){
         return 0;
@@ -55,12 +61,12 @@ int kprobe_execve(struct pt_regs *ctx){
     
     s64 res;
     
-    //Process Id and Thread Group Id
+    // process Id and thread Group Id
     __u64 pid_tgid = bpf_get_current_pid_tgid();
     ed->pid = pid_tgid >> 32;
     ed->tgid = pid_tgid;
 
-    //User Id and Group Id
+    // user Id and group Id
     __u64 uid_gid = bpf_get_current_uid_gid();
     ed->uid = uid_gid >> 32;
     ed->gid = uid_gid;
@@ -68,7 +74,7 @@ int kprobe_execve(struct pt_regs *ctx){
     // Command trigred event
     bpf_get_current_comm(&ed->comm, sizeof(ed->comm));
 
-    //Binary File path
+    // binary File path
     struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
 
     res = bpf_probe_read_user_str(&ed->binary_filepath, sizeof(ed->binary_filepath), (char *)PT_REGS_PARM1_CORE(ctx2));
@@ -77,7 +83,7 @@ int kprobe_execve(struct pt_regs *ctx){
         return 1;
     }
 
-    //Current Working Directory
+    // current working directory
     struct task_struct *task = (struct task_struct *)bpf_get_current_task();
     struct fs_struct *fs;
     struct dentry *dentry;
@@ -91,7 +97,6 @@ int kprobe_execve(struct pt_regs *ctx){
     }
 
     char *user_comm = (char *)PT_REGS_PARM2_CORE(ctx2);
-    bpf_printk("test %s", user_comm);
     
     //command 
     // __u8 *currPtr;

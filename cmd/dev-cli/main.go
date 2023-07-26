@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
+
 package main
 
 import (
@@ -15,13 +18,13 @@ import (
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_readv"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_write"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/file_writev"
-	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_entry"
-	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_exit"
-	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_socket"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_accept"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_bind"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_connect"
 	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_listen"
-	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_bind"
-	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_accept"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/network_socket"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_entry"
+	"github.com/intelops/tarian-detector/pkg/ebpf/c/process_exit"
 )
 
 func main() {
@@ -42,9 +45,10 @@ func main() {
 	networkListenDetector := network_listen.NewNetworkListenDetector()
 	networkBindDetector := network_bind.NewNetworkBindDetector()
 	networkAcceptDetector := network_accept.NewNetworkAcceptDetector()
+
 	// Register them to the events detector (composite)
 	eventsDetector := detector.NewEventsDetector()
-	
+
 	eventsDetector.Add(processEntryDetector)
 	eventsDetector.Add(processExitDetector)
 
@@ -53,7 +57,7 @@ func main() {
 	eventsDetector.Add(fileOpenatDetector)
 	eventsDetector.Add(fileOpenat2Detector)
 
-	//File Close
+	// File Close
 	eventsDetector.Add(fileCloseDetector)
 
 	//File Read
@@ -64,12 +68,13 @@ func main() {
 	eventsDetector.Add(fileWriteDetector)
 	eventsDetector.Add(fileWritevDetector)
 
-	//Network 
+	//Network
 	eventsDetector.Add(networkSocketDetector)
 	eventsDetector.Add(networkConnectDetector)
 	eventsDetector.Add(networkListenDetector)
 	eventsDetector.Add(networkBindDetector)
 	eventsDetector.Add(networkAcceptDetector)
+
 	// Start and defer Close
 	err := eventsDetector.Start()
 	if err != nil {
@@ -129,7 +134,6 @@ func printProcessExitEventData(event process_exit.ExitEventData) {
 	fmt.Println("")
 }
 
-
 func printProcessSocketEventData(event *network_socket.SocketEventData) {
 	fmt.Println("#  network_socket.SocketEventData:")
 	j, _ := json.Marshal(event)
@@ -164,8 +168,6 @@ func printNetworkAcceptEventData(event *network_accept.AcceptEventData) {
 	fmt.Println(string(j))
 	fmt.Println("")
 }
-
-
 
 func printEvent(data any) {
 	fmt.Printf("# %T:\n %v\n\n", data, data)

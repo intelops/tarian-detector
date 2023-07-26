@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2023 Authors of Tarian & the Organization created Tarian
+
 package file_readv
 
 import (
@@ -10,6 +13,8 @@ import (
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH readv readv.bpf.c -- -I../../../../headers
+
+// loads the ebpf specs like maps, programs
 func getEbpfObject() (*readvObjects, error) {
 	var bpfObj readvObjects
 	err := loadReadvObjects(&bpfObj, nil)
@@ -29,10 +34,14 @@ type ReadvDetector struct {
 	ringbufReader *ringbuf.Reader
 }
 
+// NewReadvDetector returns a new instance of ReadvDetector
 func NewReadvDetector() *ReadvDetector {
 	return &ReadvDetector{}
 }
 
+// Start the close detector by attaching ebpf program to
+// hook in kernel and opens the map to read the data.
+// If it cannot be started an error is returned.
 func (p *ReadvDetector) Start() error {
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
@@ -57,6 +66,7 @@ func (p *ReadvDetector) Start() error {
 	return nil
 }
 
+// closes the EBPF objects
 func (p *ReadvDetector) Close() error {
 	err := p.ebpfLink.Close()
 	if err != nil {
@@ -66,8 +76,10 @@ func (p *ReadvDetector) Close() error {
 	return p.ringbufReader.Close()
 }
 
+// reads the next event from the ringbuffer
 func (p *ReadvDetector) Read() (ReadvEventData, error) {
 	var event ReadvEventData
+	// reads the data from ringbuffer
 	record, err := p.ringbufReader.Read()
 	if err != nil {
 		if errors.Is(err, ringbuf.ErrClosed) {
@@ -76,7 +88,7 @@ func (p *ReadvDetector) Read() (ReadvEventData, error) {
 		return event, err
 	}
 
-	// Parse the ringbuf event entry into a bpfEvent structure.
+	// read the raw sample from the record.RawSample
 	if err := binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, &event); err != nil {
 		return event, err
 	}
@@ -84,6 +96,7 @@ func (p *ReadvDetector) Read() (ReadvEventData, error) {
 	return event, nil
 }
 
+// reads data from a ring buffer and returns it as an interface
 func (p *ReadvDetector) ReadAsInterface() (any, error) {
 	return p.Read()
 }
