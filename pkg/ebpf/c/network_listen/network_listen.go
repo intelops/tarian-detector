@@ -6,9 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"net"
-
-	"fmt"
 	"os"
 
 	"github.com/cilium/ebpf/link"
