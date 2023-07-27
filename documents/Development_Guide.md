@@ -6,6 +6,7 @@ Welcome to the development guide for Tarian Detector. This guide will help you u
 
 - [Setting Up the Development Environment](#🧑‍💻-setting-up-the-development-environment)
 - [Understanding the Repository Structure](#🗄️-repository-structure)
+- [File Contribution Guide](#file-contribution-guide)
 - [Development Workflow](#🔄-development-workflow)
 - [DCO Signoffs](#✍️-dco-signoffs)
 - [Testing](#🧪-testing)
@@ -23,7 +24,7 @@ Before you start contributing to Tarian Detector, you need to set up your develo
     git clone https://github.com/<your-username>/tarian-detector.git
     cd tarian-detector
     ```
-3. Install the project dependencies as described in the [Installation Guide](./Installation_guide.md).
+3. Install the project dependencies as described in the [Installation Guide](./Installation_Guide.md).
 
 ## 🗄️ Repository Structure
 
@@ -35,6 +36,12 @@ In the `Repository Structure Guide`, you will also find explanations of naming c
 
 Check out the [Repository Structure Guide](./Repository_Structure.md) for more detailed information and to familiarize yourself with the inner workings of the Tarian Detector project.
 
+# File Contribution Guide
+
+If you're adding new files to the project, please see our [File Contribution Guide](./File_Contribution_Guide.md). 
+This guide provides an overview of our repository structure and offers a step-by-step walkthrough on how to add new files. It addresses how to name your files, where to correctly place them within our project hierarchy, and how to document your changes. 
+
+Whether you're contributing code, documentation, graphics, or other types of files, we have a place for them all. By following this guide, you'll ensure your contributions fit seamlessly into our project, making it easier for everyone involved in the Tarian Detector project.
 
 ## 🔄 Development Workflow
 
