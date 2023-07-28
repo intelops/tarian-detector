@@ -34,11 +34,11 @@ Our `Repository Structure Guide` provides an in-depth walkthrough of the layout 
 
 In the `Repository Structure Guide`, you will also find explanations of naming conventions, file formats, and other standards that have been established for the project. Adhering to these standards helps ensure consistency and quality across all contributions.
 
-Check out the [Repository Structure Guide](./Repository_Structure.md) for more detailed information and to familiarize yourself with the inner workings of the Tarian Detector project.
+Check out the [Repository Structure Guide](Repository_Structure.md) for more detailed information and to familiarize yourself with the inner workings of the Tarian Detector project.
 
 # File Contribution Guide
 
-If you're adding new files to the project, please see our [File Contribution Guide](./File_Contribution_Guide.md). 
+If you're adding new files to the project, please see our [File Contribution Guide](./File_Contribution%20_Guide.md). 
 This guide provides an overview of our repository structure and offers a step-by-step walkthrough on how to add new files. It addresses how to name your files, where to correctly place them within our project hierarchy, and how to document your changes. 
 
 Whether you're contributing code, documentation, graphics, or other types of files, we have a place for them all. By following this guide, you'll ensure your contributions fit seamlessly into our project, making it easier for everyone involved in the Tarian Detector project.
@@ -60,7 +60,7 @@ The Tarian Detector uses a typical Git development workflow. If you are not fami
     ```bash
     git push origin <branch-name>
     ```
-5. Open a pull request from your forked repository to the main Tarian Detector repository.
+5. Open a pull request from your forked repository to the `dev` Tarian Detector repository.
 6. Wait for a review from one of the project maintainers. They may suggest some changes or improvements.
 7. Once your pull request has been approved, it will be merged into the main codebase.
 
