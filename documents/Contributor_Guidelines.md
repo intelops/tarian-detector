@@ -6,7 +6,7 @@ Here, we outline the standards for contributing to our project. Please ensure th
 
 ## 📚 Code of Conduct
 
-By participating in this project, you are expected to uphold our [Code of Conduct](./CODE_OF_CONDUCT.md). Please read the full text so that you can understand what actions will and will not be tolerated.
+By participating in this project, you are expected to uphold our [Code of Conduct](/Code_of_Conduct.md). Please read the full text so that you can understand what actions will and will not be tolerated.
 
 ## 🌈 Ways to Contribute
 
@@ -36,7 +36,7 @@ Have you found an issue? Here are some guidelines to help you report it in a way
 
 ## 📚 Documentation
 
-Documentation is a super important, critical part of this open-source project. Docs reside in the `docs/` directory in this repository. If you see a place where the documentation could be improved, please go ahead and do so! We will appreciate your help.
+Documentation is a super important, critical part of this open-source project. Docs reside in the [documents](/documents/) directory in this repository. If you see a place where the documentation could be improved, please go ahead and do so! We will appreciate your help.
 
 ## ❤️ Thank You!
 
