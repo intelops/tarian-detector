@@ -30,6 +30,7 @@ An image or diagram that provides an overview of your project's architecture is 
 ## 📚 Documentation
 
 - [Installation Guide](/documents/Installation_Guide.md)
+- [Use Cases](/documents/Use_Case.md)
 - [Changelog](/CHANGELOG.md)
 - [Release Notes](/RELEASENOTES.md)
 
