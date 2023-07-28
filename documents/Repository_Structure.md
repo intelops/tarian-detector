@@ -14,6 +14,8 @@ Welcome to the Repository Structure Guide for the Tarian Detector project. This 
 ## Repository Structure
 
 ```
+.
+├── architecture-diagram.png
 ├── CHANGELOG.md
 ├── cmd
 │   └── dev-cli
@@ -23,7 +25,9 @@ Welcome to the Repository Structure Guide for the Tarian Detector project. This 
 ├── documents
 │   ├── Contributor_Guidelines.md
 │   ├── Development_Guide.md
-│   └── Installation_Guide.md
+│   ├── File_Contribution _Guide.md
+│   ├── Installation_Guide.md
+│   └── Repository_Structure.md
 ├── go.mod
 ├── go.sum
 ├── headers
@@ -141,10 +145,17 @@ The `cmd` directory contains the executable binaries or the main applications fo
   - `main.go`: The main entry point for the CLI application.
 
 ## Documents Directory
-This directory contains all the necessary documentation for the project.
-- `Contributor_Guidelines.md`: This guide helps contributors understand how they can contribute to the Tarian Detector project.
-- `Development_Guide.md`: This document provides instructions on how to set up a development environment for the Tarian Detector project.
-- `Installation_Guide.md`: This guide provides detailed instructions on how to install and set up the Tarian Detector project.
+The `documents` directory contains the following files:
+
+- `Contributor_Guidelines.md`: This document provides guidelines for anyone who wishes to contribute to the project.
+
+- `Development_Guide.md`: This document provides instructions and guidelines for developing on this project.
+
+- `File_Contribution_Guide.md`: This document provides guidelines on how to contribute files to the project.
+
+- `Installation_Guide.md`: This document provides detailed instructions on how to install and set up the project.
+
+- `Repository_Structure.md`: This document provides an overview of the structure of the repository and describes what each directory and file is used for.
 
 ## Headers Directory
 This directory contains header files used in the Tarian Detector project.
