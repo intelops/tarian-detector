@@ -1,5 +1,5 @@
 # Tarian Detector
-<p align="center"><img src="tarian-logo.png" width="175"></p>
+<p align="center"><img src="./public/images/tarian-logo.png" width="175"></p>
 
 
 [![License](https://img.shields.io/github/license/intelops/tarian-detector)](https://github.com/intelops/tarian-detector/blob/main/LICENSE)
