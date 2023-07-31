@@ -25,12 +25,12 @@ Our mission: create an ecosystem where community members can work together to en
 
 An image or diagram that provides an overview of your project's architecture is coming soon.
 
-![Tarian Architecture Overview](/architecture-diagram.png)
+![Tarian Architecture Overview](/public/images/architecture-diagram.png)
 
 ## 📚 Documentation
 
-- [Installation Guide](/documents/Installation_Guide.md)
-- [Use Cases](/documents/Use_Case.md)
+- [Installation Guide](/public/documentations/Installation_Guide.md)
+- [Use Cases](/public/documentations/Use_Case.md)
 - [Changelog](/CHANGELOG.md)
 - [Release Notes](/RELEASENOTES.md)
 
@@ -39,11 +39,11 @@ An image or diagram that provides an overview of your project's architecture is 
 
 We welcome and appreciate contributions! Here's how you can help:
 
-- [Contributor Guidelines](/documents/Contributor_Guidelines.md)
-- [Development Guide](/documents/Development_Guide.md)
-- [Repository Guide](/documents/Repository_Structure.md)
-- [File Contribution Guide](/documents/File_Contribution%20_Guide.md)
-- [Testing Guide]()
+- [Contributor Guidelines](/public/documentations/Contributor_Guidelines.md)
+- [Development Guide](/public/documentations/Development_Guide.md)
+- [Repository Guide](/public/documentations/Repository_Structure.md)
+- [File Contribution Guide](/public/documentations/File_Contribution%20_Guide.md)
+- [Testing Guide](/public/documentations/)
 - [Join Tarian Slack](https://join.slack.com/t/kube-tarian/shared_invite/zt-118iqu4g6-wopEIyjqD_uy5uXRDChaLA)
 
 
