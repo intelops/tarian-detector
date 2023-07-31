@@ -2,7 +2,7 @@
 
 This file documents all major feature releases and important changes to the `Tarian Detector` project.
 
-**Note:** For a detailed list of changes done to the project, refer to the [CHANGELOG.md](https://github.com/intelops/tarian-detector/blob/main/CHANGELOG.md) file.
+**Note:** For a detailed list of changes done to the project, refer to the [CHANGELOG.md](/CHANGELOG.md) file.
 
 ## [Unreleased]
 
