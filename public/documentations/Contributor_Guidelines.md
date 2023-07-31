@@ -44,7 +44,7 @@ Thank you for your time and for considering contributing to the Tarian Detector 
 
 ## 🔒 Security Disclosure
 
-Security is very important to us. If you have any issue regarding security, please disclose the information responsibly by contacting our team at  [Contact Us](https://intelops.ai/contact/) and not by creating a GitHub issue.
+Security is very important to us. If you have any issue regarding security, please disclose the information responsibly by contacting our team by creating issue using our [Security Form](https://intelops.ai/opensource-security-reporting-form/) and not by creating a GitHub issue.
 
 ## 🏅 Acknowledgements
 
