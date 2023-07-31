@@ -36,7 +36,7 @@ Have you found an issue? Here are some guidelines to help you report it in a way
 
 ## 📚 Documentation
 
-Documentation is a super important, critical part of this open-source project. Docs reside in the [documents](/documents/) directory in this repository. If you see a place where the documentation could be improved, please go ahead and do so! We will appreciate your help.
+Documentation is a super important, critical part of this open-source project. Docs reside in the [documentations](/public/documentations) directory in this repository. If you see a place where the documentation could be improved, please go ahead and do so! We will appreciate your help.
 
 ## ❤️ Thank You!
 

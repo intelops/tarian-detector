@@ -97,7 +97,7 @@ All commits must include a DCO signoff line in the commit message (`Signed-off-b
 
 To automate the signoff process, you can use the `-s` flag when committing:
 ```bash
-git commit -s -m "This is my commit message"
+git commit -s -m "scope:detailed message"
 ```
 This will append the required `Signed-off-by` line to your commit message.
 
@@ -108,7 +108,7 @@ After you've made changes to the codebase, ensure you run the tests to confirm t
 
 Please also add new tests when you add new features or fix bugs.
 
-Follow the [Testing Guide](./Testing_guide.md).
+Follow the [Testing Guide](/public/documentations/testing.md).
 
 ## 👀 Code Reviews
 
