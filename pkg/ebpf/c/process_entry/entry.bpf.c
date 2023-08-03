@@ -96,7 +96,7 @@ int kprobe_execve(struct pt_regs *ctx){
         return 1;
     }
 
-    char *user_comm = (char *)PT_REGS_PARM2_CORE(ctx2);
+    // char *user_comm = (char *)PT_REGS_PARM2_CORE(ctx2);
     
     //command 
     // __u8 *currPtr;
