@@ -14,10 +14,10 @@ struct event_data
 };
 const struct event_data *unused __attribute__((unused));
 
-// Define the BPF map to hold the perf event array.
+// Define the ringbuff map with maximum 1 << 24 entries
 struct
 {
-    __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
+    __uint(type, BPF_MAP_TYPE_RINGBUF);
     __uint(max_entries, 1 << 24);
 } event SEC(".maps");
 
@@ -38,10 +38,14 @@ int kprobe_accept(struct pt_regs *ctx)
      // Read the second argument of __x64_sys_accept and store it in args.
     bpf_probe_read(&args.args[1], sizeof(args.args[1]), &PT_REGS_PARM2(ctx2));
 
-    // Emit the captured arguments as an event using the perf event array.
-    bpf_perf_event_output(ctx, &event, BPF_F_CURRENT_CPU, &args, sizeof(args));
-
-    // Return 0 to continue the execution of the probed function.
+    // Output the event data to the  event array
+    struct event_data *task_info; // Pointer to hold the reserved space in the ring buffer
+    task_info = bpf_ringbuf_reserve(&event, sizeof(struct event_data), 0); // Reserve space in ring buffer for event data
+    if (!task_info) {
+    return 0;
+    }
+    *task_info = args; // Copy the extracted args into the reserved space
+    bpf_ringbuf_submit(task_info, 0); // Submit the event to the ring buffer for userspace to consume
     return 0;
 }
 // License information for the eBPF program.
