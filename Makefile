@@ -5,7 +5,7 @@
 EXECUTABLE=bin
 
 # executable File name
-EXECUTABLE_FILE = dev-cli
+EXECUTABLE_FILE = tarian_detector
 
 # header files path in the project.
 HEADERS_PATH=headers
@@ -89,7 +89,7 @@ ifeq ($(NAME),)
 	@exit 1
 else 
 	@if [ -e "$(shell pwd)/pkg/eBPF/c/BPF/$(NAME)" ]; then \
-		echo "ERROR: module already exists at $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)"; \
+		echo "ERROR: module already exists at $(shell pwd)/pkg/eBPF/c/BPF/$(NAME) and is not has following \n\n$(shell ls ./pkg/eBPF/c/BPF/$(NAME))"; \
 	else \
 		echo "Creating bpf module: $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)"; \
 		mkdir $(shell pwd)/pkg/eBPF/c/BPF/$(NAME); \
