@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"os"
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
@@ -101,7 +100,7 @@ func (o *NetworkBindDetector) Read() (*BindEventData, error) {
 	// Return any error that occurs during reading from the  event reader.
 	if err != nil {
 		// If the  reader is closed, return the error as is.
-		if errors.Is(err, ringbufReader.ErrClosed) {
+		if errors.Is(err, ringbuf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
