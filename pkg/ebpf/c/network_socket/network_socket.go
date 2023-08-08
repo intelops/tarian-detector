@@ -6,11 +6,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"os"
 	"strconv"
 	"strings"
 
-	"github.com/cilium/ebpf"
+	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
 )
 
@@ -102,7 +101,7 @@ func (o *NetworkSocketDetector) Read() (*SocketEventData, error) {
 	// Returns the error if any.
 	if err != nil {
 		// Returns the error if any.
-		if errors.Is(err, ringbufReader.ErrClosed) {
+		if errors.Is(err, ringbuf.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
