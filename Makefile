@@ -80,12 +80,29 @@ lint: fmt vet
 	staticcheck ./...
 
 
-.PHONY: clean file
+.PHONY: clean file module
+
+# recipe to create a bpf module with basic template
+module: 
+ifeq ($(NAME),)
+	@echo "ERROR: Please provide a valid module name. \n\n\tUsage: make $@ NAME=__x64_sys_open\n"
+	@exit 1
+else 
+	@if [ -e "$(shell pwd)/pkg/eBPF/c/BPF/$(NAME)" ]; then \
+		echo "ERROR: module already exists at $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)"; \
+	else \
+		echo "Creating bpf module: $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)"; \
+		mkdir $(shell pwd)/pkg/eBPF/c/BPF/$(NAME); \
+		echo "// SPDX-License-Identifier: Apache-2.0\n// Copyright 2023 Authors of Tarian & the Organization created Tarian\n\n//go:build ignore \n\n#include \"vmlinux.h\"\n#include \"bpf_tracing.h\"\n#include \"bpf_helpers.h\"\n#include \"bpf_core_read.h\"\n\n//data gathered by this program \nstruct event_data {\n\n};\n" > $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
+		echo "// SPDX-License-Identifier: Apache-2.0\n// Copyright 2023 Authors of Tarian & the Organization created Tarian\n\npackage $(NAME)\n//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags \$$BPF_CFLAGS -type event_data -target \$$CURR_ARCH $(NAME) $(NAME).bpf.c -- -I../../../../../headers" > $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).go; \
+	fi
+endif
+
 
 # recipe to create a file with license and copyright details.
 file:
 ifeq ($(FILE_PATH),)
-	@echo "ERROR: Please provide a valid file path using 'make create_file FILE_PATH=/your/file/path/filename.ext'"
+	@echo "ERROR: Please provide a valid file path using 'make $@ FILE_PATH=/your/file/path/filename.ext'"
 	@exit 1
 endif
 	@if [ -e "$(FILE_PATH)" ]; then \
