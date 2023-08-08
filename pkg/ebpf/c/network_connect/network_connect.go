@@ -8,8 +8,8 @@ import (
 	"errors"
 	"os"
 
-	"github.com/cilium/ebpf/link"
-	"github.com/cilium/ebpf/perf"
+	"github.com/cilium/ebpf/"
+	"github.com/cilium/ebpf/ringbuf"
 )
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data connect connect.bpf.c -- -I../../../../headers
@@ -49,7 +49,7 @@ func newConnectEventDataFromEbpf(e connectEventData) *ConnectEventData {
 // NetworkConnectDetector represents the detector for network connect events using eBPF.
 type NetworkConnectDetector struct {
 	ebpfLink   link.Link
-	perfReader *perf.Reader
+	ringbufReader *ringbuf.Reader
 }
 
 // NewNetworkConnectDetector creates a new NetworkConnectDetector instance.
@@ -73,13 +73,14 @@ func (o *NetworkConnectDetector) Start() error {
 	}
 
 	o.ebpfLink = l
-	rd, err := perf.NewReader(bpfObjs.Event, os.Getpagesize())
-	// Return any error that occurs during creating the perf event reader.
+	rd, err := ringbuf.NewReader(bpfObjs.Event)
+
+	// Return any error that occurs during creating the  event reader.
 	if err != nil {
 		return err
 	}
 
-	o.perfReader = rd
+	o.ringbufReader = rd
 	return nil
 }
 
@@ -91,17 +92,17 @@ func (o *NetworkConnectDetector) Close() error {
 		return err
 	}
 
-	return o.perfReader.Close()
+	return o.ringbufReader.Close()
 }
 
 // Read retrieves the ConnectEventData from the eBPF program.
 func (o *NetworkConnectDetector) Read() (*ConnectEventData, error) {
 	var ebpfEvent connectEventData
-	record, err := o.perfReader.Read()
-	// Return any error that occurs during reading from the perf event reader.
+	record, err := o.ringbufReader.Read()
+	// Return any error that occurs during reading from the  event reader.
 	if err != nil {
-		// If the perf reader is closed, return the error as is.
-		if errors.Is(err, perf.ErrClosed) {
+		// If the  reader is closed, return the error as is.
+		if errors.Is(err, ringbufReader.ErrClosed) {
 			return nil, err
 		}
 		return nil, err
