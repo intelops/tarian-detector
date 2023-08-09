@@ -19,7 +19,7 @@ Clone the project repository using your preferred method.
 3. Run the following command to generate and interact with the call graph:
 
 ```sh
-go-callvis -algo=rta -graphviz -nodeshape=plaintext ./cmd/dev-cli/main.go
+go-callvis -algo=rta -graphviz -nodeshape=plaintext ./cmd/tarian_detector/
 ```
 
 ![call graph main package](./main.svg)
