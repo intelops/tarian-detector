@@ -25,6 +25,19 @@ DEPENDENCIES:=golang clang llvm libelf-dev libbpf-dev linux-tools-$(shell uname 
 # package manager
 PKG_MGR=apt-get 
 
+# recipe for listing available commands.
+help:
+	@echo "make build - builds the project"
+	@echo "make run - start the application"
+	@echo "make install - installs the project dependencies"
+	@echo "make uinstall - uinstalls the project dependencies"
+	@echo "make bpf_helpers - generates the header files"
+	@echo "make lint - analyze the project code"
+	@echo "make module NAME=<module-name> - create ebpf module with basic template. A module is a collection of *.c and *.go file together bascally ebpf with kernelspace and userspace programs."
+	@echo "make file FILE_PATH=</your/file/path/filename.ext> - create a file with copyrights and license comments"
+	@echo "make clean - deletes all object files(*.o)"
+	@echo "make help - prints the available commands"
+
 # recipe for running all 'go generate' commands in the project.
 gen: export CURR_ARCH := $(ARCH)
 gen: export BPF_CFLAGS := $(CFLAGS)
@@ -82,7 +95,7 @@ lint: fmt vet
 
 .PHONY: clean file module
 
-# recipe to create a bpf module with basic template
+# recipe to create a bpf module with basic template. A module is a collection of *.c and *.go file together bascally ebpf with kernelspace and userspace programs.
 module: 
 ifeq ($(NAME),)
 	@echo "ERROR: Please provide a valid module name. \n\n\tUsage: make $@ NAME=__x64_sys_open\n"
