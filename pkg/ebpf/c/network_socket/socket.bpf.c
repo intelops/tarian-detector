@@ -10,6 +10,10 @@
 // Define the structure for event data
 struct event_data
 {
+    __u32 pid;
+    __u32 tgid;
+    __u32 uid;
+    __u32 gid;
     __u32 domain;     // Holds the domain of the socket (e.g., AF_INET, AF_INET6)
     __u32 type;       // Holds the type of the socket (e.g., SOCK_STREAM, SOCK_DGRAM)
     int protocol;     // Holds the protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP)
@@ -31,22 +35,30 @@ SEC("kprobe/__x64_sys_socket")  // Attach this BPF program to the `__x64_sys_soc
 */
 int kprobe_socket(struct pt_regs *ctx) // Function definition for the kprobe
 {
-    // Create a struct to store the event data
-    struct event_data args = {};
 
-    // Extract the first two arguments from the pt_regs of the kprobe event
-    struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1(ctx); // Extract the first parameter
-    bpf_probe_read(&args.domain, sizeof(args.domain), &PT_REGS_PARM1(ctx2)); // Read the domain argument
-    bpf_probe_read(&args.type, sizeof(args.type), &PT_REGS_PARM2(ctx2)); // Read the type argument
-    bpf_probe_read(&args.protocol, sizeof(args.protocol), &PT_REGS_PARM3(ctx2)); // Read the protocol argument
-
-    // Output the event data to the perf event array
-    struct event_data *task_info; // Pointer to hold the reserved space in the ring buffer
-    task_info = bpf_ringbuf_reserve(&event, sizeof(struct event_data), 0); // Reserve space in ring buffer for event data
-    if (!task_info) {
+    struct event_data *ed; // Pointer to hold the reserved space in the ring buffer
+    ed = bpf_ringbuf_reserve(&event, sizeof(struct event_data), 0); // Reserve space in ring buffer for event data
+    if (!ed) {
     return 0;
     }
-    *task_info = args; // Copy the extracted args into the reserved space
+    //Process Id and Thread Group Id
+    __u64 pid_tgid = bpf_get_current_pid_tgid();
+    ed->pid = pid_tgid >> 32;
+    ed->tgid = pid_tgid;
+
+    //User Id and Group Id
+    __u64 uid_gid = bpf_get_current_uid_gid();
+    ed->uid = uid_gid >> 32;
+    ed->gid = uid_gid;
+
+
+    // Extract the first two arguments from the pt_regs of the kprobe event
+    struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx); // Extract the first parameter
+
+    ed->domain=(int)PT_REGS_PARM1_CORE(ctx2);// Read the domain argument
+    ed->type =(int)PT_REGS_PARM2_CORE(ctx2); // Read the type argument
+    ed->protocol=(int)PT_REGS_PARM3_CORE(ctx2);// Read the protocol argument
+
     bpf_ringbuf_submit(task_info, 0); // Submit the event to the ring buffer for userspace to consume
     return 0;
 }
