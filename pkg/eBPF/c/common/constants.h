@@ -1,0 +1,7 @@
+#ifndef __COMMON_CONSTANTS_H
+#define __COMMON_CONSTANTS_H
+
+#define MAX_LOOP 256
+#define MAX_STRING_SIZE 4096
+
+#endif
