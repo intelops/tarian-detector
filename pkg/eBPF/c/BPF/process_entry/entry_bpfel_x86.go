@@ -20,7 +20,9 @@ type entryEventData struct {
 	Gid            uint32
 	Comm           [16]uint8
 	Cwd            [32]uint8
-	BinaryFilepath [256]uint8
+	BinaryFilepath [4096]uint8
+	UserComm       [256][4096]uint8
+	EnvVars        [256][4096]uint8
 }
 
 // loadEntry returns the embedded CollectionSpec for entry.

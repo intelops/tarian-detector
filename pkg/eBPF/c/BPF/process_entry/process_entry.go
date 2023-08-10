@@ -6,10 +6,12 @@ package process_entry
 import (
 	"fmt"
 
+	"github.com/cilium/ebpf/link"
 	"github.com/intelops/tarian-detector/pkg/inspector/ebpf_manager"
+	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH entry entry.bpf.c -- -I../../../../../headers
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH entry entry.bpf.c -- -I../../../../../headers -I../../
 
 type ProcessEntryEbpf struct{}
 
@@ -17,6 +19,7 @@ func NewProcessEntryEbpf() *ProcessEntryEbpf {
 	return &ProcessEntryEbpf{}
 }
 
+// Tells how to create a ebpf program
 func (pe *ProcessEntryEbpf) NewEbpf() (ebpf_manager.Program, error) {
 	var ep ebpf_manager.Program
 	ep.Name = "__x64_sys_execve"
@@ -31,13 +34,14 @@ func (pe *ProcessEntryEbpf) NewEbpf() (ebpf_manager.Program, error) {
 	ep.Hook = ebpf_manager.Hook{
 		Type: ebpf_manager.Kprobe,
 		Name: "__x64_sys_execve",
-		Opts: nil,
+		Opts: &link.KprobeOptions{}, //can be nil
 	}
 	ep.Data = &entryEventData{}
 
 	return ep, nil
 }
 
+// Tells how to parse the information received from the ebpf program
 func (pe *ProcessEntryEbpf) DataParser(data any) (map[string]any, error) {
 	event_data, ok := data.(*entryEventData)
 	if !ok {
@@ -50,9 +54,11 @@ func (pe *ProcessEntryEbpf) DataParser(data any) (map[string]any, error) {
 	res_data["thread_group_id"] = event_data.Tgid
 	res_data["user_id"] = event_data.Uid
 	res_data["group_id"] = event_data.Gid
-	res_data["command"] = fmt.Sprintf("%s", event_data.Comm[:])
-	res_data["current_working_directory"] = fmt.Sprintf("%s", event_data.Cwd[:])
-	res_data["binary_file_path"] = fmt.Sprintf("%s", event_data.BinaryFilepath[:])
+	res_data["command"] = utils.Uint8toString(event_data.Comm[:])
+	res_data["current_working_directory"] = utils.Uint8toString(event_data.Cwd[:])
+	res_data["binary_file_path"] = utils.Uint8toString(event_data.BinaryFilepath[:])
+	res_data["user_command"] = utils.Uint8ArrtoString(event_data.UserComm)
+	res_data["environment_variables"] = utils.Uint8ArrtoStringArr(event_data.EnvVars)
 
 	return res_data, nil
 }
