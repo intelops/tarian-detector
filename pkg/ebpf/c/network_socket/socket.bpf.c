@@ -16,7 +16,7 @@ struct event_data
     __u32 gid;
     __u32 domain;     // Holds the domain of the socket (e.g., AF_INET, AF_INET6)
     __u32 type;       // Holds the type of the socket (e.g., SOCK_STREAM, SOCK_DGRAM)
-    int protocol;     // Holds the protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP)
+    __u32 protocol;     // Holds the protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP)
 };
 const struct event_data *unused __attribute__((unused));
 
@@ -59,7 +59,7 @@ int kprobe_socket(struct pt_regs *ctx) // Function definition for the kprobe
     ed->type =(int)PT_REGS_PARM2_CORE(ctx2); // Read the type argument
     ed->protocol=(int)PT_REGS_PARM3_CORE(ctx2);// Read the protocol argument
 
-    bpf_ringbuf_submit(task_info, 0); // Submit the event to the ring buffer for userspace to consume
+    bpf_ringbuf_submit(ed, 0); // Submit the event to the ring buffer for userspace to consume
     return 0;
 }
 
