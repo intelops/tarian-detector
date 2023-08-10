@@ -31,17 +31,25 @@ func getEbpfObject() (*socketObjects, error) {
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper JSON.
 type SocketEventData struct {
+	Pid      uint32
+	Tgid     uint32
+	Uid      uint32
+	Gid      uint32
 	Domain   uint32
 	Type     uint32
-	Protocol int32
+	Protocol uint32
 }
 
 // newSocketEventDataFromEbpf creates a new SocketEventData from an EventBPF event. This is used to implement event propagation.
 func newSocketEventDataFromEbpf(e socketEventData) *SocketEventData {
 	evt := &SocketEventData{
-		Domain:   e.Domain,
-		Type:     e.Type,
-		Protocol: e.Protocol,
+		Pid:   		e.Pid,
+		Tgid:   	e.Tgid,
+		Uid:   		e.Uid,
+		Gid:   		e.Gid,
+		Domain:   	e.Domain,
+		Type:     	e.Type,
+		Protocol: 	e.Protocol,
 	}
 	return evt
 }
