@@ -9,7 +9,10 @@ import (
 	"github.com/intelops/tarian-detector/pkg/inspector/ebpf_manager"
 )
 
+// attaches the ebpf programs to kernel and returns the refrences of maps and link.
 func getEbpfPrograms() ([]detector.EventDetector, error) {
+
+	//holds reference to all ebpf programs
 	var ebpf_programs = []ebpf_manager.EbpfProgram{
 		process_entry.NewProcessEntryEbpf(),
 	}
