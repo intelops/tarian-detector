@@ -132,6 +132,13 @@ func printProcessExitEventData(event process_exit.ExitEventData) {
 
 func printProcessSocketEventData(event *network_socket.SocketEventData) {
 	fmt.Println("#  network_socket.SocketEventData:")
+	fmt.Printf("Pid: %d\n", event.Pid)
+	fmt.Printf("Tgid: %d\n", event.Tgid)
+	fmt.Printf("Uid: %d\n", event.Uid)
+	fmt.Printf("Gid: %d\n", event.Gid)
+	fmt.Printf("Domain: %s\n", network_socket.Domain(event.Domain))
+	fmt.Printf("Type : %s\n", network_socket.Type(event.Type))
+	fmt.Printf("Protocol: %s\n", network_socket.Protocol(event.Protocol))
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
