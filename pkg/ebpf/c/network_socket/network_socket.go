@@ -238,7 +238,7 @@ func Type(st uint32) string {
 }
 
 // protocols contains the mapping of protocol values to their names.
-var protocols = map[int32]string{
+var protocols = map[uint32]string{
 	1:  "ICMP",
 	6:  "TCP",
 	17: "UDP",
@@ -250,7 +250,7 @@ var protocols = map[int32]string{
 // @param proto - The protocol to look up.
 // 
 // @return The name of the protocol. 
-func Protocol(proto int32) string {
+func Protocol(proto uint32) string {
 	var res string
 
 	// get the protocol name or return the protocol name
