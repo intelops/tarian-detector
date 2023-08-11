@@ -57,7 +57,6 @@ type ConnectEventData struct {
 // newConnectEventDataFromEbpf creates a new ConnectEventData instance from the given eBPF data.
 func newConnectEventDataFromEbpf(e connectEventData) *ConnectEventData {
 	evt := &ConnectEventData{
-		Args: [3]uint64{
 			Pid:       e.Pid,
 			Tgid:      e.Tgid,
 			Uid:       e.Uid,
@@ -69,7 +68,6 @@ func newConnectEventDataFromEbpf(e connectEventData) *ConnectEventData {
 			V4Addr:    e.V4Addr,
 			V6Addr:    e.V6Addr,
 			UnixAddr:  e.UnixAddr,
-		},
 	}
 	return evt
 }
