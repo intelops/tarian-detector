@@ -145,7 +145,17 @@ func printProcessSocketEventData(event *network_socket.SocketEventData) {
 }
 
 func printNetworkConnectEventData(event *network_connect.ConnectEventData) {
+	addressFamily, ipAddr , portStr := event.InterpretFamilyAndIP()
 	fmt.Println("#  network_connect.ConnectEventData:")
+	fmt.Printf("Pid: %d\n", event.Pid)
+	fmt.Printf("Tgid: %d\n", event.Tgid)
+	fmt.Printf("Uid: %d\n", event.Uid)
+	fmt.Printf("Gid: %d\n", event.Gid)
+	fmt.Printf("Fd: %d\n", event.Fd)
+	fmt.Printf("Address Family: %s\n",addressFamily)
+	fmt.Printf("IPAddress: %s\n", ipAddr)
+	fmt.Printf("Port: %d\n", portStr)
+	fmt.Printf("Address Length: %d\n", event.Addrlen)
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
