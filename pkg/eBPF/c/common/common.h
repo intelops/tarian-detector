@@ -27,6 +27,7 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define BPF_READ(__from_ptr__, __to_ptr__)                                     \
   bpf_probe_read(__to_ptr__, sizeof(typeof(*__to_ptr__)), __from_ptr__)
 
+// #define BPF_CORE_READ()
 #define BPF_GET_COMM(__var__) bpf_get_current_comm(&__var__, sizeof(__var__))
 
 // read array of strings
@@ -85,11 +86,11 @@ static __always_inline int get_cwd(__u8 (*ptr)[32]) {
   struct fs_struct *fs;
   struct dentry *dentry;
 
-  BPF_READ(&task->fs, &fs);
+  fs = BPF_CORE_READ(task, fs);
   if (fs == NULL)
     return -1;
 
-  BPF_READ(&fs->pwd.dentry, &dentry);
+  dentry = BPF_CORE_READ(fs, pwd.dentry);
   if (dentry == NULL)
     return -1;
 
