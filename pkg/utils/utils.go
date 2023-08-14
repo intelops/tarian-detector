@@ -3,7 +3,10 @@
 
 package utils
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 // converts [256][4096]uint8 to string.
 func Uint8ArrtoString(arr [256][4096]uint8) string {
@@ -43,6 +46,16 @@ func Uint8ArrtoStringArr(arr [256][4096]uint8) []string {
 // converts []uint8 to string
 func Uint8toString(arr []uint8) string {
 	return fmt.Sprintf("%s", removeNullBytes(arr)[:])
+}
+
+// converts time in nanoseconds to readable time format
+func NanoSecToTimeFormat(t uint64) string {
+	return time.Unix(0, int64(time.Duration(t)*time.Nanosecond)).String()
+}
+
+// converts time in miliseconds to readable time format
+func MiliSecToTimeFormat(t uint64) string {
+	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
 }
 
 // removes null bytes from []uint8.
