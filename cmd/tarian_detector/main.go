@@ -16,13 +16,13 @@ func main() {
 	eventsDetector := detector.NewEventsDetector()
 
 	// Loads the ebpf programs
-	bpfPrograms, err := getEbpfPrograms()
+	bpfDetectors, err := getEbpfDetectors()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Add ebpf programs to detectors
-	eventsDetector.Add(bpfPrograms)
+	eventsDetector.Add(bpfDetectors)
 
 	// Start and defer Close
 	err = eventsDetector.Start()
@@ -31,7 +31,7 @@ func main() {
 	}
 	defer eventsDetector.Close()
 
-	fmt.Print("Running detectors...\n\n")
+	fmt.Printf("%d detectors running...\n\n", eventsDetector.Count())
 
 	// Loop read events
 	go func() {
