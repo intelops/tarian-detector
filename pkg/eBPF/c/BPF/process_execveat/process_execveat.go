@@ -91,8 +91,8 @@ func (pe *ProcessExecveat) DataParser(data any) (map[string]any, error) {
 
 		res_data["file_descriptor"] = event_data.Fd
 		res_data["binary_file_path"] = utils.Uint8toString(event_data.BinaryFilepath[:])
-		res_data["user_command"] = utils.Uint8ArrtoString(event_data.UserComm)
-		res_data["environment_variables"] = utils.Uint8ArrtoStringArr(event_data.EnvVars)
+		res_data["user_command"] = utils.Uint8ArrtoString(event_data.UserComm[:])
+		res_data["environment_variables"] = utils.Uint8ArrtoStringArr(event_data.EnvVars[:])
 		res_data["flags"] = event_data.Flags
 
 	case 1:
