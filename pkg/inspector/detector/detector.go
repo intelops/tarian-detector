@@ -71,3 +71,7 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 
 	return r.eventData, r.err
 }
+
+func (t *EventsDetector) Count() int {
+	return len(t.detectors)
+}
