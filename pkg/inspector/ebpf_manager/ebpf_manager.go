@@ -16,7 +16,7 @@ import (
 )
 
 type EbpfProgram interface {
-	NewEbpf() (Program, error)              // tells how create a ebpf program.
+	NewEbpf() (EbpfModule, error)           // tells how create a ebpf program.
 	DataParser(any) (map[string]any, error) // tells how data received from ebpf program should be parsed
 }
 
@@ -39,17 +39,21 @@ type Hook struct {
 }
 
 type Program struct {
-	Name    string
-	Hook    Hook
-	Program *ebpf.Program
-	Map     *ebpf.Map
-	Data    any
+	Id           string
+	Hook         Hook
+	Program      *ebpf.Program
+	ShouldAttach bool
+}
+type EbpfModule struct {
+	Programs []Program
+	Map      *ebpf.Map
+	Data     any
 }
 
 type EbpfHandler struct {
 	dataParser func(any) (map[string]any, error)
 	mapReader  *ringbuf.Reader
-	ebpfLink   link.Link
+	ebpfLinks  []link.Link
 	dataType   any
 }
 
@@ -59,7 +63,7 @@ type EbpfPrograms struct {
 }
 
 // Creates new instance of type *EbpfPrograms
-func NewEbpfProgram() *EbpfPrograms {
+func NewEbpfPrograms() *EbpfPrograms {
 	return &EbpfPrograms{
 		ebpf_programs:   make([]EbpfProgram, 0),
 		event_detectors: make([]detector.EventDetector, 0),
@@ -67,141 +71,158 @@ func NewEbpfProgram() *EbpfPrograms {
 }
 
 // add ebpf program to EbpfPrograms
-func (e *EbpfPrograms) Add(program EbpfProgram) {
-	e.ebpf_programs = append(e.ebpf_programs, program)
+func (eps *EbpfPrograms) Add(module EbpfProgram) {
+	eps.ebpf_programs = append(eps.ebpf_programs, module)
 }
 
 // remove memory lock and attaches all the ebpf programs to kernel and
 // creates map and returns the references to maps and hooks in the form of detector.
-func (e *EbpfPrograms) LoadPrograms() ([]detector.EventDetector, error) {
+func (eps *EbpfPrograms) LoadPrograms() ([]detector.EventDetector, error) {
 	err := rlimit.RemoveMemlock()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, ebpf_program := range e.ebpf_programs {
-		ep, err := ebpf_program.NewEbpf()
+	for _, ebpf_program := range eps.ebpf_programs {
+		em, err := ebpf_program.NewEbpf()
 		if err != nil {
 			return nil, err
 		}
 
-		eh, err := ep.attach()
+		eh, err := em.attach()
 		if err != nil {
 			return nil, err
 		}
-
 		eh.dataParser = ebpf_program.DataParser
+
+		if len(eh.ebpfLinks) <= 0 {
+			continue
+		}
 
 		event_detector := detector.EventDetector{}
 		event_detector.Start = eh.read
 		event_detector.Close = eh.close
 
-		e.event_detectors = append(e.event_detectors, event_detector)
+		eps.event_detectors = append(eps.event_detectors, event_detector)
 	}
 
-	return e.event_detectors, nil
+	return eps.event_detectors, nil
 }
 
 // attaches ebpf program to kernel and returns reference to it.
-func (ep *Program) attachHook() (link.Link, error) {
+func (p *Program) attachHook() (link.Link, error) {
 	var hook_link link.Link
 	var err error
 
-	switch ep.Hook.Type {
+	switch p.Hook.Type {
 	case Tracepoint:
 		var opts *link.TracepointOptions
-		if ep.Hook.Opts != nil {
-			opts = ep.Hook.Opts.(*link.TracepointOptions)
+		if p.Hook.Opts != nil {
+			opts = p.Hook.Opts.(*link.TracepointOptions)
 		} else {
 			opts = nil
 		}
 
-		hook_link, err = link.Tracepoint(ep.Hook.Group, ep.Hook.Name, ep.Program, opts)
+		hook_link, err = link.Tracepoint(p.Hook.Group, p.Hook.Name, p.Program, opts)
 	case RawTracepoint:
 		var opts link.RawTracepointOptions
-		if ep.Hook.Opts != nil {
-			opts = ep.Hook.Opts.(link.RawTracepointOptions)
+		if p.Hook.Opts != nil {
+			opts = p.Hook.Opts.(link.RawTracepointOptions)
 		} else {
 			return nil, fmt.Errorf("opts cannot be nil for Hook.Type: RawTracepoint")
 		}
+
 		hook_link, err = link.AttachRawTracepoint(opts)
 	case Kprobe:
 		var opts *link.KprobeOptions
-		if ep.Hook.Opts != nil {
-			opts = ep.Hook.Opts.(*link.KprobeOptions)
+		if p.Hook.Opts != nil {
+			opts = p.Hook.Opts.(*link.KprobeOptions)
 		} else {
 			opts = nil
 		}
-		hook_link, err = link.Kprobe(ep.Hook.Name, ep.Program, opts)
+
+		hook_link, err = link.Kprobe(p.Hook.Name, p.Program, opts)
 	case Kretprobe:
 		var opts *link.KprobeOptions
-		if ep.Hook.Opts != nil {
-			opts = ep.Hook.Opts.(*link.KprobeOptions)
+		if p.Hook.Opts != nil {
+			opts = p.Hook.Opts.(*link.KprobeOptions)
 		} else {
 			opts = nil
 		}
-		hook_link, err = link.Kretprobe(ep.Hook.Name, ep.Program, opts)
+
+		hook_link, err = link.Kretprobe(p.Hook.Name, p.Program, opts)
 	case Cgroup:
 		var opts link.CgroupOptions
-		if ep.Hook.Opts != nil {
-			opts = ep.Hook.Opts.(link.CgroupOptions)
+		if p.Hook.Opts != nil {
+			opts = p.Hook.Opts.(link.CgroupOptions)
 		} else {
 			return nil, fmt.Errorf("opts cannot be nil for Hook.Type: Cgroup")
 		}
+
 		hook_link, err = link.AttachCgroup(opts)
 	default:
-		return nil, fmt.Errorf("invalid hook type value: %v", ep.Hook.Type)
+		return nil, fmt.Errorf("invalid hook type value: %v", p.Hook.Type)
 	}
 
 	return hook_link, err
 }
 
 // instantiate the map
-func (ep *Program) attachMap() (*ringbuf.Reader, error) {
-	return ringbuf.NewReader(ep.Map)
+func (em *EbpfModule) attachMap() (*ringbuf.Reader, error) {
+	return ringbuf.NewReader(em.Map)
 }
 
 // attaches the ebpf program to kernel
-func (ep *Program) attach() (*EbpfHandler, error) {
+func (em *EbpfModule) attach() (*EbpfHandler, error) {
 	var err error
 	eh := EbpfHandler{}
 
-	eh.ebpfLink, err = ep.attachHook()
+	for _, program := range em.Programs {
+		if !program.ShouldAttach {
+			continue
+		}
+
+		temp_link, err := program.attachHook()
+		if err != nil {
+			return nil, err
+		}
+
+		eh.ebpfLinks = append(eh.ebpfLinks, temp_link)
+	}
+
+	eh.mapReader, err = em.attachMap()
 	if err != nil {
 		return nil, err
 	}
 
-	eh.mapReader, err = ep.attachMap()
-	if err != nil {
-		return nil, err
-	}
-
-	eh.dataType = ep.Data
+	eh.dataType = em.Data
 
 	return &eh, nil
 }
 
 // reads the information from maps.
-func (ep *EbpfHandler) read() (map[string]any, error) {
-	record, err := ep.mapReader.Read()
+func (eh *EbpfHandler) read() (map[string]any, error) {
+	record, err := eh.mapReader.Read()
 	if err != nil {
 		return nil, err
 	}
 
-	err = binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, ep.dataType)
+	err = binary.Read(bytes.NewBuffer(record.RawSample), binary.LittleEndian, eh.dataType)
 	if err != nil {
 		return nil, err
 	}
 
-	return ep.dataParser(ep.dataType)
+	return eh.dataParser(eh.dataType)
 }
 
 // closes the maps and hooks
-func (ep *EbpfHandler) close() error {
-	err := ep.ebpfLink.Close()
-	if err != nil {
-		return err
+func (eh *EbpfHandler) close() error {
+	for _, lnk := range eh.ebpfLinks {
+		err := lnk.Close()
+		if err != nil {
+			return err
+		}
 	}
 
-	return ep.mapReader.Close()
+	return eh.mapReader.Close()
 }
