@@ -37,7 +37,7 @@ func (pe *ProcessExecveat) NewEbpf() (ebpf_manager.EbpfModule, error) {
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
 			Program:      bpfObjs.KprobeExecveatEntry,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_execve_exit",
@@ -47,7 +47,7 @@ func (pe *ProcessExecveat) NewEbpf() (ebpf_manager.EbpfModule, error) {
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
 			Program:      bpfObjs.KretprobeExecveatExit,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 	}
 
