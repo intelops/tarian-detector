@@ -8,5 +8,8 @@
 
 #include "common/common.h"
 #include "common/constants.h"
+#include "common/context.h"
+#include "common/types.h"
+#include "common/task.h"
 
 #endif
