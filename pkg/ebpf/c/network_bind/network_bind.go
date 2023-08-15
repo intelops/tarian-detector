@@ -6,6 +6,11 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
+	"net"
+	"strings"
+	"unsafe"
+
 
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
@@ -14,6 +19,12 @@ import (
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH  -type event_data bind bind.bpf.c -- -I../../../../headers
 
 // getEbpfObject loads the eBPF objects and returns a pointer to the bindObjects structure.
+const (
+    AF_INET  = 2   // Adjust with your actual values
+    AF_INET6 = 10
+    AF_UNIX  = 1
+)
+
 func getEbpfObject() (*bindObjects, error) {
 	var bpfObj bindObjects
 	err := loadBindObjects(&bpfObj, nil)
