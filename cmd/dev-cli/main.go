@@ -163,6 +163,8 @@ func printNetworkConnectEventData(event *network_connect.ConnectEventData) {
 
 func printNetworkListenEventData(event *network_listen.ListenEventData) {
 	fmt.Println("#  network_Listen.ListenEventData:")
+	fmt.Printf("Fd: %d\n", event.Fd)
+	fmt.Printf("Queue: %d\n", event.Backlog)
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
