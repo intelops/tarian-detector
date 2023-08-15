@@ -32,17 +32,23 @@ func getEbpfObject() (*listenObjects, error) {
 // The intention is to use the proper Go string instead of byte arrays from C.
 // It makes it simpler to use and can generate proper json.
 type ListenEventData struct {
-	Args [3]uint64
+	Pid     uint32
+	Tgid    uint32
+	Uid     uint32
+	Gid     uint32
+	Fd      int32
+	Backlog int32
 }
 
 // newListenEventDataFromEbpf creates a new ListenEventData instance from the given eBPF data.
 func newListenEventDataFromEbpf(e listenEventData) *ListenEventData {
 	evt := &ListenEventData{
-		Args: [3]uint64{
-			e.Args[0],
-			e.Args[1],
-			e.Args[2],
-		},
+			Pid :    	e.Pid,
+			Tgid:     	e.Tgid,
+			Uid:      	e.Uid,
+			Gid: 		e.Gid,
+			Fd:  		e.Fd,
+			Backlog:    e.Backlog,
 	}
 	return evt
 }
