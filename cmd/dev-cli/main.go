@@ -185,9 +185,6 @@ func printNetworkBindEventData(event *network_bind.BindEventData) {
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
-	j, _ := json.Marshal(event)
-	fmt.Println(string(j))
-	fmt.Println("")
 }
 
 func printNetworkAcceptEventData(event *network_accept.AcceptEventData) {
