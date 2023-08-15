@@ -171,7 +171,20 @@ func printNetworkListenEventData(event *network_listen.ListenEventData) {
 }
 
 func printNetworkBindEventData(event *network_bind.BindEventData) {
+	addressFamily, ipAddr , portStr := event.InterpretFamilyAndIP()
 	fmt.Println("#  network_bind.BindEventData:")
+	fmt.Printf("Pid: %d\n", event.Pid)
+	fmt.Printf("Tgid: %d\n", event.Tgid)
+	fmt.Printf("Uid: %d\n", event.Uid)
+	fmt.Printf("Gid: %d\n", event.Gid)
+	fmt.Printf("Fd: %d\n", event.Fd)
+	fmt.Printf("AddressFamily: %s\n",addressFamily)
+	fmt.Printf("IPAddress: %s\n", ipAddr)
+	fmt.Printf("Port: %d\n", portStr)
+	fmt.Printf("Address length: %d\n", event.Addrlen)
+	j, _ := json.Marshal(event)
+	fmt.Println(string(j))
+	fmt.Println("")
 	j, _ := json.Marshal(event)
 	fmt.Println(string(j))
 	fmt.Println("")
