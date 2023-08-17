@@ -13,8 +13,7 @@ import (
 )
 
 type execveatEventData struct {
-	Id    int32
-	E_ctx struct {
+	EventContext struct {
 		Ts        uint64
 		StartTime uint64
 		Pid       uint32
@@ -23,17 +22,25 @@ type execveatEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Nodename  [65]uint8
 		Comm      [16]uint8
 		Cwd       [32]uint8
+		NodeInfo  struct {
+			Sysname    [65]uint8
+			Nodename   [65]uint8
+			Release    [65]uint8
+			Version    [65]uint8
+			Machine    [65]uint8
+			Domainname [65]uint8
+		}
 	}
-	_              [3]byte
+	_              [2]byte
+	Id             int32
 	Fd             int32
+	Flags          int32
+	Ret            int32
 	BinaryFilepath [4096]uint8
 	UserComm       [256][4096]uint8
 	EnvVars        [256][4096]uint8
-	Flags          int32
-	Ret            int64
 }
 
 // loadExecveat returns the embedded CollectionSpec for execveat.
