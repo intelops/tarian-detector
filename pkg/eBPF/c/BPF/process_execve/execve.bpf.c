@@ -8,13 +8,13 @@
 // data gathered by this program.
 struct event_data {
   int id;
-  event_context_t e_ctx;
+  event_context_t eventContext;
+
+  int ret;
 
   __u8 binary_filepath[MAX_STRING_SIZE];
   __u8 user_comm[MAX_LOOP][MAX_STRING_SIZE];
   __u8 env_vars[MAX_LOOP][MAX_STRING_SIZE];
-
-  __s64 ret;
 };
 
 // Force emits struct event_data into the elf
@@ -37,7 +37,7 @@ int kprobe_execve_entry(struct pt_regs *ctx) {
   ed->id = 0;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
   struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
 
@@ -76,11 +76,10 @@ int kretprobe_execve_exit(struct pt_regs *ctx) {
   ed->id = 1;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
-  struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
-  ed->ret = PT_REGS_RC_CORE(ctx2);
-  
+  ed->ret = (int)PT_REGS_RC_CORE(ctx);
+
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
 
