@@ -8,13 +8,11 @@
 // data gathered by this program
 struct event_data {
   int id;
-  event_context_t e_ctx;
+  event_context_t eventContext;
 
-  __u32 fd;
-  //   __u8 buf[4096];
-  __u64 count;
-
-  __u64 ret;
+  int fd;
+  long unsigned int count;
+  long int ret;
 };
 
 // Force emits struct event_data into the elf
@@ -37,18 +35,14 @@ int kprobe_read_entry(struct pt_regs *ctx) {
   ed->id = 0;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
   struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
+
+  // file descriptor
   ed->fd = (unsigned int)PT_REGS_PARM1_CORE(ctx2);
 
-  //   __s64 res =
-  //       BPF_READ_STR((char *)PT_REGS_PARM2_CORE(ctx2), &ed->buf);
-  //   if (res < 0) {
-  //     BPF_RINGBUF_DISCARD(ed);
-  //     return -1;
-  //   }
-
+  // count
   ed->count = (long unsigned int)PT_REGS_PARM3_CORE(ctx2);
 
   // pushes the information to ringbuf event mamp
@@ -71,10 +65,10 @@ int kretprobe_read_exit(struct pt_regs *ctx) {
   ed->id = 1;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
-  struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
-  ed->ret = (unsigned long)PT_REGS_RC_CORE(ctx2);
+  // return value - long int
+  ed->ret = (long int)PT_REGS_RC_CORE(ctx);
 
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
