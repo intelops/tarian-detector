@@ -62,25 +62,7 @@ func (fc *FileClose) DataParser(data any) (map[string]any, error) {
 		return nil, fmt.Errorf("type mismatch: expected %T received %T", event_data, data)
 	}
 
-	res_data := make(map[string]any)
-
-	res_data["boot_time"] = utils.NanoSecToTimeFormat(event_data.E_ctx.Ts)
-	res_data["start_time"] = utils.NanoSecToTimeFormat(event_data.E_ctx.StartTime)
-
-	res_data["process_id"] = event_data.E_ctx.Pid
-	res_data["thread_group_id"] = event_data.E_ctx.Tgid
-
-	res_data["parent_process_id"] = event_data.E_ctx.Ppid
-	res_data["group_leader_process_id"] = event_data.E_ctx.Glpid
-
-	res_data["user_id"] = event_data.E_ctx.Uid
-	res_data["group_id"] = event_data.E_ctx.Gid
-
-	res_data["node_name"] = utils.Uint8toString(event_data.E_ctx.Nodename[:])
-
-	res_data["command"] = utils.Uint8toString(event_data.E_ctx.Comm[:])
-
-	res_data["current_working_directory"] = utils.Uint8toString(event_data.E_ctx.Cwd[:])
+	res_data := utils.SetContext(event_data.EventContext)
 
 	// event specific information
 	switch event_data.Id {
