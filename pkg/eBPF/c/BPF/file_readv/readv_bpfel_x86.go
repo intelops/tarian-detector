@@ -13,8 +13,7 @@ import (
 )
 
 type readvEventData struct {
-	Id    int32
-	E_ctx struct {
+	EventContext struct {
 		Ts        uint64
 		StartTime uint64
 		Pid       uint32
@@ -23,14 +22,23 @@ type readvEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Nodename  [65]uint8
 		Comm      [16]uint8
 		Cwd       [32]uint8
+		NodeInfo  struct {
+			Sysname    [65]uint8
+			Nodename   [65]uint8
+			Release    [65]uint8
+			Version    [65]uint8
+			Machine    [65]uint8
+			Domainname [65]uint8
+		}
 	}
-	_    [3]byte
+	_    [2]byte
+	Id   int32
+	_    [4]byte
 	Fd   uint64
 	Vlen uint64
-	Ret  uint64
+	Ret  int64
 }
 
 // loadReadv returns the embedded CollectionSpec for readv.
