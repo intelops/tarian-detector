@@ -13,8 +13,8 @@ import (
 )
 
 type readEventData struct {
-	Id    int32
-	E_ctx struct {
+	Id           int32
+	EventContext struct {
 		Ts        uint64
 		StartTime uint64
 		Pid       uint32
@@ -23,15 +23,21 @@ type readEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Nodename  [65]uint8
 		Comm      [16]uint8
 		Cwd       [32]uint8
+		NodeInfo  struct {
+			Sysname    [65]uint8
+			Nodename   [65]uint8
+			Release    [65]uint8
+			Version    [65]uint8
+			Machine    [65]uint8
+			Domainname [65]uint8
+		}
 	}
-	_     [3]byte
-	Fd    uint32
-	_     [4]byte
+	_     [2]byte
+	Fd    int32
 	Count uint64
-	Ret   uint64
+	Ret   int64
 }
 
 // loadRead returns the embedded CollectionSpec for read.
