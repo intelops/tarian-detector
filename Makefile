@@ -111,10 +111,10 @@ else
 		# c template - start	\
 		echo "// SPDX-License-Identifier: Apache-2.0\n// Copyright 2023 Authors of Tarian & the Organization created Tarian\n\n//go:build ignore\n" > $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
 		echo "#include \"headers.h\"\n" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
-		echo "// data gathered by this program \nstruct event_data {\n\tint id;\n\tevent_context_t e_ctx;\n};\n" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
+		echo "// data gathered by this program \nstruct event_data {\n\tint id;\n\tevent_context_t eventContext;\n};\n" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
 		echo "// Force emits struct event_data into the elf\nconst struct event_data *unused __attribute__((unused));\n" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
 		echo "// ringbuffer map definition\nBPF_RINGBUF_MAP(event);\n" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
-		echo "SEC("")\nint $(NAME)(){\n\tstruct event_data *ed;\n\n\t// allocate space for an event in map.\n\ted = BPF_RINGBUF_RESERVE(event, *ed);\n\tif (!ed) {\n\t\treturn -1;\n\t}\n\n\t// sets the context\n\tset_context(&ed->e_ctx);\n\n\t// pushes the information to ringbuf event mamp\n\tBPF_RINGBUF_SUBMIT(ed);\n\n\treturn 0;\n};" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
+		echo "SEC("")\nint $(NAME)(){\n\tstruct event_data *ed;\n\n\t// allocate space for an event in map.\n\ted = BPF_RINGBUF_RESERVE(event, *ed);\n\tif (!ed) {\n\t\treturn -1;\n\t}\n\n\t// sets the context\n\tset_context(&ed->eventContext);\n\n\t// pushes the information to ringbuf event mamp\n\tBPF_RINGBUF_SUBMIT(ed);\n\n\treturn 0;\n};" >> $(shell pwd)/pkg/eBPF/c/BPF/$(NAME)/$(NAME).bpf.c; \
 		# c template - end	\
 		\
 		# go template - start \
