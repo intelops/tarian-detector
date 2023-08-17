@@ -5,6 +5,9 @@ package main
 
 import (
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_close"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_open"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_openat"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_openat2"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_read"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_readv"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/BPF/file_write"
@@ -26,6 +29,9 @@ func getEbpfDetectors() ([]detector.EventDetector, error) {
 		file_readv.NewReadv(),
 		file_write.NewFileWrite(),
 		file_writev.NewFileWritev(),
+		file_open.NewFileOpen(),
+		file_openat.NewFileOpenat(),
+		file_openat2.NewFileOpenat2(),
 		file_close.NewClose(),
 	}
 
