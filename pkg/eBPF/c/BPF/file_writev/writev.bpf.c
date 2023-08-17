@@ -7,13 +7,12 @@
 
 // data gathered by this program
 struct event_data {
+  event_context_t eventContext;
+
   int id;
-  event_context_t e_ctx;
-
-  __u64 fd;
-  __u64 vlen;
-
-  __u64 ret;
+  unsigned long fd;
+  unsigned long vlen;
+  long int ret;
 };
 
 // Force emits struct event_data into the elf
@@ -36,12 +35,12 @@ int kprobe_writev_entry(struct pt_regs *ctx) {
   ed->id = 0;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
   struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
   ed->fd = (unsigned long)PT_REGS_PARM1_CORE(ctx2);
 
-  ed->vlen = (long unsigned)PT_REGS_PARM3_CORE(ctx2);
+  ed->vlen = (unsigned long)PT_REGS_PARM3_CORE(ctx2);
 
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
@@ -63,10 +62,10 @@ int kretprobe_writev_exit(struct pt_regs *ctx) {
   ed->id = 1;
 
   // sets the context
-  set_context(&ed->e_ctx);
+  set_context(&ed->eventContext);
 
-  struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
-  ed->ret = (long)PT_REGS_RC_CORE(ctx2);
+  //return value - long int
+  ed->ret = (long int)PT_REGS_RC_CORE(ctx);
 
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
