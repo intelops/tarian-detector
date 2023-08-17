@@ -21,4 +21,13 @@ static __always_inline char *get_task_node_name(struct task_struct *task) {
     return BPF_CORE_READ(task, nsproxy, uts_ns, name.nodename);
 };
 
+static __always_inline int get_node_info(node_info_t *ptr) {
+  if (ptr == NULL)
+    return -1;
+
+  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+
+  BPF_CORE_READ_INTO(ptr, task, nsproxy, uts_ns, name);
+  return 0;
+}
 #endif
