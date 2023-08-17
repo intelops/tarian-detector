@@ -13,8 +13,7 @@ import (
 )
 
 type closeEventData struct {
-	Id    int32
-	E_ctx struct {
+	EventContext struct {
 		Ts        uint64
 		StartTime uint64
 		Pid       uint32
@@ -23,14 +22,21 @@ type closeEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Nodename  [65]uint8
 		Comm      [16]uint8
 		Cwd       [32]uint8
+		NodeInfo  struct {
+			Sysname    [65]uint8
+			Nodename   [65]uint8
+			Release    [65]uint8
+			Version    [65]uint8
+			Machine    [65]uint8
+			Domainname [65]uint8
+		}
 	}
-	_   [3]byte
-	Fd  uint32
-	_   [4]byte
-	Ret int64
+	_   [2]byte
+	Id  int32
+	Fd  int32
+	Ret int32
 }
 
 // loadClose returns the embedded CollectionSpec for close.
