@@ -24,6 +24,7 @@ type closeEventData struct {
 		Gid       uint32
 		Comm      [16]uint8
 		Cwd       [32]uint8
+		CgroupId  uint64
 		NodeInfo  struct {
 			Sysname    [65]uint8
 			Nodename   [65]uint8
@@ -31,6 +32,11 @@ type closeEventData struct {
 			Version    [65]uint8
 			Machine    [65]uint8
 			Domainname [65]uint8
+		}
+		MountInfo struct {
+			MountId      int32
+			MountNsId    uint32
+			MountDevname [256]uint8
 		}
 	}
 	_   [2]byte
