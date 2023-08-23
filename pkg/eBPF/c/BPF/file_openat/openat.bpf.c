@@ -3,7 +3,7 @@
 
 //go:build ignore
 
-#include "headers.h"
+#include "includes.h"
 
 // data gathered by this program
 struct event_data {
@@ -38,25 +38,26 @@ int kprobe_openat_entry(struct pt_regs *ctx) {
   ed->id = 0;
 
   // sets the context
-  set_context(&ed->eventContext);
+  init_context(&ed->eventContext);
 
-  struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
+  sys_args_t sys_args;
+  read_sys_args_into(&sys_args, ctx);
 
   // file descriptor
-  ed->fd = (int)PT_REGS_PARM1_CORE(ctx2);
+  ed->fd = (int)sys_args[0];
 
   // filename
-  __s64 res = BPF_READ_STR((char *)PT_REGS_PARM2_CORE(ctx2), &ed->filename);
+  __s64 res = BPF_READ_STR((char *)sys_args[1], &ed->filename);
   if (res < 0) {
     BPF_RINGBUF_DISCARD(ed);
     return -1;
   }
 
   // flags
-  ed->flags = (int)PT_REGS_PARM3_CORE(ctx2);
+  ed->flags = (int)sys_args[2];
 
   // mode
-  ed->mode = (short unsigned int)PT_REGS_PARM4_CORE(ctx2);
+  ed->mode = (short unsigned int)sys_args[3];
 
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
@@ -78,7 +79,7 @@ int kretprobe_openat_exit(struct pt_regs *ctx) {
   ed->id = 1;
 
   // sets the context
-  set_context(&ed->eventContext);
+  init_context(&ed->eventContext);
 
   // return value - int
   ed->ret = (int)PT_REGS_RC_CORE(ctx);
