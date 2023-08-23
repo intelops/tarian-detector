@@ -1,7 +1,7 @@
-#ifndef __COMMON_COMMON_H__
-#define __COMMON_COMMON_H__
+#ifndef __UTILS_C_SHARED_H__
+#define __UTILS_C_SHARED_H__
 
-#include "constants.h"
+#include "index.h"
 
 // License Declaration
 char LICENSE[] SEC("license") = "Dual MIT/GPL";
@@ -27,26 +27,26 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define BPF_READ(__from_ptr__, __to_ptr__)                                     \
   bpf_probe_read(__to_ptr__, sizeof(typeof(*__to_ptr__)), __from_ptr__)
 
-// #define BPF_CORE_READ()
+// bpf_get_comm
 #define BPF_GET_COMM(__var__) bpf_get_current_comm(&__var__, sizeof(__var__))
 
 // read array of strings
 static __always_inline int
-read_str_arr_to_ptr(const char *const *from_ptr,
-                    __u8 (*to_ptr)[MAX_STRING_SIZE]) {
-  if (to_ptr == NULL || from_ptr == NULL)
+read_str_arr_to_ptr(const char *const *from,
+                    __u8 (*to)[MAX_STRING_SIZE]) {
+  if (to == NULL || from == NULL)
     return -1;
 
   int i = 0;
   __u8 *curr_ptr;
 
   while (i < MAX_LOOP) {
-    BPF_READ(&from_ptr[i], &curr_ptr);
+    BPF_READ(&from[i], &curr_ptr);
     if (curr_ptr == NULL) {
       break;
     }
 
-    BPF_READ_STR(curr_ptr, &to_ptr[i]);
+    BPF_READ_STR(curr_ptr, &to[i]);
     i++;
   };
 
@@ -78,8 +78,8 @@ static __always_inline int get_uid_gid(void *ptr_uid, void *ptr_gid) {
 }
 
 // reads cwd to the pointer
-static __always_inline int get_cwd(__u8 (*ptr)[32]) {
-  if (ptr == NULL)
+static __always_inline int get_cwd(__u8 (*to_ptr_arr)[32]) {
+  if (to_ptr_arr == NULL)
     return -1;
 
   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
@@ -94,7 +94,7 @@ static __always_inline int get_cwd(__u8 (*ptr)[32]) {
   if (dentry == NULL)
     return -1;
 
-  return BPF_READ_STR(&dentry->d_iname, ptr);
+  return BPF_READ_STR(&dentry->d_iname, to_ptr_arr);
 }
 
 #endif
