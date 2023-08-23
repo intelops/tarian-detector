@@ -3,7 +3,7 @@
 
 //go:build ignore
 
-#include "headers.h"
+#include "includes.h"
 
 // data gathered by this program
 struct event_data {
@@ -35,15 +35,16 @@ int kprobe_read_entry(struct pt_regs *ctx) {
   ed->id = 0;
 
   // sets the context
-  set_context(&ed->eventContext);
+  init_context(&ed->eventContext);
 
-  struct pt_regs *ctx2 = (struct pt_regs *)PT_REGS_PARM1_CORE(ctx);
+  sys_args_t sys_args;
+  read_sys_args_into(&sys_args, ctx);
 
   // file descriptor
-  ed->fd = (unsigned int)PT_REGS_PARM1_CORE(ctx2);
+  ed->fd = (unsigned int)sys_args[0];
 
   // count
-  ed->count = (long unsigned int)PT_REGS_PARM3_CORE(ctx2);
+  ed->count = (long unsigned int)sys_args[2];
 
   // pushes the information to ringbuf event mamp
   BPF_RINGBUF_SUBMIT(ed);
@@ -65,7 +66,7 @@ int kretprobe_read_exit(struct pt_regs *ctx) {
   ed->id = 1;
 
   // sets the context
-  set_context(&ed->eventContext);
+  init_context(&ed->eventContext);
 
   // return value - long int
   ed->ret = (long int)PT_REGS_RC_CORE(ctx);
