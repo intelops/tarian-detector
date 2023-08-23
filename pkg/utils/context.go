@@ -14,6 +14,7 @@ type EventContext struct {
 	Gid       uint32
 	Comm      [16]uint8
 	Cwd       [32]uint8
+	CgroupId  uint64
 	NodeInfo  struct {
 		Sysname    [65]uint8
 		Nodename   [65]uint8
@@ -22,15 +23,26 @@ type EventContext struct {
 		Machine    [65]uint8
 		Domainname [65]uint8
 	}
+	MountInfo struct {
+		MountId      int32
+		MountNsId    uint32
+		MountDevname [256]uint8
+	}
 }
 
-type NodeInfo struct {
+type Node struct {
 	Sysname    string
 	Nodename   string
 	Release    string
 	Version    string
 	Machine    string
 	Domainname string
+}
+
+type Mount struct {
+	MountId          int32
+	MountNameSpaceId uint32
+	MountDeviceName  string
 }
 
 func SetContext(ec EventContext) map[string]any {
@@ -52,13 +64,21 @@ func SetContext(ec EventContext) map[string]any {
 
 	res_data["current_working_directory"] = Uint8toString(ec.Cwd[:])
 
-	res_data["node_info"] = NodeInfo{
+	res_data["cgroup_id"] = ec.CgroupId
+
+	res_data["node"] = Node{
 		Sysname:    Uint8toString(ec.NodeInfo.Sysname[:]),
 		Nodename:   Uint8toString(ec.NodeInfo.Nodename[:]),
 		Release:    Uint8toString(ec.NodeInfo.Release[:]),
 		Version:    Uint8toString(ec.NodeInfo.Version[:]),
 		Machine:    Uint8toString(ec.NodeInfo.Machine[:]),
 		Domainname: Uint8toString(ec.NodeInfo.Domainname[:]),
+	}
+
+	res_data["mount"] = Mount{
+		MountId:          ec.MountInfo.MountId,
+		MountNameSpaceId: ec.MountInfo.MountNsId,
+		MountDeviceName:  Uint8toString(ec.MountInfo.MountDevname[:]),
 	}
 
 	return res_data
