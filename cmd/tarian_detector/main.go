@@ -8,21 +8,27 @@ import (
 	"log"
 	"time"
 
-	"github.com/intelops/tarian-detector/pkg/inspector/detector"
+	"github.com/intelops/tarian-detector/pkg/detector"
 )
 
 func main() {
-	// Instantiate event detectors
-	eventsDetector := detector.NewEventsDetector()
-
 	// Loads the ebpf programs
-	bpfDetectors, err := getEbpfDetectors()
+	bpfLinker, err := LoadPrograms(BpfModules)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Converts bpf handlers to detectors
+	eventDetectors, err := GetDetectors(bpfLinker.ProbeHandlers)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Instantiate event detectors
+	eventsDetector := detector.NewEventsDetector()
+
 	// Add ebpf programs to detectors
-	eventsDetector.Add(bpfDetectors)
+	eventsDetector.Add(eventDetectors)
 
 	// Start and defer Close
 	err = eventsDetector.Start()
@@ -31,7 +37,7 @@ func main() {
 	}
 	defer eventsDetector.Close()
 
-	fmt.Printf("%d detectors running...\n\n", eventsDetector.Count())
+	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
 
 	// Loop read events
 	go func() {
@@ -52,9 +58,11 @@ func main() {
 }
 
 func printEvent(data map[string]any) {
-	fmt.Println("======================")
+	div := "======================"
+	msg := ""
 	for ky, val := range data {
-		fmt.Printf("%s: %v\n", ky, val)
+		msg += fmt.Sprintf("%s: %v\n", ky, val)
 	}
-	fmt.Println("======================")
+
+	log.Printf("%s\n%s%s\n", div, msg, div)
 }
