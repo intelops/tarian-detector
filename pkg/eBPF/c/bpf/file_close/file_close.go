@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/cilium/ebpf/link"
-	"github.com/intelops/tarian-detector/pkg/inspector/ebpf_manager"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
@@ -15,48 +15,49 @@ import (
 
 type FileClose struct{}
 
-func NewClose() *FileClose {
+func NewFileClose() *FileClose {
 	return &FileClose{}
 }
 
-func (fc *FileClose) NewEbpf() (ebpf_manager.EbpfModule, error) {
-	var em ebpf_manager.EbpfModule
+func (fc *FileClose) NewModule() (bpf.BpfModule, error) {
+	bm := bpf.NewBpfModule()
 
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
-		return em, err
+		return bm, err
 	}
 
-	em.Programs = []ebpf_manager.Program{
+	bm.Programs = []bpf.BpfProgram{
 		{
 			Id: "__x64_sys_close_entry",
-			Hook: ebpf_manager.Hook{
-				Type: ebpf_manager.Kprobe,
+			Hook: bpf.Hook{
+				Type: bpf.Kprobe,
 				Name: "__x64_sys_close",
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
-			Program:      bpfObjs.KprobeCloseEntry,
+			Name:         bpfObjs.KprobeCloseEntry,
 			ShouldAttach: true,
 		},
 		{
 			Id: "__x64_sys_close_exit",
-			Hook: ebpf_manager.Hook{
-				Type: ebpf_manager.Kretprobe,
+			Hook: bpf.Hook{
+				Type: bpf.Kretprobe,
 				Name: "__x64_sys_close",
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
-			Program:      bpfObjs.KretprobeCloseExit,
+			Name:         bpfObjs.KretprobeCloseExit,
 			ShouldAttach: true,
 		},
 	}
 
-	em.Data = &closeEventData{}
-	em.Map = bpfObjs.Event
+	bm.Data = &closeEventData{}
+	bm.Map = bpfObjs.Event
+	bm.ParseData = parseData
 
-	return em, nil
+	return bm, nil
 }
 
-func (fc *FileClose) DataParser(data any) (map[string]any, error) {
+func parseData(data any) (map[string]any, error) {
 	event_data, ok := data.(*closeEventData)
 	if !ok {
 		return nil, fmt.Errorf("type mismatch: expected %T received %T", event_data, data)
@@ -67,12 +68,12 @@ func (fc *FileClose) DataParser(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "sys_close_entry"
+		res_data["id"] = "__x64_sys_close_entry"
 
 		res_data["file_descriptor"] = event_data.Fd
 
 	case 1:
-		res_data["id"] = "sys_close_exit"
+		res_data["id"] = "__x64_sys_close_exit"
 
 		res_data["return_value"] = event_data.Ret
 
