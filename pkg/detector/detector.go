@@ -4,13 +4,12 @@
 package detector
 
 type EventDetector interface {
-	Start() error
+	Read() (map[string]any, error)
 	Close() error
-	ReadAsInterface() (any, error)
 }
 
 type detectorReadReturn struct {
-	eventData any
+	eventData map[string]any
 	err       error
 }
 
@@ -30,17 +29,12 @@ func NewEventsDetector() *EventsDetector {
 	}
 }
 
-func (t *EventsDetector) Add(detector EventDetector) {
-	t.detectors = append(t.detectors, detector)
+func (t *EventsDetector) Add(detector []EventDetector) {
+	t.detectors = append(t.detectors, detector...)
 }
 
 func (t *EventsDetector) Start() error {
 	for _, detector := range t.detectors {
-		err := detector.Start()
-		if err != nil {
-			return err
-		}
-
 		d := detector
 		go func() {
 			for {
@@ -48,7 +42,7 @@ func (t *EventsDetector) Start() error {
 					return
 				}
 
-				event, err := d.ReadAsInterface()
+				event, err := d.Read()
 				t.eventQueue <- detectorReadReturn{event, err}
 			}
 		}()
@@ -72,8 +66,12 @@ func (t *EventsDetector) Close() error {
 	return nil
 }
 
-func (t *EventsDetector) ReadAsInterface() (any, error) {
+func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	r := <-t.eventQueue
 
 	return r.eventData, r.err
+}
+
+func (t *EventsDetector) Count() int {
+	return len(t.detectors)
 }
