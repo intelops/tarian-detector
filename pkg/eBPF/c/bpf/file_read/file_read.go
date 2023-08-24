@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/cilium/ebpf/link"
-	"github.com/intelops/tarian-detector/pkg/inspector/ebpf_manager"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
@@ -15,48 +15,49 @@ import (
 
 type FileRead struct{}
 
-func NewRead() *FileRead {
+func NewFileRead() *FileRead {
 	return &FileRead{}
 }
 
-func (fr *FileRead) NewEbpf() (ebpf_manager.EbpfModule, error) {
-	var em ebpf_manager.EbpfModule
+func (fr *FileRead) NewModule() (bpf.BpfModule, error) {
+	bm := bpf.NewBpfModule()
 
 	bpfObjs, err := getEbpfObject()
 	if err != nil {
-		return em, err
+		return bm, err
 	}
 
-	em.Programs = []ebpf_manager.Program{
+	bm.Programs = []bpf.BpfProgram{
 		{
 			Id: "__x64_sys_read_entry",
-			Hook: ebpf_manager.Hook{
-				Type: ebpf_manager.Kprobe,
+			Hook: bpf.Hook{
+				Type: bpf.Kprobe,
 				Name: "__x64_sys_read",
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
-			Program:      bpfObjs.KprobeReadEntry,
+			Name:         bpfObjs.KprobeReadEntry,
 			ShouldAttach: true,
 		},
 		{
 			Id: "__x64_sys_read_exit",
-			Hook: ebpf_manager.Hook{
-				Type: ebpf_manager.Kretprobe,
+			Hook: bpf.Hook{
+				Type: bpf.Kretprobe,
 				Name: "__x64_sys_read",
 				Opts: &link.KprobeOptions{}, //can be nil
 			},
-			Program:      bpfObjs.KretprobeReadExit,
+			Name:         bpfObjs.KretprobeReadExit,
 			ShouldAttach: true,
 		},
 	}
 
-	em.Data = &readEventData{}
-	em.Map = bpfObjs.Event
+	bm.Data = &readEventData{}
+	bm.Map = bpfObjs.Event
+	bm.ParseData = parseData
 
-	return em, nil
+	return bm, nil
 }
 
-func (fr *FileRead) DataParser(data any) (map[string]any, error) {
+func parseData(data any) (map[string]any, error) {
 	event_data, ok := data.(*readEventData)
 	if !ok {
 		return nil, fmt.Errorf("type mismatch: expected %T received %T", event_data, data)
@@ -67,13 +68,13 @@ func (fr *FileRead) DataParser(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "sys_read_entry"
+		res_data["id"] = "__x64_sys_read_entry"
 
 		res_data["file_descriptor"] = event_data.Fd
 		res_data["count"] = event_data.Count
 
 	case 1:
-		res_data["id"] = "sys_read_exit"
+		res_data["id"] = "__x64_sys_read_exit"
 
 		res_data["return_value"] = event_data.Ret
 
