@@ -3,9 +3,9 @@
 
 package detector
 
-type EventDetector struct {
-	Close func() error
-	Start func() (map[string]any, error)
+type EventDetector interface {
+	Read() (map[string]any, error)
+	Close() error
 }
 
 type detectorReadReturn struct {
@@ -42,7 +42,7 @@ func (t *EventsDetector) Start() error {
 					return
 				}
 
-				event, err := d.Start()
+				event, err := d.Read()
 				t.eventQueue <- detectorReadReturn{event, err}
 			}
 		}()
