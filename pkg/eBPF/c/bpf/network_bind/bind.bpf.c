@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Tarian & the Organization created Tarian
 
-// go:build ignore
+//go:build ignore
 
 #include "includes.h"
 
