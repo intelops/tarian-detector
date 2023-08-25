@@ -17,6 +17,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/process_execveat"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_socket"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_bind"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_listen"
 )
 
 var BpfModules = []bpf.Module{
@@ -32,4 +33,5 @@ var BpfModules = []bpf.Module{
 	file_close.NewFileClose(),
 	network_socket.NewNetworkSocket(),
 	network_bind.NewNetworkBind(),
+	network_listen.NewNetworkListen(),
 }
