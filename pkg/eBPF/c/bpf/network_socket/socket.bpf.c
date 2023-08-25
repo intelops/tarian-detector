@@ -2,7 +2,7 @@
 // Copyright 2023 Authors of Tarian & the Organization created Tarian
 
 // This directive ensures that the Go tooling will ignore this file.
-// go:build ignore
+//go:build ignore
 
 // Includes required header files.
 #include "includes.h"
