@@ -7,6 +7,8 @@ import (
 	"time"
 	"fmt"
 	"net"
+	"unsafe"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -73,12 +75,5 @@ func ipv6ToString(addr [16]uint8) string {
 
 // byteArrayToString takes an array of int8 values, and converts it to a string.
 func byteArrayToString(b [108]int8) string {
-    var bytes []byte
-    for _, v := range b {
-        if v == 0 {
-            break
-        }
-        bytes = append(bytes, byte(v))
-    }
-    return string(bytes)
+    return strings.TrimRight(string((*[108]byte)(unsafe.Pointer(&b))[:]), "\x00")
 }

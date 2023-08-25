@@ -19,6 +19,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_bind"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_listen"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_accept"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_connect"
 )
 
 var BpfModules = []bpf.Module{
@@ -36,4 +37,5 @@ var BpfModules = []bpf.Module{
 	network_bind.NewNetworkBind(),
 	network_listen.NewNetworkListen(),
 	network_accept.NewNetworkAccept(),
+	network_connect.NewNetworkConnect(),
 }
