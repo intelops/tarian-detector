@@ -14,8 +14,7 @@ struct event_data {
   int id;       // Identifier for the event type (entry/exit).
   __u32 domain; // Domain of the socket (e.g., AF_INET, AF_INET6).
   __u32 type;   // Type of the socket (e.g., SOCK_STREAM, SOCK_DGRAM).
-  __u32
-      protocol; // Protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP).
+  __u32 protocol; // Protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP).
   int ret;      // Return value (used for exit events).
 };
 

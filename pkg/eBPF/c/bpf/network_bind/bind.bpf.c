@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2023 Authors of Tarian & the Organization created Tarian
 
-//go:build ignore
+// go:build ignore
 
 #include "includes.h"
 
@@ -10,8 +10,10 @@ struct event_data {
   event_context_t eventContext;
 
   int id;
-  int fd;          // File descriptor
-  int addrlen;     // Address length
+  int fd;      // File descriptor
+  int addrlen; // Address length
+  int ret;
+
   __u16 sa_family; // Socket address family
   __u16 port;      // Port number
   struct {
@@ -24,7 +26,6 @@ struct event_data {
     char path[MAX_UNIX_PATH]; // UNIX socket path
   } unix_addr;
   __u32 padding; // Padding for alignment
-  int ret;
 };
 
 // Force emits struct event_data into the elf
@@ -62,7 +63,7 @@ int kprobe_bind_entry(struct pt_regs *ctx) {
   ed->addrlen = (int)sys_args[2];
 
   bpf_probe_read_user(&ed->sa_family, sizeof(ed->sa_family), uservaddr_ptr);
-  
+
   // Handle data based on the socket type
   switch (ed->sa_family) {
   case AF_INET: {
