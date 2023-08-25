@@ -11,7 +11,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target amd64 accept accept.bpf.c -- -I../../../../../headers -I../../
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH  accept accept.bpf.c -- -I../../../../../headers -I../../
 
 type NetworkAccept struct{}
 
