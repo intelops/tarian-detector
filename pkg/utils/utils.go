@@ -5,6 +5,10 @@ package utils
 
 import (
 	"time"
+	"fmt"
+	"net"
+	"unsafe"
+	"strings"
 
 	"golang.org/x/sys/unix"
 )
@@ -57,4 +61,19 @@ func NanoSecToTimeFormat(t uint64) string {
 // converts time in miliseconds to readable time format
 func MiliSecToTimeFormat(t uint64) string {
 	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
+}
+
+// Convert IPv4 address from binary to string.
+func ipv4ToString(addr uint32) string {
+    return fmt.Sprintf("%d.%d.%d.%d", byte(addr), byte(addr>>8), byte(addr>>16), byte(addr>>24))
+}
+
+// Convert IPv6 address from binary to string.
+func ipv6ToString(addr [16]uint8) string {
+	return net.IP(addr[:]).String()
+}
+
+// byteArrayToString takes an array of int8 values, and converts it to a string.
+func byteArrayToString(b [108]int8) string {
+    return strings.TrimRight(string((*[108]byte)(unsafe.Pointer(&b))[:]), "\x00")
 }

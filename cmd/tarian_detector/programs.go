@@ -15,6 +15,11 @@ import (
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/file_writev"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/process_execve"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/process_execveat"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_socket"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_bind"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_listen"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_accept"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_connect"
 )
 
 var BpfModules = []bpf.Module{
@@ -28,4 +33,9 @@ var BpfModules = []bpf.Module{
 	file_write.NewFileWrite(),
 	file_writev.NewFileWritev(),
 	file_close.NewFileClose(),
+	network_socket.NewNetworkSocket(),
+	network_bind.NewNetworkBind(),
+	network_listen.NewNetworkListen(),
+	network_accept.NewNetworkAccept(),
+	network_connect.NewNetworkConnect(),
 }
