@@ -98,7 +98,7 @@ type execveatProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type execveatMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ExecveatEventMap *ebpf.MapSpec `ebpf:"execveat_event_map"`
 }
 
 // execveatObjects contains all objects after they have been loaded into the kernel.
@@ -120,12 +120,12 @@ func (o *execveatObjects) Close() error {
 //
 // It can be passed to loadExecveatObjects or ebpf.CollectionSpec.LoadAndAssign.
 type execveatMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ExecveatEventMap *ebpf.Map `ebpf:"execveat_event_map"`
 }
 
 func (m *execveatMaps) Close() error {
 	return _ExecveatClose(
-		m.Event,
+		m.ExecveatEventMap,
 	)
 }
 
