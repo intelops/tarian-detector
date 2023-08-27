@@ -65,7 +65,7 @@ func main() {
 			if watcher != nil {
 				containerId, err := k8s.ProcsContainerID(e["process_id"].(uint32))
 				if err != nil {
-					log.Fatal(err)
+					continue
 				}
 
 				if len(containerId) != 0 {
@@ -78,15 +78,28 @@ func main() {
 						ContainerID    string
 						PodLabels      map[string]string
 						PodAnnotations map[string]string
-					}{
-						Podname:        pod.GetName(),
-						Namespace:      pod.GetNamespace(),
-						ContainerID:    containerId,
-						PodLabels:      pod.GetLabels(),
-						PodAnnotations: pod.GetAnnotations(),
-						PodUid:         string(pod.GetUID()),
+					}{}
+
+					if pod != nil {
+						k8sInfo = struct {
+							Podname        string
+							PodUid         string
+							Namespace      string
+							ContainerID    string
+							PodLabels      map[string]string
+							PodAnnotations map[string]string
+						}{
+							Podname:        pod.GetName(),
+							Namespace:      pod.GetNamespace(),
+							ContainerID:    containerId,
+							PodLabels:      pod.GetLabels(),
+							PodAnnotations: pod.GetAnnotations(),
+							PodUid:         string(pod.GetUID()),
+						}
+
 					}
 
+					k8sInfo.ContainerID = containerId
 					e["kubernetes"] = k8sInfo
 				}
 			}
@@ -102,15 +115,15 @@ func main() {
 	}
 }
 
-func printEvent(data map[string]any) {
-	div := "======================"
-	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
-	}
+// func printEvent(data map[string]any) {
+// 	div := "======================"
+// 	msg := ""
+// 	for ky, val := range data {
+// 		msg += fmt.Sprintf("%s: %v\n", ky, val)
+// 	}
 
-	log.Printf("%s\n%s%s\n", div, msg, div)
-}
+// 	log.Printf("%s\n%s%s\n", div, msg, div)
+// }
 
 func stats(d *detector.EventsDetector) {
 	fmt.Print("\033[H\033[2J")
