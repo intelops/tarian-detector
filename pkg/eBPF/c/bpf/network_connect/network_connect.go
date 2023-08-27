@@ -20,26 +20,24 @@ func NewNetworkConnect() *NetworkConnect {
 }
 
 func (e *connectEventData) GetSaFamily() uint16 {
-    return e.SaFamily
+	return e.SaFamily
 }
 
 func (e *connectEventData) InterpretPort() uint16 {
 	return e.Port
 }
 
-
 func (e *connectEventData) GetIPv4Addr() uint32 {
-    return e.V4Addr.S_addr
+	return e.V4Addr.S_addr
 }
 
 func (e *connectEventData) GetIPv6Addr() [16]uint8 {
-    return e.V6Addr.S6Addr
+	return e.V6Addr.S6Addr
 }
 
 func (e *connectEventData) GetUnixAddr() [108]int8 {
-    return e.UnixAddr.Path
+	return e.UnixAddr.Path
 }
-
 
 func (fo *NetworkConnect) NewModule() (bpf.BpfModule, error) {
 	bm := bpf.NewBpfModule()
@@ -73,7 +71,7 @@ func (fo *NetworkConnect) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &connectEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ConnectEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
@@ -92,12 +90,14 @@ func parseData(data any) (map[string]any, error) {
 	case 0:
 		res_data["id"] = "__x64_sys_connect_entry"
 
-		res_data["Fd"] = (event_data.Fd)
+		res_data["fd"] = (event_data.Fd)
+
 		family, ip, port := utils.InterpretFamilyAndIP(event_data)
-		res_data["AddressFamily"] =  family
-		res_data["IPAddress"] = ip
-		res_data["Port"] = port
-		res_data["Address length"] = event_data.Addrlen
+		res_data["address_family"] = family
+		res_data["ip_address"] = ip
+		res_data["port"] = port
+
+		res_data["address_length"] = event_data.Addrlen
 
 	case 1:
 		res_data["id"] = "__x64_sys_connect_exit"
