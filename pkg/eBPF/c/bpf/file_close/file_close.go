@@ -51,7 +51,7 @@ func (fc *FileClose) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &closeEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.CloseEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
