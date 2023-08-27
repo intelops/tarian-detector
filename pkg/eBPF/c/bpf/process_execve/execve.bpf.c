@@ -21,15 +21,15 @@ struct event_data {
 const struct event_data *unused __attribute__((unused));
 
 // ringbuffer map definition
-BPF_RINGBUF_MAP(event);
+BPF_RINGBUF_MAP(execve_event_map);
 
 //entry
 SEC("kprobe/__x64_sys_execve")
 int kprobe_execve_entry(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an execve_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(execve_event_map, *ed);
   if (!ed) {
     return -1;
   }
@@ -57,7 +57,7 @@ int kprobe_execve_entry(struct pt_regs *ctx) {
   read_str_arr_to_ptr((const char *const *)sys_args[2],
                       ed->env_vars);
 
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf execve_event_map mamp
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;
@@ -68,8 +68,8 @@ SEC("kretprobe/__x64_sys_execve")
 int kretprobe_execve_exit(struct pt_regs *ctx) {
   struct event_data *ed;
   
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an execve_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(execve_event_map, *ed);
   if (!ed) {
     return 0;
   }
@@ -81,7 +81,7 @@ int kretprobe_execve_exit(struct pt_regs *ctx) {
 
   ed->ret = (int)PT_REGS_RC_CORE(ctx);
 
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf execve_event_map mamp
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;
