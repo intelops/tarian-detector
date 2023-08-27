@@ -96,7 +96,7 @@ type execveProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type execveMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ExecveEventMap *ebpf.MapSpec `ebpf:"execve_event_map"`
 }
 
 // execveObjects contains all objects after they have been loaded into the kernel.
@@ -118,12 +118,12 @@ func (o *execveObjects) Close() error {
 //
 // It can be passed to loadExecveObjects or ebpf.CollectionSpec.LoadAndAssign.
 type execveMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ExecveEventMap *ebpf.Map `ebpf:"execve_event_map"`
 }
 
 func (m *execveMaps) Close() error {
 	return _ExecveClose(
-		m.Event,
+		m.ExecveEventMap,
 	)
 }
 
