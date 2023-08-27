@@ -7,11 +7,11 @@
 // Includes required header files.
 #include "includes.h"
 
-// Data structure to capture event details related to socket operations.
+// Data structure to capture socket_event_map details related to socket operations.
 struct event_data {
-  event_context_t eventContext; // General context related to the event.
+  event_context_t eventContext; // General context related to the socket_event_map.
 
-  int id;       // Identifier for the event type (entry/exit).
+  int id;       // Identifier for the socket_event_map type (entry/exit).
   __u32 domain; // Domain of the socket (e.g., AF_INET, AF_INET6).
   __u32 type;   // Type of the socket (e.g., SOCK_STREAM, SOCK_DGRAM).
   __u32 protocol; // Protocol used by the socket (e.g., IPPROTO_TCP, IPPROTO_UDP).
@@ -23,24 +23,24 @@ struct event_data {
 const struct event_data *unused __attribute__((unused));
 
 // Definition for the ring buffer map to store the events.
-BPF_RINGBUF_MAP(event);
+BPF_RINGBUF_MAP(socket_event_map);
 
 // Kprobe handler for the __x64_sys_socket function entry.
 SEC("kprobe/__x64_sys_socket")
 int kprobe_socket_entry(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // Allocate space in the ring buffer map for a new event.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // Allocate space in the ring buffer map for a new socket_event_map.
+  ed = BPF_RINGBUF_RESERVE(socket_event_map, *ed);
   if (!ed) {
     // Allocation failed.
     return -1;
   }
 
-  // Set event ID for entry.
+  // Set socket_event_map ID for entry.
   ed->id = 0;
 
-  // Initialize the event context.
+  // Initialize the socket_event_map context.
   init_context(&ed->eventContext);
 
   sys_args_t sys_args;
@@ -66,17 +66,17 @@ SEC("kretprobe/__x64_sys_openat")
 int kretprobe_socket_exit(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // Allocate space in the ring buffer map for a new event.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // Allocate space in the ring buffer map for a new socket_event_map.
+  ed = BPF_RINGBUF_RESERVE(socket_event_map, *ed);
   if (!ed) {
     // Allocation failed.
     return -1;
   }
 
-  // Set event ID for exit.
+  // Set socket_event_map ID for exit.
   ed->id = 1;
 
-  // Initialize the event context.
+  // Initialize the socket_event_map context.
   init_context(&ed->eventContext);
 
   // Capture and store the return value from the system call.
