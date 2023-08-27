@@ -51,7 +51,7 @@ func (frv *FileReadv) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &readvEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ReadvEventMap
 	bm.ParseData = parseData
 
 	return bm, nil

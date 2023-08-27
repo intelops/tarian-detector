@@ -96,7 +96,7 @@ type openatProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type openatMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	OpenatEventMap *ebpf.MapSpec `ebpf:"openat_event_map"`
 }
 
 // openatObjects contains all objects after they have been loaded into the kernel.
@@ -118,12 +118,12 @@ func (o *openatObjects) Close() error {
 //
 // It can be passed to loadOpenatObjects or ebpf.CollectionSpec.LoadAndAssign.
 type openatMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	OpenatEventMap *ebpf.Map `ebpf:"openat_event_map"`
 }
 
 func (m *openatMaps) Close() error {
 	return _OpenatClose(
-		m.Event,
+		m.OpenatEventMap,
 	)
 }
 

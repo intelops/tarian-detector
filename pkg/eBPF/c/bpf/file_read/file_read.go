@@ -51,7 +51,7 @@ func (fr *FileRead) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &readEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ReadEventMap
 	bm.ParseData = parseData
 
 	return bm, nil

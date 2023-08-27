@@ -52,7 +52,7 @@ func (pe *ProcessExecve) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &execveEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ExecveEventMap
 	bm.ParseData = parseData
 
 	return bm, nil

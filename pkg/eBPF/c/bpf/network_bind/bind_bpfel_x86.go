@@ -43,13 +43,13 @@ type bindEventData struct {
 	Id       int32
 	Fd       int32
 	Addrlen  int32
+	Ret      int32
 	SaFamily uint16
 	Port     uint16
 	V4Addr   struct{ S_addr uint32 }
 	V6Addr   struct{ S6Addr [16]uint8 }
 	UnixAddr struct{ Path [108]int8 }
 	Padding  uint32
-	Ret      int32
 }
 
 // loadBind returns the embedded CollectionSpec for bind.
@@ -101,7 +101,7 @@ type bindProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bindMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	BindEventMap *ebpf.MapSpec `ebpf:"bind_event_map"`
 }
 
 // bindObjects contains all objects after they have been loaded into the kernel.
@@ -123,12 +123,12 @@ func (o *bindObjects) Close() error {
 //
 // It can be passed to loadBindObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bindMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	BindEventMap *ebpf.Map `ebpf:"bind_event_map"`
 }
 
 func (m *bindMaps) Close() error {
 	return _BindClose(
-		m.Event,
+		m.BindEventMap,
 	)
 }
 

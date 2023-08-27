@@ -94,7 +94,7 @@ type closeProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type closeMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	CloseEventMap *ebpf.MapSpec `ebpf:"close_event_map"`
 }
 
 // closeObjects contains all objects after they have been loaded into the kernel.
@@ -116,12 +116,12 @@ func (o *closeObjects) Close() error {
 //
 // It can be passed to loadCloseObjects or ebpf.CollectionSpec.LoadAndAssign.
 type closeMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	CloseEventMap *ebpf.Map `ebpf:"close_event_map"`
 }
 
 func (m *closeMaps) Close() error {
 	return _CloseClose(
-		m.Event,
+		m.CloseEventMap,
 	)
 }
 

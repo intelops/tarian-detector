@@ -52,7 +52,7 @@ func (pe *ProcessExecveat) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &execveatEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ExecveatEventMap
 	bm.ParseData = parseData
 
 	return bm, nil

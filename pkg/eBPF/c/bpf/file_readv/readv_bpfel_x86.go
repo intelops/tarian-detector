@@ -96,7 +96,7 @@ type readvProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type readvMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ReadvEventMap *ebpf.MapSpec `ebpf:"readv_event_map"`
 }
 
 // readvObjects contains all objects after they have been loaded into the kernel.
@@ -118,12 +118,12 @@ func (o *readvObjects) Close() error {
 //
 // It can be passed to loadReadvObjects or ebpf.CollectionSpec.LoadAndAssign.
 type readvMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ReadvEventMap *ebpf.Map `ebpf:"readv_event_map"`
 }
 
 func (m *readvMaps) Close() error {
 	return _ReadvClose(
-		m.Event,
+		m.ReadvEventMap,
 	)
 }
 

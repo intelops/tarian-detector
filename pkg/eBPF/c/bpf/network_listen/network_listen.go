@@ -55,7 +55,7 @@ func (fo *NetworkListen) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &listenEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.ListenEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
@@ -74,8 +74,8 @@ func parseData(data any) (map[string]any, error) {
 	case 0:
 		res_data["id"] = "__x64_sys_bind_entry"
 
-		res_data["Fd"] = event_data.Fd
-		res_data["Backlog"] = event_data.Backlog
+		res_data["fd"] = event_data.Fd
+		res_data["backlog"] = event_data.Backlog
 
 	case 1:
 		res_data["id"] = "__x64_sys_bind_exit"
