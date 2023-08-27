@@ -65,7 +65,7 @@ func main() {
 			if watcher != nil {
 				containerId, err := k8s.ProcsContainerID(e["process_id"].(uint32))
 				if err != nil {
-					log.Fatal(err)
+					continue
 				}
 
 				if len(containerId) != 0 {
@@ -78,21 +78,34 @@ func main() {
 						ContainerID    string
 						PodLabels      map[string]string
 						PodAnnotations map[string]string
-					}{
-						Podname:        pod.GetName(),
-						Namespace:      pod.GetNamespace(),
-						ContainerID:    containerId,
-						PodLabels:      pod.GetLabels(),
-						PodAnnotations: pod.GetAnnotations(),
-						PodUid:         string(pod.GetUID()),
+					}{}
+
+					if pod != nil {
+						k8sInfo = struct {
+							Podname        string
+							PodUid         string
+							Namespace      string
+							ContainerID    string
+							PodLabels      map[string]string
+							PodAnnotations map[string]string
+						}{
+							Podname:        pod.GetName(),
+							Namespace:      pod.GetNamespace(),
+							ContainerID:    containerId,
+							PodLabels:      pod.GetLabels(),
+							PodAnnotations: pod.GetAnnotations(),
+							PodUid:         string(pod.GetUID()),
+						}
+
 					}
 
+					k8sInfo.ContainerID = containerId
 					e["kubernetes"] = k8sInfo
 				}
 			}
 
-			// printEvent(e)
-			stats(eventsDetector)
+			printEvent(e)
+			// stats(eventsDetector)
 		}
 	}()
 
