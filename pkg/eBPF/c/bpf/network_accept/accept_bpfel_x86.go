@@ -101,7 +101,7 @@ type acceptProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type acceptMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	AcceptEventMap *ebpf.MapSpec `ebpf:"accept_event_map"`
 }
 
 // acceptObjects contains all objects after they have been loaded into the kernel.
@@ -123,12 +123,12 @@ func (o *acceptObjects) Close() error {
 //
 // It can be passed to loadAcceptObjects or ebpf.CollectionSpec.LoadAndAssign.
 type acceptMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	AcceptEventMap *ebpf.Map `ebpf:"accept_event_map"`
 }
 
 func (m *acceptMaps) Close() error {
 	return _AcceptClose(
-		m.Event,
+		m.AcceptEventMap,
 	)
 }
 
