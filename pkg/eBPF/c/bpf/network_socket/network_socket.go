@@ -12,7 +12,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-// This directive is used to generate code using bpf2go tool. 
+// This directive is used to generate code using bpf2go tool.
 // It helps in generating Go bindings for the eBPF program defined in socket.bpf.c.
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH socket socket.bpf.c -- -I../../../../../headers -I../../
 
@@ -61,7 +61,7 @@ func (fo *NetworkSocket) NewModule() (bpf.BpfModule, error) {
 
 	// Assign data structures and parsing functions.
 	bm.Data = &socketEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.SocketEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
@@ -82,18 +82,20 @@ func parseData(data any) (map[string]any, error) {
 	switch event_data.Id {
 	case 0:
 		res_data["id"] = "__x64_sys_socket_entry"
-		res_data["Domain"] = utils.Domain(event_data.Domain)
-		res_data["Type"] = utils.Type(event_data.Type)
-		res_data["Protocol"] = utils.Protocol(event_data.Protocol)
+
+		res_data["domain"] = utils.Domain(event_data.Domain)
+		res_data["type"] = utils.Type(event_data.Type)
+		res_data["protocol"] = utils.Protocol(event_data.Protocol)
 	case 1:
 		res_data["id"] = "__x64_sys_socket_exit"
+
 		res_data["return_value"] = event_data.Ret
 	}
 
 	return res_data, nil
 }
 
-// getEbpfObject loads eBPF specs like maps, programs, etc. 
+// getEbpfObject loads eBPF specs like maps, programs, etc.
 // It returns the loaded eBPF objects.
 func getEbpfObject() (*socketObjects, error) {
 	var bpfObj socketObjects
