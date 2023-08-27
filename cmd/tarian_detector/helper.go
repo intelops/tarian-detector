@@ -25,11 +25,11 @@ func LoadPrograms(modules []bpf.Module) (*linker.Linker, error) {
 	return linker, nil
 }
 
-func GetDetectors(handlers []linker.Handler) ([]detector.EventDetector, error) {
+func GetDetectors(handlers []*linker.Handler) ([]detector.EventDetector, error) {
 	detectors := make([]detector.EventDetector, 0)
 
 	for _, handler := range handlers {
-		detectors = append(detectors, &handler)
+		detectors = append(detectors, handler)
 	}
 
 	return detectors, nil
