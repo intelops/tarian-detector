@@ -4,14 +4,29 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
+	"github.com/intelops/tarian-detector/pkg/k8s"
+	"k8s.io/client-go/rest"
 )
 
 func main() {
+	// Start kubernetes watcher
+	watcher, err := K8Watcher()
+	if err != nil {
+		if !errors.Is(err, rest.ErrNotInCluster) {
+			log.Fatal(err)
+		}
+
+		log.Print("Kubernetes environment not detected. The Kubernetes context has been disabled.")
+	} else {
+		watcher.Start()
+	}
+
 	// Loads the ebpf programs
 	bpfLinker, err := LoadPrograms(BpfModules)
 	if err != nil {
@@ -47,7 +62,37 @@ func main() {
 				fmt.Println(err)
 			}
 
-			printEvent(e)
+			if watcher != nil {
+				containerId, err := k8s.ProcsContainerID(e["process_id"].(uint32))
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if len(containerId) != 0 {
+					pod := watcher.FindPod(containerId)
+
+					k8sInfo := struct {
+						Podname        string
+						PodUid         string
+						Namespace      string
+						ContainerID    string
+						PodLabels      map[string]string
+						PodAnnotations map[string]string
+					}{
+						Podname:        pod.GetName(),
+						Namespace:      pod.GetNamespace(),
+						ContainerID:    containerId,
+						PodLabels:      pod.GetLabels(),
+						PodAnnotations: pod.GetAnnotations(),
+						PodUid:         string(pod.GetUID()),
+					}
+
+					e["kubernetes"] = k8sInfo
+				}
+			}
+
+			// printEvent(e)
+			stats(eventsDetector)
 		}
 	}()
 
@@ -65,4 +110,15 @@ func printEvent(data map[string]any) {
 	}
 
 	log.Printf("%s\n%s%s\n", div, msg, div)
+}
+
+func stats(d *detector.EventsDetector) {
+	fmt.Print("\033[H\033[2J")
+	fmt.Printf("%d detectors running...\n", d.Count())
+	fmt.Printf("Total Record captured %d\n", d.TotalRecordsCount)
+
+	fmt.Printf("Event wise count...\n\n")
+	for k, v := range d.ProbeRecordsCount {
+		fmt.Printf("%s: %d\n", k, v)
+	}
 }
