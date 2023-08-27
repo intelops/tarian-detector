@@ -31,7 +31,11 @@ func (h *Handler) Read() (map[string]any, error) {
 		return nil, err
 	}
 
-	return h.ParseData(h.Data)
+	tm, err := h.ParseData(h.Data)
+	if err != nil {
+		return nil, err
+	}
+	return tm, nil
 }
 
 // closes the maps and hooks
