@@ -51,7 +51,7 @@ func (fw *FileWrite) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &writeEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.WriteEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
