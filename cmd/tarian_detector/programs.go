@@ -13,13 +13,13 @@ import (
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/file_readv"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/file_write"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/file_writev"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_accept"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_bind"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_connect"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_listen"
+	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_socket"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/process_execve"
 	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/process_execveat"
-	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_socket"
-	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_bind"
-	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_listen"
-	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_accept"
-	"github.com/intelops/tarian-detector/pkg/eBPF/c/bpf/network_connect"
 )
 
 var BpfModules = []bpf.Module{
