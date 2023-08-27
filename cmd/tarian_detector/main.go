@@ -104,8 +104,8 @@ func main() {
 				}
 			}
 
-			printEvent(e)
-			// stats(eventsDetector)
+			// printEvent(e)
+			stats(eventsDetector)
 		}
 	}()
 
@@ -115,15 +115,15 @@ func main() {
 	}
 }
 
-func printEvent(data map[string]any) {
-	div := "======================"
-	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
-	}
+// func printEvent(data map[string]any) {
+// 	div := "======================"
+// 	msg := ""
+// 	for ky, val := range data {
+// 		msg += fmt.Sprintf("%s: %v\n", ky, val)
+// 	}
 
-	log.Printf("%s\n%s%s\n", div, msg, div)
-}
+// 	log.Printf("%s\n%s%s\n", div, msg, div)
+// }
 
 func stats(d *detector.EventsDetector) {
 	fmt.Print("\033[H\033[2J")
