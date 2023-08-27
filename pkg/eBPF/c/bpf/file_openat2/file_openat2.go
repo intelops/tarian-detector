@@ -51,7 +51,7 @@ func (fo2 *FileOpenat2) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &openat2EventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.Openat2EventMap
 	bm.ParseData = parseData
 
 	return bm, nil
