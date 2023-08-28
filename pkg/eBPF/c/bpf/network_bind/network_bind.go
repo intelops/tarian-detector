@@ -24,7 +24,7 @@ func NewNetworkBind() *NetworkBind {
 
 // GetSaFamily returns the socket address family.
 func (e *bindEventData) GetSaFamily() uint16 {
-    return e.SaFamily
+	return e.SaFamily
 }
 
 // InterpretPort returns the port from the event data.
@@ -34,17 +34,17 @@ func (e *bindEventData) InterpretPort() uint16 {
 
 // GetIPv4Addr extracts and returns the IPv4 address from the event data.
 func (e *bindEventData) GetIPv4Addr() uint32 {
-    return e.V4Addr.S_addr
+	return e.V4Addr.S_addr
 }
 
 // GetIPv6Addr extracts and returns the IPv6 address from the event data.
 func (e *bindEventData) GetIPv6Addr() [16]uint8 {
-    return e.V6Addr.S6Addr
+	return e.V6Addr.S6Addr
 }
 
 // GetUnixAddr extracts and returns the Unix address from the event data.
 func (e *bindEventData) GetUnixAddr() [108]int8 {
-    return e.UnixAddr.Path
+	return e.UnixAddr.Path
 }
 
 // NewModule initializes a new BPF module for network binding and attaches necessary eBPF programs.
@@ -80,7 +80,7 @@ func (fo *NetworkBind) NewModule() (bpf.BpfModule, error) {
 	}
 
 	bm.Data = &bindEventData{}
-	bm.Map = bpfObjs.Event
+	bm.Map = bpfObjs.BindEventMap
 	bm.ParseData = parseData
 
 	return bm, nil
@@ -99,12 +99,14 @@ func parseData(data any) (map[string]any, error) {
 	case 0:
 		res_data["id"] = "__x64_sys_bind_entry"
 
-		res_data["Fd"] = (event_data.Fd)
+		res_data["fd"] = (event_data.Fd)
+
 		family, ip, port := utils.InterpretFamilyAndIP(event_data)
-		res_data["AddressFamily"] =  family
-		res_data["IPAddress"] = ip
-		res_data["Port"] = port
-		res_data["Address length"] = event_data.Addrlen
+		res_data["address_family"] = family
+		res_data["ip_address"] = ip
+		res_data["port"] = port
+
+		res_data["address_length"] = event_data.Addrlen
 
 	case 1:
 		res_data["id"] = "__x64_sys_bind_exit"

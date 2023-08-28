@@ -18,6 +18,9 @@ type EventsDetector struct {
 	eventQueue chan detectorReadReturn
 	started    bool
 	closed     bool
+
+	ProbeRecordsCount map[string]int
+	TotalRecordsCount int
 }
 
 func NewEventsDetector() *EventsDetector {
@@ -26,11 +29,14 @@ func NewEventsDetector() *EventsDetector {
 		eventQueue: make(chan detectorReadReturn, 1),
 		started:    false,
 		closed:     false,
+
+		ProbeRecordsCount: make(map[string]int),
+		TotalRecordsCount: 0,
 	}
 }
 
-func (t *EventsDetector) Add(detector []EventDetector) {
-	t.detectors = append(t.detectors, detector...)
+func (t *EventsDetector) Add(detectors []EventDetector) {
+	t.detectors = append(t.detectors, detectors...)
 }
 
 func (t *EventsDetector) Start() error {
@@ -69,6 +75,11 @@ func (t *EventsDetector) Close() error {
 func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	r := <-t.eventQueue
 
+	if len(r.eventData) != 0 {
+		t.TotalRecordsCount++
+		t.ProbeRecordsCount[r.eventData["id"].(string)]++
+
+	}
 	return r.eventData, r.err
 }
 

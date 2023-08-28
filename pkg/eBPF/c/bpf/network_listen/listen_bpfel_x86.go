@@ -95,7 +95,7 @@ type listenProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type listenMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ListenEventMap *ebpf.MapSpec `ebpf:"listen_event_map"`
 }
 
 // listenObjects contains all objects after they have been loaded into the kernel.
@@ -117,12 +117,12 @@ func (o *listenObjects) Close() error {
 //
 // It can be passed to loadListenObjects or ebpf.CollectionSpec.LoadAndAssign.
 type listenMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ListenEventMap *ebpf.Map `ebpf:"listen_event_map"`
 }
 
 func (m *listenMaps) Close() error {
 	return _ListenClose(
-		m.Event,
+		m.ListenEventMap,
 	)
 }
 

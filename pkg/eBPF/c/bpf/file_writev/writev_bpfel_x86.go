@@ -96,7 +96,7 @@ type writevProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type writevMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	WritevEventMap *ebpf.MapSpec `ebpf:"writev_event_map"`
 }
 
 // writevObjects contains all objects after they have been loaded into the kernel.
@@ -118,12 +118,12 @@ func (o *writevObjects) Close() error {
 //
 // It can be passed to loadWritevObjects or ebpf.CollectionSpec.LoadAndAssign.
 type writevMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	WritevEventMap *ebpf.Map `ebpf:"writev_event_map"`
 }
 
 func (m *writevMaps) Close() error {
 	return _WritevClose(
-		m.Event,
+		m.WritevEventMap,
 	)
 }
 

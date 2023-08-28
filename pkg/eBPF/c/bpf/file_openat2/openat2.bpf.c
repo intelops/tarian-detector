@@ -22,15 +22,15 @@ struct event_data {
 const struct event_data *unused __attribute__((unused));
 
 // ringbuffer map definition
-BPF_RINGBUF_MAP(event);
+BPF_RINGBUF_MAP(openat2_event_map);
 
 // entry
 SEC("kprobe/__x64_sys_openat2")
 int kprobe_openat2_entry(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an openat2_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(openat2_event_map, *ed);
   if (!ed) {
     return -1;
   }
@@ -63,7 +63,7 @@ int kprobe_openat2_entry(struct pt_regs *ctx) {
   // usize
   ed->usize = (long unsigned int)sys_args[3];
 
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf openat2_event_map mamp
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;
@@ -74,8 +74,8 @@ SEC("kretprobe/__x64_sys_openat2")
 int kretprobe_openat2_exit(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an openat2_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(openat2_event_map, *ed);
   if (!ed) {
     return -1;
   }
@@ -88,7 +88,7 @@ int kretprobe_openat2_exit(struct pt_regs *ctx) {
   // return value - long
   ed->ret = (long)PT_REGS_RC_CORE(ctx);
 
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf openat2_event_map mamp
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;

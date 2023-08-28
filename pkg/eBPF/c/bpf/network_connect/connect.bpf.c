@@ -31,15 +31,15 @@ struct event_data {
 const struct event_data *unused __attribute__((unused));
 static inline __u16 my_ntohs(__u16 port) { return (port >> 8) | (port << 8); }
 // ringbuffer map definition
-BPF_RINGBUF_MAP(event);
+BPF_RINGBUF_MAP(connect_event_map);
 
 // entry
 SEC("kprobe/__x64_sys_connect")
 int kprobe_connect_entry(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an connect_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(connect_event_map, *ed);
   if (!ed) {
     return -1;
   }
@@ -88,7 +88,7 @@ int kprobe_connect_entry(struct pt_regs *ctx) {
     bpf_probe_read_user(&ed->unix_addr, sizeof(struct sockaddr_un), uservaddr_ptr);
     break;
   }
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf connect_event_map map
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;
@@ -99,8 +99,8 @@ SEC("kretprobe/__x64_sys_connect")
 int kretprobe_connect_exit(struct pt_regs *ctx) {
   struct event_data *ed;
 
-  // allocate space for an event in map.
-  ed = BPF_RINGBUF_RESERVE(event, *ed);
+  // allocate space for an connect_event_map in map.
+  ed = BPF_RINGBUF_RESERVE(connect_event_map, *ed);
   if (!ed) {
     return -1;
   }
@@ -113,7 +113,7 @@ int kretprobe_connect_exit(struct pt_regs *ctx) {
   // return value - int
   ed->ret = (int)PT_REGS_RC_CORE(ctx);
 
-  // pushes the information to ringbuf event mamp
+  // pushes the information to ringbuf connect_event_map map
   BPF_RINGBUF_SUBMIT(ed);
 
   return 0;

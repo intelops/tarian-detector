@@ -11,11 +11,11 @@ import (
 
 // NetworkData is an interface for different network-related data types.
 type NetworkData interface {
-	GetSaFamily() uint16            // Get the socket address family.
-	InterpretPort() uint16          // Interpret the port number.
-	GetIPv4Addr() uint32            // Get the IPv4 address.
-	GetIPv6Addr() [16]uint8         // Get the IPv6 address.
-	GetUnixAddr() [108]int8         // Get the Unix address.
+	GetSaFamily() uint16    // Get the socket address family.
+	InterpretPort() uint16  // Interpret the port number.
+	GetIPv4Addr() uint32    // Get the IPv4 address.
+	GetIPv6Addr() [16]uint8 // Get the IPv6 address.
+	GetUnixAddr() [108]int8 // Get the Unix address.
 }
 
 // GetSocketDomainName returns the socket domain's name for the given domain value.
@@ -193,7 +193,7 @@ func getKeyFromValue(value string) uint32 {
 	// Search for the key
 	for k, v := range socketDomains {
 		if v == value {
-			keyFromValueCache[value] = k  // Cache the result
+			keyFromValueCache[value] = k // Cache the result
 			return k
 		}
 	}

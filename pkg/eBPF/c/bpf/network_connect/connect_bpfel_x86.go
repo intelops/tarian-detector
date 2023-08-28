@@ -101,7 +101,7 @@ type connectProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type connectMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ConnectEventMap *ebpf.MapSpec `ebpf:"connect_event_map"`
 }
 
 // connectObjects contains all objects after they have been loaded into the kernel.
@@ -123,12 +123,12 @@ func (o *connectObjects) Close() error {
 //
 // It can be passed to loadConnectObjects or ebpf.CollectionSpec.LoadAndAssign.
 type connectMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ConnectEventMap *ebpf.Map `ebpf:"connect_event_map"`
 }
 
 func (m *connectMaps) Close() error {
 	return _ConnectClose(
-		m.Event,
+		m.ConnectEventMap,
 	)
 }
 

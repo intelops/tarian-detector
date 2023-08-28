@@ -95,7 +95,7 @@ type readProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type readMapSpecs struct {
-	Event *ebpf.MapSpec `ebpf:"event"`
+	ReadEventMap *ebpf.MapSpec `ebpf:"read_event_map"`
 }
 
 // readObjects contains all objects after they have been loaded into the kernel.
@@ -117,12 +117,12 @@ func (o *readObjects) Close() error {
 //
 // It can be passed to loadReadObjects or ebpf.CollectionSpec.LoadAndAssign.
 type readMaps struct {
-	Event *ebpf.Map `ebpf:"event"`
+	ReadEventMap *ebpf.Map `ebpf:"read_event_map"`
 }
 
 func (m *readMaps) Close() error {
 	return _ReadClose(
-		m.Event,
+		m.ReadEventMap,
 	)
 }
 

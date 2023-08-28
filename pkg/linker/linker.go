@@ -13,17 +13,15 @@ type Linker struct {
 	ProbeIds           map[string]bool // Holds the Ids of attached bpf programs and attach status
 	AttachCount        int             // Number of ebpf hooks attached
 	AttachSkippedCount int             // Number of ebpf hooks skipped
-	ProbeHandlers      []Handler       // Bpf Programs Handler
+	ProbeHandlers      []*Handler      // Bpf Programs Handler
 }
 
 // creates new instance of *Linker
 func NewLinker() *Linker {
 	return &Linker{
-		ProbeIds:    make(map[string]bool),
-		AttachCount: 0,
-		// ProbeRecordsCount: make(map[string]int),
-		// TotalRecordsCount: 0,
-		ProbeHandlers: make([]Handler, 0),
+		ProbeIds:      make(map[string]bool),
+		AttachCount:   0,
+		ProbeHandlers: make([]*Handler, 0),
 	}
 }
 
@@ -58,7 +56,7 @@ func (l *Linker) Attach(bpfModule bpf.BpfModule) error {
 
 		h.ProbeLink = pL
 
-		l.ProbeHandlers = append(l.ProbeHandlers, h)
+		l.ProbeHandlers = append(l.ProbeHandlers, &h)
 		l.AttachCount++
 	}
 
