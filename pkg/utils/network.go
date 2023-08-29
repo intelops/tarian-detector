@@ -119,7 +119,7 @@ var FamilyHandlers = map[string]HandlerFunc{
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.
 func InterpretFamilyAndIP(e NetworkData) (family string, ip string, port uint16) {
-	handler, exists := FamilyHandlers[uint32(e.GetSaFamily())]
+	handler, exists := FamilyHandlers[Domain(uint32(e.GetSaFamily()))]
 	if !exists {
 		handler = DefaultHandler
 	}
