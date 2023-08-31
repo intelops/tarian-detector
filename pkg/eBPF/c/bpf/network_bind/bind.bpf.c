@@ -61,20 +61,19 @@ int kprobe_bind_entry(struct pt_regs *ctx) {
 
   // Read the protocol argument
   ed->addrlen = (int)sys_args[2];
-
-  bpf_probe_read_user(&ed->sa_family, sizeof(ed->sa_family), uservaddr_ptr);
+  BPF_READ(uservaddr_ptr, &v4);
 
   // Handle data based on the socket type
   switch (ed->sa_family) {
   case AF_INET: {
     struct sockaddr_in v4;
-    bpf_probe_read_user(&v4, sizeof(v4), uservaddr_ptr);
+    BPF_READ(uservaddr_ptr, &v4);
     ed->v4_addr.s_addr = v4.sin_addr.s_addr;
     ed->port = my_ntohs(v4.sin_port); // Convert from network to host byte order
   } break;
   case AF_INET6: {
     struct sockaddr_in6 v6;
-    bpf_probe_read_user(&v6, sizeof(v6), uservaddr_ptr);
+    BPF_READ(uservaddr_ptr, &v6);
 
 // Copying the IPv6 address
 #pragma unroll
@@ -87,8 +86,7 @@ int kprobe_bind_entry(struct pt_regs *ctx) {
         my_ntohs(v6.sin6_port); // Convert from network to host byte order
   } break;
   case AF_UNIX:
-    bpf_probe_read_user(&ed->unix_addr, sizeof(struct sockaddr_un),
-                        uservaddr_ptr);
+    BPF_READ(uservaddr_ptr, &ed->unix_addr);
     break;
   }
   // pushes the information to ringbuf bind_event_map map
