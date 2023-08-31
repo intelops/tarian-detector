@@ -23,7 +23,7 @@ struct event_data {
     __u8 s6_addr[16]; // IPv6 address
   } v6_addr;
   struct {
-    char path[MAX_UNIX_PATH]; // UNIX socket path
+    __u8 path[MAX_UNIX_PATH]; // UNIX socket path
   } unix_addr;
   __u32 padding; // Padding for alignment
 };
