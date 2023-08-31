@@ -43,7 +43,7 @@ func (e *bindEventData) GetIPv6Addr() [16]uint8 {
 }
 
 // GetUnixAddr extracts and returns the Unix address from the event data.
-func (e *bindEventData) GetUnixAddr() []int8 {
+func (e *bindEventData) GetUnixAddr() []uint8 {
 	return e.UnixAddr.Path[:]
 }
 
