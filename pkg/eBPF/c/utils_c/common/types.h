@@ -40,6 +40,6 @@ typedef struct __attribute__((__packed__)) event_context {
   mount_info_t mount_info; // mount information
 } event_context_t;
 
-typedef unsigned long sys_args_t[5];
+typedef unsigned long sys_args_t[MAX_ARGS];
 
 #endif
