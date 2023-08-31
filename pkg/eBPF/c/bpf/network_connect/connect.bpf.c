@@ -22,7 +22,7 @@ struct event_data {
     __u8 s6_addr[16]; // IPv6 address
   } v6_addr;
   struct {
-    char path[MAX_UNIX_PATH]; // UNIX socket path
+    __u8 path[MAX_UNIX_PATH]; // UNIX socket path
   } unix_addr;
   __u32 padding; // Padding for alignment
 };
@@ -52,16 +52,16 @@ int kprobe_connect_entry(struct pt_regs *ctx) {
   sys_args_t sys_args;
   read_sys_args_into(&sys_args, ctx);
 
-  // Read the domain argument
+  // Read the file descriptor argument
   ed->fd = (int)sys_args[0];
+
+  // Read the addresslen argument
+  ed->addrlen = (int)sys_args[2];
 
   // Read the type argument
   struct sockaddr *uservaddr_ptr = (struct sockaddr *)sys_args[1];
-
-  // Read the protocol argument
-
-  ed->addrlen = (int)sys_args[2];
   BPF_READ(uservaddr_ptr, &ed->sa_family);
+
   // Handle data based on the socket type
   switch (ed->sa_family) {
   case AF_INET: {
