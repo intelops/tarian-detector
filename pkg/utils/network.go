@@ -9,7 +9,6 @@ import (
 	"strings"
 	"fmt"
 	"net"
-	"unsafe"
 )
 
 const (
@@ -23,7 +22,7 @@ type NetworkData interface {
 	InterpretPort() uint16  // Interpret the port number.
 	GetIPv4Addr() uint32    // Get the IPv4 address.
 	GetIPv6Addr() [16]uint8 // Get the IPv6 address.
-	GetUnixAddr() [108]int8 // Get the Unix address.
+	GetUnixAddr() []uint8 // Get the Unix address.
 }
 
 // Utility function to get string representation or fallback to numeric value
@@ -162,7 +161,7 @@ func HandleIPv6(e NetworkData) (string, string) {
 
 // HandleUnix handles Unix-specific data.
 func HandleUnix(e NetworkData) (string, string) {
-	return "AF_UNIX", byteArrayToString(e.GetUnixAddr())
+	return "AF_UNIX", Uint8toString(e.GetUnixAddr())
 }
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.
