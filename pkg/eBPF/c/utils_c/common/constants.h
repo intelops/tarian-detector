@@ -11,4 +11,6 @@
 #define AF_UNIX 1
 #define MAX_UNIX_PATH 108 // standard size for UNIX paths
 
+#define MAX_ARGS 6
+
 #endif
