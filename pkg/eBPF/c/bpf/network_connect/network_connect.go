@@ -35,7 +35,7 @@ func (e *connectEventData) GetIPv6Addr() [16]uint8 {
 	return e.V6Addr.S6Addr
 }
 
-func (e *connectEventData) GetUnixAddr() []int8 {
+func (e *connectEventData) GetUnixAddr() []uint8 {
 	return e.UnixAddr.Path[:]
 }
 
