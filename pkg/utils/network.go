@@ -117,6 +117,51 @@ var FamilyHandlers = map[string]HandlerFunc{
 	"AF_UNIX":  HandleUnix,
 }
 
+// Convert IPv4 address from binary to string.
+func ipv4ToString(addr uint32) string {
+	return fmt.Sprintf("%d.%d.%d.%d", byte(addr), byte(addr>>8), byte(addr>>16), byte(addr>>24))
+}
+
+// Convert IPv6 address from binary to string.
+func ipv6ToString(addr [16]uint8) string {
+	return net.IP(addr[:]).String()
+}
+
+// byteArrayToString takes an array of int8 values, and converts it to a string.
+func byteArrayToString(b [108]int8) string {
+	return strings.TrimRight(string((*[108]byte)(unsafe.Pointer(&b))[:]), "\x00")
+}
+
+func Domain(sd uint32) string {
+	return mapLookup(socketDomains, sd)
+}
+
+func Type(st uint32) string {
+	return mapLookup(socketTypes, st&0xf, st&SOCK_NONBLOCK, st&SOCK_CLOEXEC)
+}
+
+func Protocol(proto uint32) string {
+	return mapLookup(protocols, proto)
+}
+
+func DefaultHandler(e NetworkData) (string, string) {
+	return Domain(uint32(e.GetSaFamily())), "N/A"
+}
+
+func HandleIPv4(e NetworkData) (string, string) {
+	return "AF_INET", ipv4ToString(e.GetIPv4Addr())
+}
+
+// HandleIPv6 handles IPv6-specific data.
+func HandleIPv6(e NetworkData) (string, string) {
+	return "AF_INET6", ipv6ToString(e.GetIPv6Addr())
+}
+
+// HandleUnix handles Unix-specific data.
+func HandleUnix(e NetworkData) (string, string) {
+	return "AF_UNIX", byteArrayToString(e.GetUnixAddr())
+}
+
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.
 func InterpretFamilyAndIP(e NetworkData) (family string, ip string, port uint16) {
 	handler, exists := FamilyHandlers[Domain(uint32(e.GetSaFamily()))]
