@@ -31,9 +31,8 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define BPF_GET_COMM(__var__) bpf_get_current_comm(&__var__, sizeof(__var__))
 
 // read array of strings
-static __always_inline int
-read_str_arr_to_ptr(const char *const *from,
-                    __u8 (*to)[MAX_STRING_SIZE]) {
+static __always_inline int read_str_arr_to_ptr(const char *const *from,
+                                               __u8 (*to)[MAX_STRING_SIZE]) {
   if (to == NULL || from == NULL)
     return -1;
 
