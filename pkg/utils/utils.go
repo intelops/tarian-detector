@@ -77,3 +77,33 @@ func ipv6ToString(addr [16]uint8) string {
 func byteArrayToString(b [108]int8) string {
 	return strings.TrimRight(string((*[108]byte)(unsafe.Pointer(&b))[:]), "\x00")
 }
+
+func Domain(sd uint32) string {
+	return mapLookup(socketDomains, sd)
+}
+
+func Type(st uint32) string {
+	return mapLookup(socketTypes, st&0xf, st&SOCK_NONBLOCK, st&SOCK_CLOEXEC)
+}
+
+func Protocol(proto uint32) string {
+	return mapLookup(protocols, proto)
+}
+
+func DefaultHandler(e NetworkData) (string, string) {
+	return Domain(uint32(e.GetSaFamily())), "N/A"
+}
+
+func HandleIPv4(e NetworkData) (string, string) {
+	return "AF_INET", ipv4ToString(e.GetIPv4Addr())
+}
+
+// HandleIPv6 handles IPv6-specific data.
+func HandleIPv6(e NetworkData) (string, string) {
+	return "AF_INET6", ipv6ToString(e.GetIPv6Addr())
+}
+
+// HandleUnix handles Unix-specific data.
+func HandleUnix(e NetworkData) (string, string) {
+	return "AF_UNIX", byteArrayToString(e.GetUnixAddr())
+}

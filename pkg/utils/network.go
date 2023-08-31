@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+const (
+    SOCK_NONBLOCK = 000004000
+    SOCK_CLOEXEC  = 002000000
+)
+
 // NetworkData is an interface for different network-related data types.
 type NetworkData interface {
 	GetSaFamily() uint16    // Get the socket address family.
@@ -18,25 +23,22 @@ type NetworkData interface {
 	GetUnixAddr() [108]int8 // Get the Unix address.
 }
 
-// GetSocketDomainName returns the socket domain's name for the given domain value.
-func GetSocketDomainName(domain interface{}) string {
-	var value uint32
-
-	switch d := domain.(type) {
-	case uint32:
-		value = d
-	case uint16:
-		value = uint32(d)
-	default:
-		return "UNKNOWN"
+// Utility function to get string representation or fallback to numeric value
+func mapLookup(m map[uint32]string, key uint32, additionalFlags ...uint32) string {
+	var f []string
+	if name, ok := m[key]; ok {
+		f = append(f, name)
+	} else {
+		f = append(f, strconv.Itoa(int(key)))
 	}
-
-	name, exists := socketDomains[value]
-	if !exists {
-		return "UNKNOWN"
+	for _, flag := range additionalFlags {
+		if name, ok := m[flag]; ok {
+			f = append(f, name)
+		}
 	}
-	return name
+	return strings.Join(f, "|")
 }
+
 
 // socketDomains contains the mapping of socket domain values to their corresponding names.
 var socketDomains = map[uint32]string{
@@ -87,19 +89,6 @@ var socketDomains = map[uint32]string{
 	44: "AF_XDP",
 }
 
-// Domain looks up the socket domain name based on the provided value.
-func Domain(sd uint32) string {
-	var res string
-
-	if sdName, ok := socketDomains[sd]; ok {
-		res = sdName
-	} else {
-		res = strconv.Itoa(int(sd))
-	}
-
-	return res
-}
-
 // socketTypes maps socket type values to their respective names.
 var socketTypes = map[uint32]string{
 	1:  "SOCK_STREAM",
@@ -111,27 +100,6 @@ var socketTypes = map[uint32]string{
 	10: "SOCK_PACKET",
 }
 
-// Type converts the given socket type value to its string representation.
-func Type(st uint32) string {
-	var f []string
-
-	if stName, ok := socketTypes[st&0xf]; ok {
-		f = append(f, stName)
-	} else {
-		f = append(f, strconv.Itoa(int(st)))
-	}
-
-	// Check for special socket type flags
-	if st&000004000 == 000004000 {
-		f = append(f, "SOCK_NONBLOCK")
-	}
-	if st&002000000 == 002000000 {
-		f = append(f, "SOCK_CLOEXEC")
-	}
-
-	return strings.Join(f, "|")
-}
-
 // protocols maps protocol values to their names.
 var protocols = map[uint32]string{
 	1:  "ICMP",
@@ -140,77 +108,18 @@ var protocols = map[uint32]string{
 	58: "ICMPv6",
 }
 
-// Protocol looks up the name of the given protocol value.
-func Protocol(proto uint32) string {
-	var res string
-
-	if protoName, ok := protocols[proto]; ok {
-		res = protoName
-	} else {
-		res = strconv.Itoa(int(proto))
-	}
-
-	return res
-}
-
 // HandlerFunc defines a function that handles specific network data.
 type HandlerFunc func(NetworkData) (string, string)
 
-// DefaultHandler is a default function to handle NetworkData.
-func DefaultHandler(e NetworkData) (string, string) {
-	familyName := GetSocketDomainName(e.GetSaFamily())
-	if familyName == "UNKNOWN" {
-		return strconv.Itoa(int(e.GetSaFamily())), "N/A"
-	}
-	return familyName, "N/A"
-}
-
-// HandleIPv4 handles IPv4-specific data.
-func HandleIPv4(e NetworkData) (string, string) {
-	return "AF_INET", ipv4ToString(e.GetIPv4Addr())
-}
-
-// HandleIPv6 handles IPv6-specific data.
-func HandleIPv6(e NetworkData) (string, string) {
-	return "AF_INET6", ipv6ToString(e.GetIPv6Addr())
-}
-
-// HandleUnix handles Unix-specific data.
-func HandleUnix(e NetworkData) (string, string) {
-	return "AF_UNIX", byteArrayToString(e.GetUnixAddr())
-}
-
-// keyFromValueCache caches the results of the getKeyFromValue function.
-var keyFromValueCache = make(map[string]uint32)
-
-// getKeyFromValue returns the key for a given value from the socketDomains map.
-func getKeyFromValue(value string) uint32 {
-	// Check cache first
-	if key, exists := keyFromValueCache[value]; exists {
-		return key
-	}
-
-	// Search for the key
-	for k, v := range socketDomains {
-		if v == value {
-			keyFromValueCache[value] = k // Cache the result
-			return k
-		}
-	}
-
-	return 0
-}
-
-// FamilyHandlers is a map that associates socket families with their handlers.
-var FamilyHandlers = map[uint32]HandlerFunc{
-	getKeyFromValue("AF_INET"):  HandleIPv4,
-	getKeyFromValue("AF_INET6"): HandleIPv6,
-	getKeyFromValue("AF_UNIX"):  HandleUnix,
+var FamilyHandlers = map[string]HandlerFunc{
+	"AF_INET":  HandleIPv4,
+	"AF_INET6": HandleIPv6,
+	"AF_UNIX":  HandleUnix,
 }
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.
 func InterpretFamilyAndIP(e NetworkData) (family string, ip string, port uint16) {
-	handler, exists := FamilyHandlers[uint32(e.GetSaFamily())]
+	handler, exists := FamilyHandlers[Domain(uint32(e.GetSaFamily()))]
 	if !exists {
 		handler = DefaultHandler
 	}
