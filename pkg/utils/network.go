@@ -129,11 +129,6 @@ func ipv6ToString(addr [16]uint8) string {
 	return net.IP(addr[:]).String()
 }
 
-// byteArrayToString takes an array of int8 values, and converts it to a string.
-func byteArrayToString(b [108]int8) string {
-	return strings.TrimRight(string((*[108]byte)(unsafe.Pointer(&b))[:]), "\x00")
-}
-
 func Domain(sd uint32) string {
 	return mapLookup(socketDomains, sd)
 }
