@@ -48,7 +48,10 @@ static __always_inline int set_context(event_context_t *e,
   e->node_info = get_node_info(task);
 
   // mount information
-  e->mount_info = get_mount_info(task);
+  e->mount_id = get_mts_id(get_task_nsproxy(task));
+  e->mount_ns_id = get_uts_ns_id(get_task_nsproxy(task));
+  BPF_READ_STR((const char *)get_mts_devname(get_task_nsproxy(task)),
+               &e->mount_devname);
 
   e->cgroup_id = bpf_get_current_cgroup_id();
 
