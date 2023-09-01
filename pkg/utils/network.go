@@ -7,6 +7,8 @@ package utils
 import (
 	"strconv"
 	"strings"
+	"fmt"
+	"net"
 )
 
 const (
@@ -20,7 +22,7 @@ type NetworkData interface {
 	InterpretPort() uint16  // Interpret the port number.
 	GetIPv4Addr() uint32    // Get the IPv4 address.
 	GetIPv6Addr() [16]uint8 // Get the IPv6 address.
-	GetUnixAddr() [108]int8 // Get the Unix address.
+	GetUnixAddr() []uint8 // Get the Unix address.
 }
 
 // Utility function to get string representation or fallback to numeric value
@@ -115,6 +117,46 @@ var FamilyHandlers = map[string]HandlerFunc{
 	"AF_INET":  HandleIPv4,
 	"AF_INET6": HandleIPv6,
 	"AF_UNIX":  HandleUnix,
+}
+
+// Convert IPv4 address from binary to string.
+func ipv4ToString(addr uint32) string {
+	return fmt.Sprintf("%d.%d.%d.%d", byte(addr), byte(addr>>8), byte(addr>>16), byte(addr>>24))
+}
+
+// Convert IPv6 address from binary to string.
+func ipv6ToString(addr [16]uint8) string {
+	return net.IP(addr[:]).String()
+}
+
+func Domain(sd uint32) string {
+	return mapLookup(socketDomains, sd)
+}
+
+func Type(st uint32) string {
+	return mapLookup(socketTypes, st&0xf, st&SOCK_NONBLOCK, st&SOCK_CLOEXEC)
+}
+
+func Protocol(proto uint32) string {
+	return mapLookup(protocols, proto)
+}
+
+func DefaultHandler(e NetworkData) (string, string) {
+	return Domain(uint32(e.GetSaFamily())), "N/A"
+}
+
+func HandleIPv4(e NetworkData) (string, string) {
+	return "AF_INET", ipv4ToString(e.GetIPv4Addr())
+}
+
+// HandleIPv6 handles IPv6-specific data.
+func HandleIPv6(e NetworkData) (string, string) {
+	return "AF_INET6", ipv6ToString(e.GetIPv6Addr())
+}
+
+// HandleUnix handles Unix-specific data.
+func HandleUnix(e NetworkData) (string, string) {
+	return "AF_UNIX", Uint8toString(e.GetUnixAddr())
 }
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.

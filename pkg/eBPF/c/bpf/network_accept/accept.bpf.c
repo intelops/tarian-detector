@@ -21,7 +21,7 @@ struct event_data {
     __u8 s6_addr[16]; // IPv6 address
   } v6_addr;
   struct {
-    char path[MAX_UNIX_PATH]; // UNIX socket path
+    __u8 path[MAX_UNIX_PATH]; // UNIX socket path
   } unix_addr;
   __u32 padding; // Padding for alignment
   int ret;
@@ -52,17 +52,16 @@ int kprobe_accept_entry(struct pt_regs *ctx) {
   sys_args_t sys_args;
   read_sys_args_into(&sys_args, ctx);
 
-  // Read the domain argument
+  // Read the file descriptor argument
   ed->fd = (int)sys_args[0];
 
-  // Read the type argument
-  struct sockaddr *uservaddr_ptr = (struct sockaddr *)sys_args[1];
-
-  // Read the protocol argument
-
+  // Read the address length argument
   ed->addrlen = (int)sys_args[2];
+
+  // Read the family argument
+  struct sockaddr *uservaddr_ptr = (struct sockaddr *)sys_args[1];
   BPF_READ(uservaddr_ptr, &ed->sa_family);
-  
+
   // Handle data based on the socket type
   switch (ed->sa_family) {
   case AF_INET: {
@@ -80,7 +79,6 @@ int kprobe_accept_entry(struct pt_regs *ctx) {
     for (int i = 0; i < 16; i++) {
       ed->v6_addr.s6_addr[i] = v6.sin6_addr.in6_u.u6_addr8[i];
     }
-
     // Reading the IPv6 port
     ed->port =
         my_ntohs(v6.sin6_port); // Convert from network to host byte order
@@ -89,6 +87,7 @@ int kprobe_accept_entry(struct pt_regs *ctx) {
     BPF_READ(uservaddr_ptr, &ed->unix_addr);
     break;
   }
+
   // pushes the information to ringbuf accept_event_map map
   BPF_RINGBUF_SUBMIT(ed);
 
