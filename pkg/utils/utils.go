@@ -4,9 +4,8 @@
 package utils
 
 import (
+	"strings"
 	"time"
-	
-	"golang.org/x/sys/unix"
 )
 
 // converts [][4096]uint8 to string.
@@ -46,7 +45,7 @@ func Uint8ArrtoStringArr(arr [][4096]uint8) []string {
 
 // converts []uint8 to string
 func Uint8toString(arr []uint8) string {
-	return unix.ByteSliceToString(arr[:])
+	return strings.Trim(string(arr[:]), "\x00")
 }
 
 // converts time in nanoseconds to readable time format
@@ -58,4 +57,3 @@ func NanoSecToTimeFormat(t uint64) string {
 func MiliSecToTimeFormat(t uint64) string {
 	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
 }
-
