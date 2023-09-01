@@ -5,15 +5,15 @@
 package utils
 
 import (
-	"strconv"
-	"strings"
 	"fmt"
 	"net"
+	"strconv"
+	"strings"
 )
 
 const (
-    SOCK_NONBLOCK = 000004000
-    SOCK_CLOEXEC  = 002000000
+	SOCK_NONBLOCK = 000004000
+	SOCK_CLOEXEC  = 002000000
 )
 
 // NetworkData is an interface for different network-related data types.
@@ -22,7 +22,7 @@ type NetworkData interface {
 	InterpretPort() uint16  // Interpret the port number.
 	GetIPv4Addr() uint32    // Get the IPv4 address.
 	GetIPv6Addr() [16]uint8 // Get the IPv6 address.
-	GetUnixAddr() []uint8 // Get the Unix address.
+	GetUnixAddr() []uint8   // Get the Unix address.
 }
 
 // Utility function to get string representation or fallback to numeric value
@@ -40,7 +40,6 @@ func mapLookup(m map[uint32]string, key uint32, additionalFlags ...uint32) strin
 	}
 	return strings.Join(f, "|")
 }
-
 
 // socketDomains contains the mapping of socket domain values to their corresponding names.
 var socketDomains = map[uint32]string{
