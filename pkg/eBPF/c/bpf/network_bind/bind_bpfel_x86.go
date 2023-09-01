@@ -22,8 +22,8 @@ type bindEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Comm      [16]uint8
-		Cwd       [32]uint8
+		MountId   int32
+		MountNsId uint32
 		CgroupId  uint64
 		NodeInfo  struct {
 			Sysname    [65]uint8
@@ -33,11 +33,9 @@ type bindEventData struct {
 			Machine    [65]uint8
 			Domainname [65]uint8
 		}
-		MountInfo struct {
-			MountId      int32
-			MountNsId    uint32
-			MountDevname [256]uint8
-		}
+		Comm         [16]uint8
+		Cwd          [32]uint8
+		MountDevname [256]uint8
 	}
 	_        [2]byte
 	Id       int32
@@ -48,7 +46,7 @@ type bindEventData struct {
 	Port     uint16
 	V4Addr   struct{ S_addr uint32 }
 	V6Addr   struct{ S6Addr [16]uint8 }
-	UnixAddr struct{ Path [108]int8 }
+	UnixAddr struct{ Path [108]uint8 }
 	Padding  uint32
 }
 

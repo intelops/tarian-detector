@@ -23,8 +23,8 @@ type execveEventData struct {
 		Glpid     uint32
 		Uid       uint32
 		Gid       uint32
-		Comm      [16]uint8
-		Cwd       [32]uint8
+		MountId   int32
+		MountNsId uint32
 		CgroupId  uint64
 		NodeInfo  struct {
 			Sysname    [65]uint8
@@ -34,11 +34,9 @@ type execveEventData struct {
 			Machine    [65]uint8
 			Domainname [65]uint8
 		}
-		MountInfo struct {
-			MountId      int32
-			MountNsId    uint32
-			MountDevname [256]uint8
-		}
+		Comm         [16]uint8
+		Cwd          [32]uint8
+		MountDevname [256]uint8
 	}
 	_              [2]byte
 	Ret            int32
