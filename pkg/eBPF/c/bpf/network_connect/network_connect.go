@@ -35,8 +35,8 @@ func (e *connectEventData) GetIPv6Addr() [16]uint8 {
 	return e.V6Addr.S6Addr
 }
 
-func (e *connectEventData) GetUnixAddr() [108]int8 {
-	return e.UnixAddr.Path
+func (e *connectEventData) GetUnixAddr() []uint8 {
+	return e.UnixAddr.Path[:]
 }
 
 func (fo *NetworkConnect) NewModule() (bpf.BpfModule, error) {

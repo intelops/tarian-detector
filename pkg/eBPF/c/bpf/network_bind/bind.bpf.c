@@ -23,7 +23,7 @@ struct event_data {
     __u8 s6_addr[16]; // IPv6 address
   } v6_addr;
   struct {
-    char path[MAX_UNIX_PATH]; // UNIX socket path
+    __u8 path[MAX_UNIX_PATH]; // UNIX socket path
   } unix_addr;
   __u32 padding; // Padding for alignment
 };
@@ -53,15 +53,15 @@ int kprobe_bind_entry(struct pt_regs *ctx) {
   sys_args_t sys_args;
   read_sys_args_into(&sys_args, ctx);
 
-  // Read the domain argument
+  // Read the file descriptor argument
   ed->fd = (int)sys_args[0];
-
-  // Read the type argument
-  struct sockaddr *uservaddr_ptr = (struct sockaddr *)sys_args[1];
-
-  // Read the protocol argument
+  
+  // Read the arrlen argument
   ed->addrlen = (int)sys_args[2];
-  BPF_READ(uservaddr_ptr, &v4);
+
+  // Read the family argument
+  struct sockaddr *uservaddr_ptr = (struct sockaddr *)sys_args[1];
+  BPF_READ(uservaddr_ptr, &ed->sa_family);
 
   // Handle data based on the socket type
   switch (ed->sa_family) {
@@ -71,20 +71,20 @@ int kprobe_bind_entry(struct pt_regs *ctx) {
     ed->v4_addr.s_addr = v4.sin_addr.s_addr;
     ed->port = my_ntohs(v4.sin_port); // Convert from network to host byte order
   } break;
+
   case AF_INET6: {
     struct sockaddr_in6 v6;
     BPF_READ(uservaddr_ptr, &v6);
-
 // Copying the IPv6 address
 #pragma unroll
     for (int i = 0; i < 16; i++) {
       ed->v6_addr.s6_addr[i] = v6.sin6_addr.in6_u.u6_addr8[i];
     }
-
     // Reading the IPv6 port
     ed->port =
         my_ntohs(v6.sin6_port); // Convert from network to host byte order
   } break;
+
   case AF_UNIX:
     BPF_READ(uservaddr_ptr, &ed->unix_addr);
     break;

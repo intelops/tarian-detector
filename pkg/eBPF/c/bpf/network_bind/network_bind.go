@@ -43,8 +43,8 @@ func (e *bindEventData) GetIPv6Addr() [16]uint8 {
 }
 
 // GetUnixAddr extracts and returns the Unix address from the event data.
-func (e *bindEventData) GetUnixAddr() [108]int8 {
-	return e.UnixAddr.Path
+func (e *bindEventData) GetUnixAddr() []uint8 {
+	return e.UnixAddr.Path[:]
 }
 
 // NewModule initializes a new BPF module for network binding and attaches necessary eBPF programs.
