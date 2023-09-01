@@ -71,7 +71,7 @@ int kretprobe_execve_exit(struct pt_regs *ctx) {
   // allocate space for an execve_event_map in map.
   ed = BPF_RINGBUF_RESERVE(execve_event_map, *ed);
   if (!ed) {
-    return 0;
+    return -1;
   }
 
   ed->id = 1;

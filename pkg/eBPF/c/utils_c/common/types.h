@@ -31,15 +31,18 @@ typedef struct __attribute__((__packed__)) event_context {
   __u32 uid; // user id
   __u32 gid; // group id
 
-  __u8 comm[TASK_COMM_LEN]; // command
-  __u8 cwd[32];             // current working directory
+  __s32 mount_id;    // mount id
+  __u32 mount_ns_id; // mount namespace id
 
   __u64 cgroup_id; // cgroup id
 
   node_info_t node_info; // node/system information
-  mount_info_t mount_info; // mount information
+
+  __u8 comm[TASK_COMM_LEN]; // command
+  __u8 cwd[32];             // current working directory
+  __u8 mount_devname[256];  // mount device name
 } event_context_t;
 
-typedef unsigned long sys_args_t[5];
+typedef unsigned long sys_args_t[MAX_ARGS];
 
 #endif
