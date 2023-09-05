@@ -68,7 +68,7 @@ func parseData(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_openat_entry"
+		res_data["tarian_detector"] = "__x64_sys_openat_entry"
 
 		res_data["file_descriptor"] = event_data.Fd
 		res_data["filename"] = utils.Uint8toString(event_data.Filename[:])
@@ -76,7 +76,7 @@ func parseData(data any) (map[string]any, error) {
 		res_data["mode"] = event_data.Mode
 
 	case 1:
-		res_data["id"] = "__x64_sys_openat_exit"
+		res_data["tarian_detector"] = "__x64_sys_openat_exit"
 
 		res_data["return_value"] = event_data.Ret
 
