@@ -77,7 +77,7 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 
 	if len(r.eventData) != 0 {
 		t.TotalRecordsCount++
-		t.ProbeRecordsCount[r.eventData["id"].(string)]++
+		t.ProbeRecordsCount[r.eventData["tarian_detector"].(string)]++
 
 	}
 	return r.eventData, r.err
