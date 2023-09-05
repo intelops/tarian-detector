@@ -72,13 +72,13 @@ func parseData(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_bind_entry"
+		res_data["tarian_detector"] = "__x64_sys_bind_entry"
 
 		res_data["fd"] = event_data.Fd
 		res_data["backlog"] = event_data.Backlog
 
 	case 1:
-		res_data["id"] = "__x64_sys_bind_exit"
+		res_data["tarian_detector"] = "__x64_sys_bind_exit"
 
 		res_data["return_value"] = event_data.Ret
 
