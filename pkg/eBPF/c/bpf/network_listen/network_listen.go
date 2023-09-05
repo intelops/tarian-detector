@@ -14,7 +14,6 @@ import (
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH listen listen.bpf.c -- -I../../../../../headers -I../../
 
 // NetworkListen is an empty struct that serves as a receiver for methods related to network listening.
-
 type NetworkListen struct{}
 
 // NewNetworkListen creates and returns a new instance of NetworkListen.
