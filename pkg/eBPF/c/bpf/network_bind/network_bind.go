@@ -14,7 +14,6 @@ import (
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data -target $CURR_ARCH bind bind.bpf.c -- -I../../../../../headers -I../../
 
 // NetworkBind is an empty struct that serves as a receiver for methods related to network bindings.
-
 type NetworkBind struct{}
 
 // NewNetworkBind creates and returns a new instance of NetworkBind.
@@ -97,7 +96,7 @@ func parseData(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_bind_entry"
+		res_data["tarian_detector"] = "__x64_sys_bind_entry"
 
 		res_data["fd"] = (event_data.Fd)
 
@@ -109,7 +108,7 @@ func parseData(data any) (map[string]any, error) {
 		res_data["address_length"] = event_data.Addrlen
 
 	case 1:
-		res_data["id"] = "__x64_sys_bind_exit"
+		res_data["tarian_detector"] = "__x64_sys_bind_exit"
 
 		res_data["return_value"] = event_data.Ret
 
