@@ -68,12 +68,12 @@ func parseData(data any) (map[string]any, error) {
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_close_entry"
+		res_data["tarian_detector"] = "__x64_sys_close_entry"
 
 		res_data["file_descriptor"] = event_data.Fd
 
 	case 1:
-		res_data["id"] = "__x64_sys_close_exit"
+		res_data["tarian_detector"] = "__x64_sys_close_exit"
 
 		res_data["return_value"] = event_data.Ret
 
