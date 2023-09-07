@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	"github.com/intelops/tarian-detector/pkg/k8s"
+	"github.com/intelops/tarian-detector/pkg/linker"
 	"k8s.io/client-go/rest"
 )
 
@@ -22,7 +22,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		log.Print("Kubernetes environment not detected. The Kubernetes context has been disabled.")
+		log.Print(NotInClusterErrMsg)
 	} else {
 		watcher.Start()
 	}
@@ -53,6 +53,7 @@ func main() {
 	defer eventsDetector.Close()
 
 	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
+	defer stats(eventsDetector, bpfLinker)
 
 	// Loop read events
 	go func() {
@@ -62,50 +63,15 @@ func main() {
 				fmt.Println(err)
 			}
 
-			if watcher != nil {
-				containerId, err := k8s.ProcsContainerID(e["process_id"].(uint32))
-				if err != nil {
-					continue
-				}
-
-				if len(containerId) != 0 {
-					pod := watcher.FindPod(containerId)
-
-					k8sInfo := struct {
-						Podname        string
-						PodUid         string
-						Namespace      string
-						ContainerID    string
-						PodLabels      map[string]string
-						PodAnnotations map[string]string
-					}{}
-
-					if pod != nil {
-						k8sInfo = struct {
-							Podname        string
-							PodUid         string
-							Namespace      string
-							ContainerID    string
-							PodLabels      map[string]string
-							PodAnnotations map[string]string
-						}{
-							Podname:        pod.GetName(),
-							Namespace:      pod.GetNamespace(),
-							ContainerID:    containerId,
-							PodLabels:      pod.GetLabels(),
-							PodAnnotations: pod.GetAnnotations(),
-							PodUid:         string(pod.GetUID()),
-						}
-
-					}
-
-					k8sInfo.ContainerID = containerId
-					e["kubernetes"] = k8sInfo
-				}
+			k8sCtx, err := GetK8sContext(watcher, e["process_id"].(uint32))
+			if err != nil {
+				log.Print(err)
+				e["kubernetes"] = err.Error()
+			} else {
+				e["kubernetes"] = k8sCtx
 			}
 
-			// printEvent(e)
-			stats(eventsDetector)
+			printEvent(e)
 		}
 	}()
 
@@ -115,23 +81,37 @@ func main() {
 	}
 }
 
-// func printEvent(data map[string]any) {
-// 	div := "======================"
-// 	msg := ""
-// 	for ky, val := range data {
-// 		msg += fmt.Sprintf("%s: %v\n", ky, val)
-// 	}
+func printEvent(data map[string]any) {
+	div := "======================"
+	msg := ""
+	for ky, val := range data {
+		msg += fmt.Sprintf("%s: %v\n", ky, val)
+	}
 
-// 	log.Printf("%s\n%s%s\n", div, msg, div)
-// }
+	log.Printf("%s\n%s%s\n", div, msg, div)
+}
 
-func stats(d *detector.EventsDetector) {
-	fmt.Print("\033[H\033[2J")
-	fmt.Printf("%d detectors running...\n", d.Count())
+func stats(d *detector.EventsDetector, l *linker.Linker) {
+	// fmt.Print("\033[H\033[2J")
+	fmt.Printf("\n\n%d detectors running...\n", d.Count())
 	fmt.Printf("Total Record captured %d\n", d.TotalRecordsCount)
 
 	fmt.Printf("Event wise count...\n\n")
-	for k, v := range d.ProbeRecordsCount {
-		fmt.Printf("%s: %d\n", k, v)
+	countTriggered := 0
+	for k, v := range l.ProbeIds {
+		if !v {
+			// skips the disabled probes
+			continue
+		}
+
+		_, keyExists := d.ProbeRecordsCount[k]
+		if keyExists {
+			countTriggered++
+			fmt.Printf("%s: %d\n", k, d.ProbeRecordsCount[k])
+		} else {
+			fmt.Printf("%s: 0\n", k)
+		}
 	}
+
+	fmt.Printf("\n%d events triggered in total.\n", countTriggered)
 }
