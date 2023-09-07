@@ -107,7 +107,7 @@ var protocols = map[uint32]string{
 // HandlerFunc defines a function that handles specific network data.
 type HandlerFunc func(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16)  (string, string)
 
-var familyHandlers = map[string]HandlerFunc{
+var familyHandlers = map[int]HandlerFunc{
 	AF_INET:  HandleIPv4,
 	AF_INET6: HandleIPv6,
 	AF_UNIX:  HandleUnix,
