@@ -77,17 +77,18 @@ func parseData(data any) (map[string]any, error) {
 
 	// Get contextual information from the event data.
 	res_data := utils.SetContext(event_data.EventContext)
+	res_data["tarian_detector"] = "network_socket"
 
 	// Extract specific details based on the event type.
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_socket_entry"
+		res_data["tarian_detector_hook"] = "__x64_sys_socket_entry"
 
 		res_data["domain"] = utils.Domain(event_data.Domain)
 		res_data["type"] = utils.Type(event_data.Type)
 		res_data["protocol"] = utils.Protocol(event_data.Protocol)
 	case 1:
-		res_data["id"] = "__x64_sys_socket_exit"
+		res_data["tarian_detector_hook"] = "__x64_sys_socket_exit"
 
 		res_data["return_value"] = event_data.Ret
 	}

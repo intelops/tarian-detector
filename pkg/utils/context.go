@@ -12,8 +12,8 @@ type EventContext struct {
 	Glpid     uint32
 	Uid       uint32
 	Gid       uint32
-	Comm      [16]uint8
-	Cwd       [32]uint8
+	MountId   int32
+	MountNsId uint32
 	CgroupId  uint64
 	NodeInfo  struct {
 		Sysname    [65]uint8
@@ -23,11 +23,9 @@ type EventContext struct {
 		Machine    [65]uint8
 		Domainname [65]uint8
 	}
-	MountInfo struct {
-		MountId      int32
-		MountNsId    uint32
-		MountDevname [256]uint8
-	}
+	Comm         [16]uint8
+	Cwd          [32]uint8
+	MountDevname [256]uint8
 }
 
 type Node struct {
@@ -76,9 +74,9 @@ func SetContext(ec EventContext) map[string]any {
 	}
 
 	res_data["mount"] = Mount{
-		MountId:          ec.MountInfo.MountId,
-		MountNameSpaceId: ec.MountInfo.MountNsId,
-		MountDeviceName:  Uint8toString(ec.MountInfo.MountDevname[:]),
+		MountId:          ec.MountId,
+		MountNameSpaceId: ec.MountNsId,
+		MountDeviceName:  Uint8toString(ec.MountDevname[:]),
 	}
 
 	return res_data

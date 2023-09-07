@@ -6,6 +6,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -97,18 +98,13 @@ type PodWatcher struct {
 
 func NewPodWatcher(k8sClient *kubernetes.Clientset) *PodWatcher {
 	k8sInformerFactory := informers.NewSharedInformerFactory(k8sClient, 60*time.Second) // informers.WithTweakListOptions(func(options *metav1.ListOptions) {
-	// 	if nodeName != "" {
-	// 		options.FieldSelector = "spec.nodeName=" + nodeName
-	// 	}
-	// })
 
 	podInformer := k8sInformerFactory.Core().V1().Pods().Informer()
 	err := podInformer.AddIndexers(map[string]cache.IndexFunc{
 		containerIdx: ContainerIndexFunc,
 	})
 	if err != nil {
-		// logger.Fatal(err)
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 
 	return &PodWatcher{podInformer: podInformer, informerFactory: k8sInformerFactory}

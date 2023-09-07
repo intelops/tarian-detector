@@ -114,7 +114,7 @@ else
 		echo "// data gathered by this program \nstruct event_data {\n\tint id;\n\tevent_context_t eventContext;\n};\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
 		echo "// Force emits struct event_data into the elf\nconst struct event_data *unused __attribute__((unused));\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
 		echo "// ringbuffer map definition\nBPF_RINGBUF_MAP(event);\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
-		echo "SEC("")\nint $(NAME)(struct pt_regs *ctx){\n\tstruct event_data *ed;\n\n\t// allocate space for an event in map.\n\ted = BPF_RINGBUF_RESERVE(event, *ed);\n\tif (!ed) {\n\t\treturn -1;\n\t}\n\n\t// sets the context\n\tinit_context(&ed->eventContext);\n\n\tsys_args_t sys_args;\n\tread_sys_args_into(&sys_args, ctx);\n\n\t// pushes the information to ringbuf event mamp\n\tBPF_RINGBUF_SUBMIT(ed);\n\n\treturn 0;\n};" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "SEC("")\nint $(NAME)(struct pt_regs *ctx){\n\tstruct event_data *ed;\n\n\t// allocate space for an event in map.\n\ted = BPF_RINGBUF_RESERVE(event, *ed);\n\tif (!ed) {\n\t\treturn -1;\n\t}\n\n\t// sets the context\n\tinit_context(&ed->eventContext);\n\n\tsys_args_t sys_args;\n\tread_sys_args_into(&sys_args, ctx);\n\n\t// pushes the information to ringbuf event map\n\tBPF_RINGBUF_SUBMIT(ed);\n\n\treturn 0;\n};" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
 		# c template - end	\
 		\
 		# go template - start \

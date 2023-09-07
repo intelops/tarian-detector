@@ -84,11 +84,12 @@ func parseData(data any) (map[string]any, error) {
 	}
 
 	res_data := utils.SetContext(event_data.EventContext)
+	res_data["tarian_detector"] = "network_accept"
 
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_accept_entry"
+		res_data["tarian_detector_hook"] = "__x64_sys_accept_entry"
 
 		res_data["fd"] = (event_data.Fd)
 
@@ -98,10 +99,9 @@ func parseData(data any) (map[string]any, error) {
 		res_data["port"] = port
 
 	case 1:
-		res_data["id"] = "__x64_sys_accept_exit"
+		res_data["tarian_detector_hook"] = "__x64_sys_accept_exit"
 
 		res_data["return_value"] = event_data.Ret
-
 	}
 
 	return res_data, nil

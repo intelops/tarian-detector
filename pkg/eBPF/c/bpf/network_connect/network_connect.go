@@ -84,11 +84,12 @@ func parseData(data any) (map[string]any, error) {
 	}
 
 	res_data := utils.SetContext(event_data.EventContext)
+	res_data["tarian_detector"] = "network_connect"
 
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_connect_entry"
+		res_data["tarian_detector_hook"] = "__x64_sys_connect_entry"
 
 		res_data["fd"] = (event_data.Fd)
 
@@ -100,10 +101,9 @@ func parseData(data any) (map[string]any, error) {
 		res_data["address_length"] = event_data.Addrlen
 
 	case 1:
-		res_data["id"] = "__x64_sys_connect_exit"
+		res_data["tarian_detector_hook"] = "__x64_sys_connect_exit"
 
 		res_data["return_value"] = event_data.Ret
-
 	}
 
 	return res_data, nil
