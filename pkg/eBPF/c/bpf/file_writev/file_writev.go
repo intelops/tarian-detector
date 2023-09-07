@@ -64,17 +64,18 @@ func parseData(data any) (map[string]any, error) {
 	}
 
 	res_data := utils.SetContext(event_data.EventContext)
+	res_data["tarian_detector"] = "file_writev"
 
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["tarian_detector"] = "__x64_sys_writev_entry"
+		res_data["tarian_detector_hook"] = "__x64_sys_writev_entry"
 
 		res_data["file_descriptor"] = event_data.Fd
 		res_data["vlen"] = event_data.Vlen
 
 	case 1:
-		res_data["tarian_detector"] = "__x64_sys_writev_exit"
+		res_data["tarian_detector_hook"] = "__x64_sys_writev_exit"
 
 		res_data["return_value"] = event_data.Ret
 
