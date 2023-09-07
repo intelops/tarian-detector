@@ -19,26 +19,6 @@ func NewNetworkConnect() *NetworkConnect {
 	return &NetworkConnect{}
 }
 
-func (e *connectEventData) GetSaFamily() uint16 {
-	return e.SaFamily
-}
-
-func (e *connectEventData) InterpretPort() uint16 {
-	return e.Port
-}
-
-func (e *connectEventData) GetIPv4Addr() uint32 {
-	return e.V4Addr.S_addr
-}
-
-func (e *connectEventData) GetIPv6Addr() [16]uint8 {
-	return e.V6Addr.S6Addr
-}
-
-func (e *connectEventData) GetUnixAddr() []uint8 {
-	return e.UnixAddr.Path[:]
-}
-
 func (fo *NetworkConnect) NewModule() (bpf.BpfModule, error) {
 	bm := bpf.NewBpfModule()
 
@@ -93,7 +73,7 @@ func parseData(data any) (map[string]any, error) {
 
 		res_data["fd"] = (event_data.Fd)
 
-		family, ip, port := utils.InterpretFamilyAndIP(event_data)
+		family, ip, port := utils.InterpretFamilyAndIP(event_data.SaFamily,event_data.V4Addr.S_addr,event_data.V6Addr.S6Addr,event_data.UnixAddr.Path[:],event_data.Port)
 		res_data["address_family"] = family
 		res_data["ip_address"] = ip
 		res_data["port"] = port
