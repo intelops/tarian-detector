@@ -14,11 +14,14 @@ import (
 const (
 	SOCK_NONBLOCK = 000004000
 	SOCK_CLOEXEC  = 002000000
+	AF_INET  = 2
+    AF_INET6 = 10
+    AF_UNIX  = 1
 )
 
 
 // Utility function to get string representation or fallback to numeric value
-func mapLookup(m map[uint32]string, key uint32, additionalFlags ...uint32) string {
+func MapLookup(m map[uint32]string, key uint32, additionalFlags ...uint32) string {
 	var f []string
 	if name, ok := m[key]; ok {
 		f = append(f, name)
@@ -104,32 +107,32 @@ var protocols = map[uint32]string{
 // HandlerFunc defines a function that handles specific network data.
 type HandlerFunc func(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16)  (string, string)
 
-var FamilyHandlers = map[string]HandlerFunc{
-	"AF_INET":  HandleIPv4,
-	"AF_INET6": HandleIPv6,
-	"AF_UNIX":  HandleUnix,
+var familyHandlers = map[string]HandlerFunc{
+	AF_INET:  HandleIPv4,
+	AF_INET6: HandleIPv6,
+	AF_UNIX:  HandleUnix,
 }
 
 // Convert IPv4 address from binary to string.
-func ipv4ToString(addr uint32) string {
+func Ipv4ToString(addr uint32) string {
 	return fmt.Sprintf("%d.%d.%d.%d", byte(addr), byte(addr>>8), byte(addr>>16), byte(addr>>24))
 }
 
 // Convert IPv6 address from binary to string.
-func ipv6ToString(addr [16]uint8) string {
+func Ipv6ToString(addr [16]uint8) string {
 	return net.IP(addr[:]).String()
 }
 
 func Domain(sd uint32) string {
-	return mapLookup(socketDomains, sd)
+	return MapLookup(socketDomains, sd)
 }
 
 func Type(st uint32) string {
-	return mapLookup(socketTypes, st&0xf, st&SOCK_NONBLOCK, st&SOCK_CLOEXEC)
+	return MapLookup(socketTypes, st&0xf, st&SOCK_NONBLOCK, st&SOCK_CLOEXEC)
 }
 
 func Protocol(proto uint32) string {
-	return mapLookup(protocols, proto)
+	return MapLookup(protocols, proto)
 }
 
 func InterpretPort(port uint16) uint16 {
@@ -137,31 +140,35 @@ func InterpretPort(port uint16) uint16 {
 } 
 
 func DefaultHandler(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16)(string, string) {
-	return Domain(uint32(e.GetSaFamily())), "N/A"
+	familyName, exists := socketDomains[uint32(saFamily)]
+	if !exists {
+		familyName = "UNKNOWN"
+	}
+	return familyName, "N/A"
 }
 
-func handleIPv4(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
-	return "AF_INET", ipv4ToString(e.GetIPv4Addr())
+func HandleIPv4(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
+	return "AF_INET", Ipv4ToString(v4Addr)
 }
 
 // HandleIPv6 handles IPv6-specific data.
-func handleIPv6(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
-	return "AF_INET6", ipv6ToString(e.GetIPv6Addr())
+func HandleIPv6(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
+	return "AF_INET6", Ipv6ToString(v6Addr)
 }
 
 // HandleUnix handles Unix-specific data.
-func handleUnix(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
-	return "AF_UNIX", Uint8toString(e.GetUnixAddr())
+func HandleUnix(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
+	return "AF_UNIX", Uint8toString(unixAddr)
 }
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.
 func InterpretFamilyAndIP(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (family string, ip string, retPort uint16) {
-	handler, exists := FamilyHandlers[Domain(uint32(e.GetSaFamily()))]
+	handler, exists := familyHandlers[int(saFamily)]
 	if !exists {
 		handler = DefaultHandler
 	}
-	family, ip = handler(e)
-	port = e.InterpretPort()
+	family, ip = handler(saFamily, v4Addr, v6Addr, unixAddr, port)
+	retPort = InterpretPort(port)
 	return
 }
 
