@@ -187,20 +187,20 @@ func HandleUnix(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uin
 
 // ParseSendmsgFlags parses sendmsg flag values to their string representation.
 func ParseSendmsgFlags(flags uint32) string {
-    var parsedFlags []string
-    for bit, name := range sendmsgFlags {
-        if flags&bit != 0 {
-            parsedFlags = append(parsedFlags, name)
-            flags &= ^bit // Remove this flag bit from the remaining flags
-        }
-    }
+	var parsedFlags []string
+	for bit, name := range sendmsgFlags {
+		if flags&bit != 0 {
+			parsedFlags = append(parsedFlags, name)
+			flags &= ^bit // Remove this flag bit from the remaining flags
+		}
+	}
 
-    // Add any remaining unrecognized flags as numeric values.
-    if flags != 0 {
-        parsedFlags = append(parsedFlags, strconv.FormatUint(uint64(flags), 16))
-    }
+	// Add any remaining unrecognized flags as numeric values.
+	if flags != 0 {
+		parsedFlags = append(parsedFlags, strconv.FormatUint(uint64(flags), 16))
+	}
 
-    return strings.Join(parsedFlags, "|")
+	return strings.Join(parsedFlags, "|")
 }
 
 // InterpretFamilyAndIP interprets the family, IP, and port from the given network data.

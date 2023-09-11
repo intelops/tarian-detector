@@ -64,11 +64,12 @@ func parseData(data any) (map[string]any, error) {
 	}
 
 	res_data := utils.SetContext(event_data.EventContext)
+	res_data["tarian_detector"] = "network_sendmsg"
 
 	// event specific information
 	switch event_data.Id {
 	case 0:
-		res_data["id"] = "__x64_sys_sendmsg_entry"
+		res_data["tarian_detector_hook"] = "__x64_sys_sendmsg_entry"
 
 		res_data["socket_file_descriptor"] = event_data.Fd
 		res_data["message_length"] = event_data.Len //The length of the message being sent.
@@ -77,7 +78,7 @@ func parseData(data any) (map[string]any, error) {
 		res_data["Destination_address"] = utils.InterpretMsgName(event_data.MsgName, event_data.MsgNamelen) //Destination address
 
 	case 1:
-		res_data["id"] = "__x64_sys_sendmsg_exit"
+		res_data["tarian_detector_hook"] = "__x64_sys_sendmsg_exit"
 
 		res_data["return_value"] = event_data.Ret
 
