@@ -2,7 +2,6 @@
 # Copyright 2023 Authors of Tarian & the Organization created Tarian
 
 # executable Files Path
-export PATH := /usr/bin:$(PATH)
 EXECUTABLE=bin
 
 # executable File name
