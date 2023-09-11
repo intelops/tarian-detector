@@ -9,6 +9,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"encoding/binary"
 )
 
 const (
@@ -228,7 +229,7 @@ func InterpretMsgName(msgName [64]uint8, msgLen int32) string {
 
     handler, exists := familyHandlers[int(saFamily)]
     if !exists {
-        handler = defaultHandler
+        handler = DefaultHandler
     }
 
     _, ip := handler(saFamily, v4Addr, v6Addr, unixAddr, 0) // Passing 0 for port as it's not used here
