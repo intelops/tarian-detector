@@ -73,7 +73,7 @@ func parseData(data any) (map[string]any, error) {
 
 		res_data["fd"] = (event_data.Fd)
 
-		family, ip, port := utils.InterpretFamilyAndIP(event_data.SaFamily,event_data.V4Addr.S_addr,event_data.V6Addr.S6Addr,event_data.UnixAddr.Path[:],event_data.Port)
+		family, ip, port := utils.InterpretFamilyAndIP(event_data.SaFamily, event_data.V4Addr.S_addr, event_data.V6Addr.S6Addr, event_data.UnixAddr.Path[:], event_data.Port)
 		res_data["address_family"] = family
 		res_data["ip_address"] = ip
 		res_data["port"] = port

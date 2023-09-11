@@ -14,11 +14,10 @@ import (
 const (
 	SOCK_NONBLOCK = 000004000
 	SOCK_CLOEXEC  = 002000000
-	AF_INET  = 2
-    AF_INET6 = 10
-    AF_UNIX  = 1
+	AF_INET       = 2
+	AF_INET6      = 10
+	AF_UNIX       = 1
 )
-
 
 // Utility function to get string representation or fallback to numeric value
 func MapLookup(m map[uint32]string, key uint32, additionalFlags ...uint32) string {
@@ -105,7 +104,7 @@ var protocols = map[uint32]string{
 }
 
 // HandlerFunc defines a function that handles specific network data.
-type HandlerFunc func(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16)  (string, string)
+type HandlerFunc func(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string)
 
 var familyHandlers = map[int]HandlerFunc{
 	AF_INET:  HandleIPv4,
@@ -137,9 +136,9 @@ func Protocol(proto uint32) string {
 
 func InterpretPort(port uint16) uint16 {
 	return port
-} 
+}
 
-func DefaultHandler(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16)(string, string) {
+func DefaultHandler(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string) {
 	familyName, exists := socketDomains[uint32(saFamily)]
 	if !exists {
 		familyName = "UNKNOWN"
@@ -171,5 +170,3 @@ func InterpretFamilyAndIP(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unix
 	retPort = InterpretPort(port)
 	return
 }
-
-
