@@ -103,6 +103,31 @@ var protocols = map[uint32]string{
 	58: "ICMPv6",
 }
 
+var sendmsgFlags = map[uint32]string{
+	1: "MSG_OOB", // Sends out-of-band data on sockets that support this notion (e.g., of type SOCK_STREAM); the underlying protocol must also support out-of-band data.
+	2: "MSG_PEEK", // Peek at incoming messages.
+	4: "MSG_DONTROUTE", // Don't use a gateway to send out the packet, send to hosts only on directly connected networks. This is usually used only by diagnostic or routing programs.
+	8: "MSG_CTRUNC", // Control data lost before delivery.
+	16: "MSG_PROXY", // Supply or ask for a second address.
+	32: "MSG_TRUNC", // Truncate message if it's too long.
+	64: "MSG_DONTWAIT", // Enables nonblocking operation; if the operation would block, EAGAIN or EWOULDBLOCK is returned.
+	128: "MSG_EOR", // Terminates a record (when this notion is supported, as for sockets of type SOCK_SEQPACKET).
+	256: "MSG_WAITALL", // Wait for a full request.
+	512: "MSG_FIN", 
+	1024: "MSG_SYN", 
+	2048: "MSG_CONFIRM", // Tell the link layer that forward progress happened.
+	4096: "MSG_RST", 
+	8192: "MSG_ERRQUEUE", // Fetch message from the error queue.
+	16384: "MSG_NOSIGNAL", // Don't generate a SIGPIPE signal if the peer on a stream-oriented socket has closed the connection.
+	32768: "MSG_MORE", // The caller has more data to send.
+	65536: "MSG_WAITFORONE", // Wait for at least one packet to return.
+	262144: "MSG_BATCH", // More messages coming (used with sendmmsg).
+	67108864: "MSG_ZEROCOPY", // Use user data in the kernel path.
+	536870912: "MSG_FASTOPEN", // Send data in TCP SYN.
+	1073741824: "MSG_CMSG_CLOEXEC", // Set close_on_exit for file descriptor received through SCM_RIGHTS.
+}
+
+
 // HandlerFunc defines a function that handles specific network data.
 type HandlerFunc func(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unixAddr []uint8, port uint16) (string, string)
 
@@ -169,4 +194,48 @@ func InterpretFamilyAndIP(saFamily uint16, v4Addr uint32, v6Addr [16]uint8, unix
 	family, ip = handler(saFamily, v4Addr, v6Addr, unixAddr, port)
 	retPort = InterpretPort(port)
 	return
+}
+
+// InterpretMsgName interprets msg_name to its correct form based on its address family.
+// Takes in msgName which is the array containing the address, and msgLen which is the length of the address.
+func InterpretMsgName(msgName [64]uint8, msgLen int32) string {
+    // If msg_namelen is zero, the message will be sent to an address that the kernel already knows about
+    if msgLen == 0 {
+        return "Destination is implied (msg_namelen is zero)"
+    }
+
+    // Assuming first two bytes represent the address family in little endian
+    saFamily := binary.LittleEndian.Uint16(msgName[:2])
+
+    var v4Addr uint32
+    var v6Addr [16]uint8
+    var unixAddr []uint8
+
+    switch saFamily {
+    case AF_INET: // AF_INET for IPv4
+        v4Addr = binary.LittleEndian.Uint32(msgName[4:8])
+    case AF_INET6: // AF_INET6 for IPv6
+        copy(v6Addr[:], msgName[8:24])
+    case AF_UNIX: // AF_UNIX for Unix Domain Socket
+        // Extracting until the first null byte as AF_UNIX addresses are usually null-terminated
+        for _, b := range msgName[2:msgLen] { // Start from index 2 to skip the family bytes
+            if b == 0 {
+                break
+            }
+            unixAddr = append(unixAddr, b)
+        }
+    }
+
+    handler, exists := familyHandlers[int(saFamily)]
+    if !exists {
+        handler = defaultHandler
+    }
+
+    _, ip := handler(saFamily, v4Addr, v6Addr, unixAddr, 0) // Passing 0 for port as it's not used here
+
+    if saFamily == AF_UNIX {
+        return "Unix: " + ip
+    }
+
+    return ip
 }
