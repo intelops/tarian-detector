@@ -3,7 +3,7 @@
 
 //go:build ignore
 
-#include "includes.h"
+#include "common.h"
 
 // data gathered by this program.
 struct event_data {
