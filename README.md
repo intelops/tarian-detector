@@ -29,8 +29,8 @@ An image or diagram that provides an overview of your project's architecture is 
 
 ## 📚 Documentation
 
-- [Installation Guide](/public/documentations/Installation_Guide.md)
-- [Use Cases](/public/documentations/Use_Case.md)
+- [Installation Guide](/public/documents/Installation_Guide.md)
+- [Use Cases](/public/documents/Use_Case.md)
 - [Changelog](/CHANGELOG.md)
 - [Release Notes](/RELEASENOTES.md)
 
@@ -39,11 +39,11 @@ An image or diagram that provides an overview of your project's architecture is 
 
 We welcome and appreciate contributions! Here's how you can help:
 
-- [Contributor Guidelines](/public/documentations/Contributor_Guidelines.md)
-- [Development Guide](/public/documentations/Development_Guide.md)
-- [Repository Guide](/public/documentations/Repository_Structure.md)
-- [File Contribution Guide](/public/documentations/File_Contribution%20_Guide.md)
-- [Testing Guide](/public/documentations/)
+- [Contributor Guidelines](/public/documents/Contributor_Guidelines.md)
+- [Development Guide](/public/documents/Development_Guide.md)
+- [Repository Guide](/public/documents/Repository_Structure.md)
+- [File Contribution Guide](/public/documents/File_Contribution%20_Guide.md)
+- [Testing Guide](/public/documents/Testing.md)
 - [Join Tarian Slack](https://join.slack.com/t/kube-tarian/shared_invite/zt-118iqu4g6-wopEIyjqD_uy5uXRDChaLA)
 
 
