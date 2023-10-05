@@ -17,27 +17,19 @@ stain int new_program(program_data_t *pd, void *ctx) {
 
   // reads syscall arguments
   int err = read_sys_ctx_into(&pd->sys_ctx, pd->ctx);
-  if (err != OK) 
+  if (err != OK)
     return err;
 
-  // pd.event = {};                 /* event data */
-  // pd.event->context = {};        /* event context */
-  // pd.event->context.task = {};   /* task context */
-  // pd.event->buf = {};            /* syscall buffer */
-  // pd.event->buf.num_fields = 0;  /* no of fields stored */
-  // pd.event->buf.field_types = 0; /* stored field types */
-  // pd.event->system_info = {}     /* system information*/
-
   pd->event = BPF_RINGBUF_RESERVE(EVENT_RINGBUF_MAP_NAME, *pd->event);
-  if (!pd->event) 
+  if (!pd->event)
     return RINGBUF_CAPACITY_REACHED_ERR;
-  
 
   pd->event->buf.num_fields = 0;
   pd->event->buf.field_types = 0;
+  flush(pd->event->buf.data, sizeof(pd->event->buf.data));
 
   err = init_event_context(&pd->event->context, pd->task, 0 /* event id */, (int)(pd->sys_ctx[6]) /* syscall id */);
-  if (err != OK){
+  if (err != OK) {
     events_ringbuf_discard(pd);
     return err;
   }
@@ -51,7 +43,7 @@ stain int new_program(program_data_t *pd, void *ctx) {
 
 stain int init_event_context(event_context_t *e, struct task_struct *t, int event_id, int syscall_id) {
   int err = init_task_context(&e->task, t);
-  if (err != OK) 
+  if (err != OK)
     return err;
 
   e->ts = bpf_ktime_get_ns();
@@ -85,12 +77,12 @@ stain int init_task_context(task_context_t *tc, struct task_struct *t) {
   tc->mount_ns_id = get_mnt_ns_id(get_task_nsproxy(t));
   tc->pid_ns_id = get_pid_ns_id(get_task_nsproxy(t));
 
-  __builtin_memset(tc->comm, 0, sizeof(tc->comm));
+  flush(tc->comm, sizeof(tc->comm));
   if (BPF_GET_COMM(tc->comm) < 0)
     return NOT_OK;
 
   struct path path = BPF_CORE_READ(t, fs, pwd);
-
+  flush(tc->cwd, sizeof(tc->cwd));
   return read_cwd_into(&path, tc->cwd);
 }
 
@@ -119,7 +111,7 @@ stain int read_cwd_into(struct path *path, u8 *buf) {
 
   unsigned int len = 0;
   short cursor = MAX_STRING_SIZE - 1; // current index in buffer. starts with 4095
-  short str_len = 0;       // total size of string written to buffer
+  short str_len = 0; // total size of string written to buffer
 
 #pragma unroll
   for (int i = 0; i < MAX_PATH_LOOP /* 20 */; i++) {
@@ -171,7 +163,7 @@ stain int read_cwd_into(struct path *path, u8 *buf) {
     cursor -= 1;
     bpf_probe_read(&(buf[cursor & (MAX_STRING_SIZE - 1)]), 1, &slash);
     bpf_probe_read(&(buf[MAX_STRING_SIZE - 1]), 1, &zero);
-    str_len += 2 /* 1 for null termination + 1 for adding slash in the begning of the string */;
+    str_len += 2; /* 1 for null termination + 1 for adding slash in the begning of the string */
   }
 
   // write start index of string to buffer
@@ -183,9 +175,8 @@ stain int read_cwd_into(struct path *path, u8 *buf) {
 
 // task->nsproxy->uts_ns->name
 stain int read_node_info_into(node_info_t *ni, struct task_struct *t) {
-  if (ni == NULL) 
+  if (ni == NULL)
     return NULL_POINTER_ERROR;
-  
 
   struct uts_namespace *uts_ns = get_uts_ns(get_task_nsproxy(t));
   BPF_CORE_READ_INTO(ni, uts_ns, name);
