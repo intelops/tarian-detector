@@ -6,18 +6,17 @@
 // License Declaration
 char LICENSE[] SEC("license") = "Dual MIT/GPL";
 
-// Ringbuffer map definition
-#define BPF_RINGBUF_MAP(__name__)                                              \
-  struct {                                                                     \
-    __uint(type, BPF_MAP_TYPE_RINGBUF);                                        \
-    __uint(max_entries, 1 << 24);                                              \
-  } __name__ SEC(".maps");
+#if defined(bpf_target_x86)
+#define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), r9)
+#elif defined(bpf_target_arm64)
+#define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), regs[5])
+#endif
 
-// Ringbuf helpers
-#define BPF_RINGBUF_SUBMIT(__var__) bpf_ringbuf_submit(__var__, 0)
-#define BPF_RINGBUF_DISCARD(__var__) bpf_ringbuf_discard(__var__, 0)
-#define BPF_RINGBUF_RESERVE(__map_name__, __var__)                             \
-  bpf_ringbuf_reserve(&__map_name__, sizeof(__var__), 0)
+#if defined(bpf_target_x86)
+#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), orig_ax)
+#elif defined(bpf_target_arm64)
+#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), syscallno)
+#endif
 
 // bpf_probe_read_str
 #define BPF_READ_STR(__from_ptr__, __to_ptr__)                                 \
@@ -31,15 +30,14 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define BPF_GET_COMM(__var__) bpf_get_current_comm(&__var__, sizeof(__var__))
 
 // read array of strings
-static __always_inline int read_str_arr_to_ptr(const char *const *from,
-                                               __u8 (*to)[MAX_STRING_SIZE]) {
+stain int read_str_arr_to_ptr(const char *const *from, u8 (*to)[MAX_STRING_SIZE]) {
   if (to == NULL || from == NULL)
     return -1;
 
   int i = 0;
-  __u8 *curr_ptr;
+  u8 *curr_ptr;
 
-  while (i < MAX_LOOP) {
+  while (i < 20) {
     BPF_READ(&from[i], &curr_ptr);
     if (curr_ptr == NULL) {
       break;
@@ -52,32 +50,20 @@ static __always_inline int read_str_arr_to_ptr(const char *const *from,
   return 0;
 };
 
-// reads process id and thread group id to the pointers
-static __always_inline int get_pid_tgid(void *ptr_pid, void *ptr_tgid) {
-  if (ptr_pid == NULL || ptr_tgid == NULL)
-    return -1;
-
-  __u64 pid_tgid = bpf_get_current_pid_tgid();
-  *(__u32 *)ptr_pid = pid_tgid >> 32;
-  *(__u32 *)ptr_tgid = pid_tgid;
-
-  return 0;
-}
-
 // reads user id and group id to the pointers
-static __always_inline int get_uid_gid(void *ptr_uid, void *ptr_gid) {
+stain int get_uid_gid(void *ptr_uid, void *ptr_gid) {
   if (ptr_uid == NULL || ptr_gid == NULL)
     return -1;
 
-  __u64 uid_gid = bpf_get_current_uid_gid();
-  *(__u32 *)ptr_uid = uid_gid >> 32;
-  *(__u32 *)ptr_gid = uid_gid;
+  u64 uid_gid = bpf_get_current_uid_gid();
+  *(u32 *)ptr_uid = uid_gid >> 32;
+  *(u32 *)ptr_gid = uid_gid;
 
   return 0;
 }
 
 // reads cwd to the pointer
-static __always_inline int get_cwd(__u8 (*to_ptr_arr)[32]) {
+stain int get_cwd(u8 (*to_ptr_arr)[32]) {
   if (to_ptr_arr == NULL)
     return -1;
 
@@ -96,4 +82,49 @@ static __always_inline int get_cwd(__u8 (*to_ptr_arr)[32]) {
   return BPF_READ_STR(&dentry->d_iname, to_ptr_arr);
 }
 
+stain struct mount *real_mount(struct vfsmount *mnt) {
+  return container_of(mnt, struct mount, mnt);
+}
+
+stain struct dentry *get_mnt_root_ptr(struct vfsmount *vfsmnt){
+  return BPF_CORE_READ(vfsmnt, mnt_root);
+}
+
+stain struct dentry *get_d_parent_ptr(struct dentry *dentry){
+  return BPF_CORE_READ(dentry, d_parent);
+}
+
+stain struct qstr get_d_name_from_dentry(struct dentry *dentry){
+  return BPF_CORE_READ(dentry, d_name);
+}
+
+stain int events_ringbuf_submit(program_data_t *ptr) {
+  if (ptr == NULL)
+    return NULL_POINTER_ERROR;
+  
+  BPF_RINGBUF_SUBMIT(ptr->event);
+
+  return OK;
+}
+
+stain int events_ringbuf_discard(program_data_t *ptr){
+  if (ptr == NULL)
+      return NULL_POINTER_ERROR;
+  
+  BPF_RINGBUF_DISCARD(ptr->event);
+
+  return OK;
+}
+
+stain int flush(u8 *buf, int n) {
+  if (buf == NULL) 
+    return NULL_POINTER_ERROR;
+
+  u8 zero = 0;
+
+  for (int i = 0; i < n; i++){
+    bpf_probe_read(&buf[i], sizeof(u8), &zero);
+  }
+  return OK;
+}
 #endif

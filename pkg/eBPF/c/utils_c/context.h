@@ -5,12 +5,12 @@
 
 // func definitions
 stain int read_cwd_into(struct path *, u8 *);
-stain int new_program(program_data_t *pd, void *);
+stain int new_program(program_data_t *pd, void *, int);
 stain int read_node_info_into(node_info_t *, struct task_struct *);
 stain int init_task_context(task_context_t *, struct task_struct *);
 stain int init_event_context(event_context_t *, struct task_struct *, int, int);
 
-stain int new_program(program_data_t *pd, void *ctx) {
+stain int new_program(program_data_t *pd, void *ctx, int event_id) {
   pd->ctx = ctx; /* pt regs ctx*/
   pd->task = (struct task_struct *)bpf_get_current_task(); /* task struct pointer*/
   pd->cursor = 0;
@@ -28,7 +28,7 @@ stain int new_program(program_data_t *pd, void *ctx) {
   pd->event->buf.field_types = 0;
   flush(pd->event->buf.data, sizeof(pd->event->buf.data));
 
-  err = init_event_context(&pd->event->context, pd->task, 0 /* event id */, (int)(pd->sys_ctx[6]) /* syscall id */);
+  err = init_event_context(&pd->event->context, pd->task, event_id /* event id */, (int)(pd->sys_ctx[6]) /* syscall id */);
   if (err != OK) {
     events_ringbuf_discard(pd);
     return err;
@@ -88,7 +88,7 @@ stain int init_task_context(task_context_t *tc, struct task_struct *t) {
 
 stain int read_cwd_into(struct path *path, u8 *buf) {
   /*
-    Data saved to buf: [[start index of string 2byte][size of the string 2byte] 32bit/4byte]....[...string....]
+    Data saved to buf: [start index of string 2byte][size of the string 2byte]....[...string....]
   */
   char slash = '/';
   int zero = 0;

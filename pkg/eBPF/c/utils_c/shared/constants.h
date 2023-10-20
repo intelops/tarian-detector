@@ -1,0 +1,77 @@
+#ifndef __UTLIS_C_SHARED_CONSTANTS_H
+#define __UTLIS_C_SHARED_CONSTANTS_H
+
+#define MAX_ARGS 8
+#define MAX_PATH_LOOP 20
+#define MAX_STR_ARR_ELEM 38
+#define MAX_NODE_FIELD_SIZE 65    /* 65B */
+#define MAX_STRING_SIZE 4096      /* 4KB */
+#define SYS_BUF_SIZE 1024 * 10 /* 10kB */
+
+#define TASK_COMM_LEN 16
+
+#define AF_INET 2
+#define AF_INET6 10
+#define AF_UNIX 1
+
+#define EVENT_RINGBUF_MAP_NAME events
+#define RINGBUF_MAX_ENTRIES 1024 * 1024 * 16 /* 16MB */
+
+#define stain static __always_inline
+
+enum pt_regs_idx_e{
+    PARAM1 = 0,
+    PARAM2,
+    PARAM3,
+    PARAM4,
+    PARAM5,
+    PARAM6,
+    SYSCALL,
+    RETURN
+};
+
+enum argument_type_e {
+    NONE_T = 0UL,
+    INT_T,
+    UINT_T,
+    LONG_T,
+    ULONG_T,
+    STR_T,
+    STR_ARR_T,
+    ARG_TYPE_MAX = 255UL
+};
+
+enum event_id_e {
+    SYS_ENTER_EXECVE = 0UL,
+    SYS_EXIT_EXECVE,
+    SYS_ENTER_EXECVEAT,
+    SYS_EXIT_EXECVEAT,
+    SYS_ENTER_OPEN,
+    SYS_EXIT_OPEN,
+    SYS_ENTER_OPENAT,
+    SYS_EXIT_OPENAT,
+    SYS_ENTER_OPENAT2,
+    SYS_EXIT_OPENAT2,
+    SYS_ENTER_CLOSE,
+    SYS_EXIT_CLOSE,
+    SYS_ENTER_READ,
+    SYS_EXIT_READ,
+    SYS_ENTER_READV,
+    SYS_EXIT_READV,
+    SYS_ENTER_WRITE,
+    SYS_EXIT_WRITE,
+    SYS_ENTER_WRITEV,
+    SYS_EXIT_WRITEV,
+    SYS_ENTER_LISTEN,
+    SYS_EXIT_LISTEN,
+    SYS_ENTER_SOCKET,
+    SYS_EXIT_SOCKET,
+    SYS_ENTER_ACCEPT,
+    SYS_EXIT_ACCEPT,
+    SYS_ENTER_BIND,
+    SYS_EXIT_BIND,
+    SYS_ENTER_CONNECT,
+    SYS_EXIT_CONNECT
+};
+
+#endif
