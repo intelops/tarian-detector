@@ -3,6 +3,7 @@
 
 #include "index.h"
 
+long total = 0, dropped = 0;
 // License Declaration
 char LICENSE[] SEC("license") = "Dual MIT/GPL";
 
@@ -96,6 +97,13 @@ stain struct dentry *get_d_parent_ptr(struct dentry *dentry){
 
 stain struct qstr get_d_name_from_dentry(struct dentry *dentry){
   return BPF_CORE_READ(dentry, d_name);
+}
+
+stain void *events_reserve_space(u16 cpu, int size) {
+  // int zero = 0;
+
+  // return (struct event_data *)bpf_map_lookup_elem(&heap, &zero);
+  return BPF_RINGBUF_RESERVE(EVENT_RINGBUF_MAP_NAME, size);
 }
 
 stain int events_ringbuf_submit(program_data_t *ptr) {

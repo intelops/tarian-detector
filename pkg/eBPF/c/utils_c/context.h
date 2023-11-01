@@ -11,6 +11,8 @@ stain int init_task_context(task_context_t *, struct task_struct *);
 stain int init_event_context(event_context_t *, struct task_struct *, int, int);
 
 stain int new_program(program_data_t *pd, void *ctx, int event_id) {
+  total++;
+  
   pd->ctx = ctx; /* pt regs ctx*/
   pd->task = (struct task_struct *)bpf_get_current_task(); /* task struct pointer*/
   pd->cursor = 0;
@@ -20,7 +22,7 @@ stain int new_program(program_data_t *pd, void *ctx, int event_id) {
   if (err != OK)
     return err;
 
-  pd->event = BPF_RINGBUF_RESERVE(EVENT_RINGBUF_MAP_NAME, *pd->event);
+  pd->event = events_reserve_space((u16)bpf_get_smp_processor_id(), (int)sizeof(*pd->event));
   if (!pd->event)
     return RINGBUF_CAPACITY_REACHED_ERR;
 

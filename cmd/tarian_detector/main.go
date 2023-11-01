@@ -53,6 +53,7 @@ func main() {
 	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
 	// defer stats(eventsDetector, bpfLinker)
 
+	count := 0
 	// Loop read events
 	go func() {
 		for {
@@ -63,13 +64,18 @@ func main() {
 
 			k8sCtx, err := GetK8sContext(watcher, e["host_pid"].(uint32))
 			if err != nil {
-				log.Print(err)
+				// log.Print(err)
 				e["kubernetes"] = err.Error()
 			} else {
 				e["kubernetes"] = k8sCtx
 			}
 
-			printEvent(e)
+			// printEvent(e)
+			count++
+			fmt.Println("Total count:", count)
+			// if count > 1000 {
+			// 	os.Exit(1)
+			// }
 		}
 	}()
 
