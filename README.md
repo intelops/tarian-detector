@@ -43,7 +43,7 @@ We welcome and appreciate contributions! Here's how you can help:
 - [Development Guide](/public/documentations/Development_Guide.md)
 - [Repository Guide](/public/documentations/Repository_Structure.md)
 - [File Contribution Guide](/public/documentations/File_Contribution%20_Guide.md)
-- [Testing Guide](/public/documentations/)
+- [Testing Guide](/public/documentations/Testing.md)
 - [Join Tarian Slack](https://join.slack.com/t/kube-tarian/shared_invite/zt-118iqu4g6-wopEIyjqD_uy5uXRDChaLA)
 
 
