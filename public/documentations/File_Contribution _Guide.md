@@ -164,6 +164,54 @@ Contributing to `tarian.go` requires a solid understanding of Go, eBPF, and syst
 -----
 The `tarian.go` file in the `eventparser` package of the Tarian Detector project is focused on parsing and interpreting system call arguments. It plays a crucial role in analyzing and formatting the data captured by the eBPF programs for further processing or monitoring. Here's an overview of its key functionalities:
 
+### Key Functionalities of `tarian.go` in the `eventparser` Package
+
+1. **Package Declaration**: The file is part of the `eventparser` package, indicating its role in parsing and interpreting event data.
+
+2. **SysArg Struct**:
+   - Represents a system call argument.
+   - Contains fields like `Name`, `Description`, `Type`, and `Function`. The `Function` is a custom parser function to convert the argument value into a readable format.
+
+3. **Syscall Struct**:
+   - Represents a system call.
+   - Contains fields like `Id`, `Name`, and a slice of `SysArg` representing the arguments of the syscall.
+
+4. **Arg Struct**:
+   - A simple struct to hold the name and value of a parsed argument.
+
+5. **Syscalls Map**:
+   - A map of system call IDs to `Syscall` structs.
+   - It predefines a set of system calls (like `sys_read`, `sys_write`, `sys_open`, etc.) and their associated arguments.
+
+6. **Function `ParseArg`**:
+   - A method of the `SysArg` struct.
+   - It parses an argument value based on the custom parser function defined in `SysArg`.
+   - If no custom parser is defined, it converts the value to a string using `fmt.Sprintf`.
+
+7. **Custom Argument Parsing**:
+   - The design allows for custom parsing logic for different argument types, making the system flexible and capable of handling a variety of data formats.
+
+### How to Contribute to `tarian.go` in the `eventparser` Package
+
+Contributors interested in enhancing the system call parsing and interpretation aspect of the Tarian Detector project can focus on several areas in this file:
+
+1. **Adding New System Calls**: Introduce parsing logic for additional system calls that might be relevant for monitoring or detection.
+
+2. **Enhancing Argument Parsing**: Improve the parsing mechanisms for existing arguments, especially for complex data types.
+
+3. **Optimizing Performance**: Ensure that the argument parsing is efficient, especially for high-frequency system calls.
+
+4. **Extending Custom Parsing Functions**: Develop more sophisticated custom parsing functions for specific argument types.
+
+5. **Improving Documentation**: Add detailed comments and documentation, particularly for custom parsing functions, to make it easier for other developers to understand and contribute.
+
+6. **Testing**: Create comprehensive tests for different system calls and their arguments to ensure accurate parsing and error handling.
+
+Contributing to this part of the project requires a good understanding of system calls, their arguments, and how they can be interpreted meaningfully. It's also important to ensure that any changes are compatible with the eBPF programs capturing these system calls.
+
+---
+The `tarian.go` file in the `eventparser` package of the Tarian Detector project is focused on parsing and interpreting system call arguments. It plays a crucial role in analyzing and formatting the data captured by the eBPF programs for further processing or monitoring. Here's an overview of its key functionalities:
+
 ### Key Functionalities of `parser.go` in the `eventparser` Package
 
 1. **Package Declaration**: The file is part of the `eventparser` package, indicating its role in parsing and interpreting event data.
