@@ -1,220 +1,119 @@
 # File Contribution Guide
 
-Welcome to the File Contribution Guide for the Tarian Detector project. This guide will help you understand how to effectively organize and contribute files to our project.
+Welcome to the File Contribution Guide for the Tarian Detector project. This guide is designed to assist contributors in understanding how to effectively organize and contribute files to our project. We'll focus particularly on the `pkg` directory, which is a key part of our codebase.
 
-## Table of Contents
+## 📖 Table of Contents
 
-- [Introduction](#introduction)
-- [Adding Files](#adding-files)
-- [The Detector Directory](#the-detector-directory)
-    - [EventDetector Interface](#eventdetector-interface)
-    - [EventsDetector Struct](#eventsdetector-struct)
-- [Updating the Main Code](#updating-the-main-code)
-    - [The Main.go File](#the-main-go-file)
-        - [Instantiating Event Detectors](#instantiating-event-detectors)
-        - [Managing Event Detectors](#managing-event-detectors)
-- [Adding eBPF Programs](#adding-ebpf-programs)
-- [eBPF Programs and How to Add New System Call Hooks](#ebpf-programs-and-how-to-add-new-system-call-hooks)
-    - [Kernel Space Program Naming](#kernel-space-program-naming)
-    - [User Space Program Naming](#user-space-program-naming)
-    - [Function Naming in Kernel Space Program](#function-naming-in-kernel-space-program)
-- [Examples](#examples)
-- [Code Contribution Workflow](#code-contribution-workflow)
-- [Documenting Your Changes](#documenting-your-changes)
-## Introduction
+1. [Overview of Major Directories](#overview-of-major-directories)
+2. [Deep Dive into `pkg` Directory](#deep-dive-into-pkg-directory)
+   1. [Detector](#detector)
+   2. [eBPF](#ebpf)
+   3. [Eventparser](#eventparser)
+   4. [K8s](#k8s)
+   5. [Utils](#utils)
 
-Effective file management is crucial for the success of an open-source project. A well-structured repository makes it easier for all contributors to navigate the project and contribute their own work. This guide will walk you through the steps for correctly adding new files to our project.
+## Overview of Major Directories
 
-## Adding Files
+Our repository is organized into several major directories:
 
-You should place your files in the correct directory of the project hierarchy. Below is a brief overview of our repository's structure and the types of files you might add to each directory:
+1. **Root**: Contains global files like README, LICENSE, and general documentation.
+2. **Cmd**: Houses the main application's executable code.
+3. **Headers**: Contains header files for eBPF operations.
+4. **Pkg**: A crucial directory with core logic and functionalities.
+5. **Public**: Includes public resources such as images and documentation.
 
-- `Root Directory`: Contains high-level files like README.md, CHANGELOG.md, LICENSE, etc.
-- `Cmd Directory`: Contains the executable binaries or main applications for the project.
-- `Documents Directory`: Contains all necessary project documentation.
-- `Headers Directory`: Contains header files used in the project.
-- `Pkg Directory`: Contains the reusable and exportable packages for the project.
+## Deep Dive into `pkg` Directory
 
-## The Detector Directory
+Exploring the `pkg` directory in-depth will provide a clear understanding of each file's purpose and functionality in your Tarian Detector project. Let's break down the contents of each subdirectory and file within `pkg`:
 
-The [detector](/pkg/detector) directory, located inside the [pkg](/pkg/) directory, contains the source code for the detector functionality of the project. If your contribution is related to the detection functionalities, you should add your code files in this directory.
+### 1. Detector Subdirectory
+- **`detector.go`**: This is the main file in the `detector` subdirectory. It likely contains the core logic for the detection mechanisms employed by the Tarian Detector. Functions in this file may include initializing detection processes, defining detection rules or algorithms, and handling detected events or anomalies.
 
-The [detector.go](/pkg/detector/detector.go) file located in the `detector` package plays a vital role in the Tarian Detector project. This file contains the core abstractions and functionality for handling different types of detectors.
+### 2. eBPF Subdirectory
+- **`bpf.go`**: This file is responsible for initializing and managing eBPF (Extended Berkeley Packet Filter) programs. It might include code to load eBPF programs into the kernel, handle eBPF maps, and interact with eBPF subsystems.
+- **`c` Directory**: Contains C language files specifically for eBPF operations.
+  - **`common.h`**: A header file that likely contains common definitions and structures used by other eBPF C files.
+  - **`tarian.bpf.c`**: The main eBPF program written in C, which probably contains the logic for packet filtering, monitoring, or data collection at the kernel level.
+  - **`utils_c` Directory**: Contains utility headers for eBPF operations in C.
+    - **`buffer.h`, `context.h`, `index.h`**: These header files likely contain utility functions and structures for buffer management, execution context, and indexing.
+    - **`shared` Directory**: Stores shared resources and common definitions.
+      - **`constants.h`, `error_codes.h`, `maps.h`, `nsproxy.h`, `task.h`, `types.h`**: These headers define various constants, error codes, map structures, and data types used throughout the eBPF program.
+    - **`shared.h`**: A consolidated header file that might include common functions or definitions used across multiple eBPF C files.
+    - **`sys_args.h`**: Header file for system call arguments, likely used in eBPF programs to interact with system calls.
+- **`tarian_bpfel_x86.go` & `tarian_bpfel_x86.o`**: These are the Go and compiled object files for the eBPF program, tailored for x86 architecture.
+- **`tarian.go`**: This Go file might include higher-level functions or wrappers around the eBPF functionalities.
 
-### EventDetector Interface
+The `bpf.go` file in your Tarian Detector project is a crucial component for handling eBPF (Extended Berkeley Packet Filter) operations. Let's break down its functionality and explore how someone can contribute to it.
 
-The `EventDetector` interface is a contract for all the types of event detectors within the project. Any new event detector that you add to the project should conform to this interface, which includes three methods:
+### Overview of `bpf.go`
+1. **Imports**: The file imports necessary packages from `github.com/cilium/ebpf`, `link`, and `ringbuf`, which are essential for working with eBPF in Go.
 
-1. `Start()`: This method initiates the event detection process.
-2. `Close()`: This method halts the event detection process.
-3. `ReadAsInterface()`: This method retrieves the detected events.
+2. **Interfaces and Types**:
+   - `Module` Interface: Defines a method for creating a new eBPF module.
+   - `HookType`: An enumeration representing different types of hooks (e.g., Tracepoint, Kprobe, etc.).
+   - `Hook`: A struct that describes a hook with its type, group, name, and options.
+   - `BpfProgram`: Represents an eBPF program with an ID, associated hook, and other properties.
+   - `BpfModule`: Contains the ID, a slice of `BpfPrograms`, and an eBPF map.
+   - `Handler`: Manages the eBPF programs, including map readers and probe links.
 
-### EventsDetector Struct
+3. **Core Functions**:
+   - `NewBpfModule()`: Initializes a new `BpfModule` with empty `BpfPrograms`.
+   - `AttachProbe()`: Method to attach a probe based on the type of hook (e.g., Tracepoint, Kprobe).
+   - `Start()`: Starts the eBPF module, attaching necessary probes and creating a map reader.
+   - `ReadAsInterface()`: Reads data from the eBPF map as a byte slice.
+   - `Close()`: Closes all probe links and the map reader.
 
-The `EventsDetector` struct is a manager for the various event detectors in the project. It includes:
+4. **Helper Functions**:
+   - `createMapReader()`: Creates a new ring buffer reader for the eBPF map.
 
-- `detectors`: This slice holds all the individual event detectors.
-- `eventQueue`: This is a buffered channel that acts as a queue for all the detected events from different detectors.
-- `started` and `closed`: These boolean flags indicate whether the `EventsDetector` has been started or closed.
+### Contribution Opportunities
 
-The struct has several associated methods for managing the lifecycle and operation of the event detectors:
+1. **Adding New Hook Types**:
+   - The file currently handles several hook types. Contributors can add support for new eBPF hook types if required by the project.
 
-1. `NewEventsDetector()`: This function constructs a new `EventsDetector` instance.
-2. `Add(detector EventDetector)`: This method allows you to add a new detector to the `detectors` slice.
-3. `Start()`: This method starts all the detectors and listens to the events from them.
-4. `Close()`: This method closes all the detectors and stops listening to their events.
-5. `ReadAsInterface()`: This method fetches the next event from the event queue.
+2. **Enhancing Error Handling**:
+   - Contributors can improve error messages and handling throughout the file, making the module more robust and user-friendly.
 
-Each new type of detector added to the project should be integrated into an `EventsDetector` instance using the `Add()` method. The `EventsDetector` takes care of the lifecycle and event collection of all the integrated detectors.
+3. **Optimizing Performance**:
+   - Performance enhancements, such as optimizing the way eBPF programs are attached or the map is read, are always valuable.
 
-This is the broad structural overview of the `detector.go` file. As a contributor, it is crucial to understand this structure as it will guide you in adding new event detectors or modifying existing ones.
+4. **Adding Tests and Examples**:
+   - Writing tests for different functionalities in `bpf.go` would greatly improve reliability. Also, providing examples of how to use the defined structs and functions would be beneficial.
 
-## Updating the Main Code
+5. **Documentation and Comments**:
+   - Adding more in-depth comments and documentation within the code can make it easier for new contributors to understand the file's functionality.
 
-If you are making changes to the main code, you should modify the [main.go](/cmd/dev-cli/main.go) file located in the [cmd](/cmd/) directory. Ensure you thoroughly test your changes and follow the coding conventions used throughout the project.
+6. **Extending Functionality**:
+   - Contributors can extend the functionalities of `BpfModule`, `BpfProgram`, or `Handler` to cater to more advanced eBPF use cases.
 
-## The Main.go File
+7. **Code Refactoring**:
+   - Simplifying or refactoring complex parts of the code for better readability and maintenance is always helpful.
 
-The `main.go` file in the `cmd` directory serves as the entry point of the Tarian Detector application. Here is a brief overview of its structure and operation:
+The `bpf.go` file is a core component of the Tarian Detector project, dealing with intricate eBPF operations. Contributions to this file should be made with a clear understanding of eBPF and its application within the project.
 
-### Instantiating Event Detectors
+### 3. Eventparser Subdirectory
+- **`context.go`, `parser.go`, `probes.go`**: These files are likely involved in parsing and interpreting events captured by the system. They might include logic for event context management, actual parsing of event data, and definitions of various probes or triggers used in event detection.
 
-The `main()` function begins by creating instances of each type of event detector available in the application, including process, file, and network event detectors.
+### 4. K8s Subdirectory
+- **`container.go`**: This file possibly contains functionalities related to Kubernetes container management, such as container status monitoring or interaction with container runtime.
+- **`k8s.go`**: A broader file for Kubernetes-related operations, which might include integrations with Kubernetes APIs, handling Kubernetes resources, or Kubernetes cluster management functions.
 
-### Managing Event Detectors
+### 5. Utils Subdirectory
+- **`converter.go`**: Likely includes utility functions for data type conversions or transformations.
+- **`network.go`**: This file probably contains network-related utility functions, such as network status checks, network configuration utilities, or network communication functions.
+- **`utils.go`**: A general utility file that might house a variety of helper functions used across the project.
 
-Next, an `EventsDetector` instance is created. This object acts as a manager for all the individual event detectors. Each of the instantiated event detectors is then added to this `EventsDetector` using its `Add()` method.
+Each of these files plays a vital role in the functionality of the Tarian Detector project. Understanding their purpose and interaction helps contributors make meaningful and coherent contributions to the project.
 
-### Starting Event Detection
+## Contributing to `pkg`
 
-The `Start()` method of `EventsDetector` is called to initiate the event detection process for all the detectors. The `Close()` method is deferred to ensure that all detectors will be properly stopped when the program ends.
+Contributors are encouraged to familiarize themselves with the structure and purpose of each file within the `pkg` directory. When contributing:
 
-### Reading and Handling Events
+1. Ensure your changes align with the purpose of the file.
+2. Follow coding standards and guidelines as outlined in our `Contributor_Guidelines.md`.
+3. Test your changes thoroughly before submitting a pull request.
+4. Include documentation updates if you add new features or change existing functionalities.
 
-A separate Goroutine is started to continuously read events from the `EventsDetector`. For each event, the code determines its type and calls the appropriate function to handle and print the event data.
+Thank you for your interest in contributing to the Tarian Detector project. Your contributions help us build a stronger and more effective tool for our community.
 
-### Keeping the Application Running
-
-Finally, an infinite loop is used to prevent the application from prematurely exiting, as it's designed to be a long-running application.
-
-As a contributor, understanding the workflow and structure of the `main.go` file is essential. It coordinates the operations of the entire application and is a key area you might update when adding new detectors or modifying existing ones.
-
-
-## Adding eBPF Programs
-
-eBPF (Extended Berkeley Packet Filter) programs provide the functionality for file and network operations, as well as process entry and exit handling. If you need to add a new eBPF program, you should place it in the [ebpf](/pkg/ebpf/) subdirectory within the `pkg` directory. Each subdirectory in the `ebpf` directory should contain `.go` files for the respective operations, `.bpf.c` files for the corresponding eBPF programs, and `.o` files as a result of compiling the eBPF programs.
-
-Extended Berkeley Packet Filter (eBPF) provides robust capabilities for process introspection,including monitoring system calls, network activity, and more. eBPF operates by running compact programs within a restricted virtual machine in the kernel, ensuring system safety. These programs gather data about the system state for subsequent analysis or alteration.
-
-In the given example, an eBPF program is utilized to monitor the network accept system call, `__x64_sys_accept`. This system call is commonly used by server applications to accept incoming network connections.
-
-
-## eBPF Programs and How to Add New System Call Hooks
-
-The interaction between eBPF programs and corresponding Go programs facilitates a range of functionality. Let's consider a template case of a network accept system call and its associated eBPF and Go programs - [accept.bpf.c](/pkg/ebpf/c/network_accept/accept.bpf.c) and [network_accept.go](/pkg/ebpf/c/network_accept/network_accept.go) respectively.
-
-### eBPF Program Template - [accept.bpf.c](/pkg/ebpf/c/network_accept/accept.bpf.c)
-
-The eBPF program, `accept.bpf.c`, attaches a `kprobe` to the `__x64_sys_accept` system call. `kprobes` provide a mechanism for setting dynamic breakpoints in any kernel routine, which is useful for gathering debug and performance data. Here, the `kprobe` captures information about the function arguments and emits it as a `perf` event which is then stored in a `perf` event array map and is accessible to user-space applications.
-
-### Go Program Template - [network_accept.go](/pkg/ebpf/c/network_accept/network_accept.go)
-
-The associated Go program, `network_accept.go`, uses the `cilium/ebpf` library to interact with the eBPF program. The `Start` method loads the compiled eBPF program, attaches the `kprobe` to the `__x64_sys_accept` system call, and begins monitoring the event. The `Read` method retrieves an event from the eBPF program, transforms it into a Go-friendly format, and returns it for further processing.
-
-### Adding a New System Call Hook
-
-When adding a new system call hook, you can follow the structure of the aforementioned template. Here's a generalized workflow:
-
-1. Identify the system call you wish to monitor. Use its name to create a new `.bpf.c` file within the `ebpf` directory (e.g., `your_system_call.bpf.c`).
-2. In this new `.bpf.c` file, write an eBPF program that attaches a `kprobe` to the identified system call, collects the necessary data (e.g., function arguments), and emits it as a `perf` event.
-3. Create a corresponding Go program in the same directory (e.g., `domain-name_your_system_call.go`). This program should load the compiled eBPF program, attach the `kprobe`, and implement methods to start the monitoring, read the events, and stop the monitoring.
-4. Make sure to handle the conversion of eBPF events into a Go-compatible format that can be easily processed by your application.
-
-Remember, eBPF and Go programs should be created under a specific subdirectory within the `ebpf` directory. This subdirectory should ideally be named according to the operation it monitors (e.g., `your_domain_your_hook`), containing the respective `.go` files for operations, `.bpf.c` files for the eBPF programs, and `.o` files resulting from the compilation of the eBPF programs.
-
-## Naming  Programs
-
-## Kernel Space Program Naming
-
-The name of the eBPF program that runs in the kernel space should be the syscall used, followed by `.bpf.c`. For example, if the syscall is `accept`, the eBPF kernel space program should be named `accept.bpf.c`.
-
-## User Space Program Naming
-
-The name of the eBPF program that runs in the user space should follow the pattern `domain-name_syscall-name.go`. The domain name refers to whether the program is for process, file, or network operations.
-
-## Function Naming in Kernel Space Program
-
-Inside the eBPF kernel space program, the function name should follow the pattern `"hook-used"_"syscall-used"`. The hook used could be `kprobe`, `kretprobe`, etc. The syscall used is the syscall that the program intends to hook.
-
-## Examples
-
-
-```C
-SEC("kprobe/__x64_sys_accept")
-int kprobe_accept(struct pt_regs *ctx)
-{
-    .
-    .
-    .
-
-    return 0;
-}
-```
-
-For example if you are writing an ebpf program for this accept syscall using kprobe you need to  adhere to the following naming conventions:
-
-1. Kernel Space Program: For an eBPF program that hooks the `accept` syscall, the kernel space program should be named `accept.bpf.c`.
-   
-2. User Space Program: For an eBPF program that deals with network operations and hooks the `accept` syscall, the user space program should be named `network_accept.go`.
-
-3. Function Naming in Kernel Space Program: For an eBPF program that uses a `kprobe` hook and hooks the `__x64_sys_accept` syscall, the function should be named `kprobe___x64_sys_accept`.
-
-By following these naming conventions, we ensure that our codebase remains consistent and easy to understand. This also facilitates easier navigation and debugging for all contributors. Thank you for adhering to these conventions while contributing to the Tarian Detector project.
-
-## Code Contribution Workflow
-
-When contributing to the Tarian Detector project, you need to understand how the project's workflow operates. Here are the steps to contribute your eBPF programs:
-
-1. **Kernel Space Program:** Write your eBPF program that runs in the kernel space. This should be related to a specific syscall that you wish to monitor. Remember to follow the [naming convention](#naming-ebpf-programs) provided.
-
-2. **User Space Program:** Write the corresponding userspace program for the syscall used in the Kernel Space Program. This program should follow the domain name and syscall pattern as detailed in the naming convention.
-
-3. **Update Main Program:** The main program resides in the [cmd](/cmd) folder under the name [dev-cli](/cmd/dev-cli/). This is where you integrate your detectors. Here are the steps to update the main program:
-
-   a. **Instantiate Event Detectors:** Create a new instance of your event detector. Follow the existing pattern in the main program. For example, if you have created a network accept detector, you would instantiate it like this:
-   ```C
-    networkAcceptDetector:=network_acceptNewNetworkAcceptDetector().
-    ```
-
-   b. **Register Event Detectors:** Register your newly instantiated event detector to the events detector. This can be done like this: 
-   
-   ```C
-   `eventsDetector.Add(networkAcceptDetector)`.
-    ```
-
-   c. **Loop Read Events:** Add your event data type to the event loop. Follow the existing switch-case pattern. For example: 
-   
-   ```go
-   case *network_accept.AcceptEventData:
-   printNetworkAcceptEventData(event)
-   ```
-
-## Documenting Your Changes
-
-Whenever you add new files or make significant modifications, you should document these changes. This will help other contributors understand the purpose of your contribution and the changes you made. This can usually be done within a pull request.
-
-## Examples
-
-Here we provide a couple of example scenarios to demonstrate how to add files to our project:
-
-1. Adding a new feature:
-    - Create a new branch for your feature.
-    - Add your code files in the correct directory according to the functionality they provide.
-    - Document your changes in the pull request.
-
-2. Adding a new document:
-    - Create a new branch for your documentation.
-    - Add your `.md` file in the `documents` directory.
-    - Document your changes in the pull request.
-
-Thank you for your contributions to the Tarian Detector project! By following this guide, you help keep our repository organized and our project running smoothly.
+---
