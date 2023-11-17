@@ -91,6 +91,36 @@ The `bpf.go` file in your Tarian Detector project is a crucial component for han
 
 The `bpf.go` file is a core component of the Tarian Detector project, dealing with intricate eBPF operations. Contributions to this file should be made with a clear understanding of eBPF and its application within the project.
 
+-----
+
+The `tarian_bpfel_x86.go` file in the Tarian Detector project plays a crucial role in interfacing with the eBPF (Extended Berkeley Packet Filter) components, specifically compiled for the x86 architecture. Here's a breakdown of its functionality and structure:
+
+### Key Components of `tarian_bpfel_x86.go`
+
+1. **Package Declaration**: The file is part of the `bpf` package, aligning it with other eBPF-related files in the project.
+
+2. **Imports**: It imports standard Go libraries and essential eBPF-related packages, such as `github.com/cilium/ebpf`, which is a common library for working with eBPF in Go.
+
+3. **Data Structures**:
+   - `tarianEventDataT`: Defines a complex struct that likely represents the data structure of events captured by the eBPF programs. It includes fields like timestamps, task information, event IDs, syscall numbers, processor IDs, buffer data, and system information.
+
+4. **eBPF Collection Loading Functions**:
+   - `loadTarian()`: Loads the eBPF program specifications from an embedded object file (`tarian_bpfel_x86.o`) into an `ebpf.CollectionSpec`.
+   - `loadTarianObjects()`: Utilizes the loaded `CollectionSpec` to load and assign eBPF objects into the kernel. This function is versatile and can work with various object types, such as maps and programs.
+
+5. **Specs and Objects**:
+   - The file contains multiple structs that define the specifications (`tarianSpecs`, `tarianProgramSpecs`, `tarianMapSpecs`) and the actual loaded objects (`tarianObjects`, `tarianMaps`, `tarianPrograms`) for eBPF programs and maps. These are crucial for managing the lifecycle of eBPF components within the kernel.
+
+6. **Program and Map Definitions**:
+   - Detailed definitions for various eBPF programs (`Kprobe`, `Kretprobe`) and maps (`Events`) are provided, allowing the kernel to understand what functions and data structures are being loaded and how to interact with them.
+
+7. **Closing Functions**:
+   - Functions like `Close()` in `tarianObjects`, `tarianMaps`, and `tarianPrograms` are defined for proper cleanup and deallocation of resources within the kernel when the eBPF programs and maps are no longer needed.
+
+8. **Embedded eBPF Bytecode**:
+   - The file contains an embedded eBPF object file (`tarian_bpfel_x86.o`), which is the compiled eBPF bytecode. This is loaded into the kernel to perform various monitoring and data capturing tasks.
+-----
+
 ### 3. Eventparser Subdirectory
 - **`context.go`, `parser.go`, `probes.go`**: These files are likely involved in parsing and interpreting events captured by the system. They might include logic for event context management, actual parsing of event data, and definitions of various probes or triggers used in event detection.
 
