@@ -3,13 +3,17 @@
 
 package detector
 
+import (
+	"github.com/intelops/tarian-detector/pkg/eventparser"
+)
+
 type EventDetector interface {
-	Read() (map[string]any, error)
 	Close() error
+	ReadAsInterface() ([]byte, error)
 }
 
 type detectorReadReturn struct {
-	eventData map[string]any
+	eventData []byte
 	err       error
 }
 
@@ -35,8 +39,8 @@ func NewEventsDetector() *EventsDetector {
 	}
 }
 
-func (t *EventsDetector) Add(detectors []EventDetector) {
-	t.detectors = append(t.detectors, detectors...)
+func (t *EventsDetector) Add(detectors EventDetector) {
+	t.detectors = append(t.detectors, detectors)
 }
 
 func (t *EventsDetector) Start() error {
@@ -48,7 +52,7 @@ func (t *EventsDetector) Start() error {
 					return
 				}
 
-				event, err := d.Read()
+				event, err := d.ReadAsInterface()
 				t.eventQueue <- detectorReadReturn{event, err}
 			}
 		}()
@@ -74,13 +78,11 @@ func (t *EventsDetector) Close() error {
 
 func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	r := <-t.eventQueue
-
-	if len(r.eventData) != 0 {
-		t.TotalRecordsCount++
-		t.ProbeRecordsCount[r.eventData["tarian_detector_hook"].(string)]++
-
+	if r.err != nil {
+		return map[string]any{}, r.err
 	}
-	return r.eventData, r.err
+
+	return eventparser.DecodeByte(r.eventData)
 }
 
 func (t *EventsDetector) Count() int {
