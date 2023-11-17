@@ -23,7 +23,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeExecve,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_execve_exit",
@@ -33,7 +33,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeExecve,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_execveat_entry",
@@ -43,7 +43,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeExecveat,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_execveat_exit",
@@ -53,7 +53,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeExecveat,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_close_entry",
@@ -63,7 +63,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeClose,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_close_exit",
@@ -73,7 +73,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeClose,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_open_entry",
@@ -83,7 +83,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeOpen,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_open_exit",
@@ -93,7 +93,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeOpen,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_openat_entry",
@@ -103,7 +103,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeOpenat,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_openat_exit",
@@ -113,7 +113,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeOpenat,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_openat2_entry",
@@ -123,7 +123,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeOpenat2,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_openat2_exit",
@@ -133,7 +133,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeOpenat2,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_read_entry",
@@ -143,7 +143,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeRead,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_read_exit",
@@ -153,7 +153,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeRead,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_readv_entry",
@@ -163,7 +163,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeReadv,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_readv_exit",
@@ -173,7 +173,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeReadv,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_write_entry",
@@ -183,7 +183,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeWrite,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_write_exit",
@@ -193,7 +193,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeWrite,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_writev_entry",
@@ -203,7 +203,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeWritev,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_writev_exit",
@@ -213,7 +213,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeWritev,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_listen_entry",
@@ -243,7 +243,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeSocket,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_socket_exit",
@@ -253,7 +253,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeSocket,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_accept_entry",
@@ -263,7 +263,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeAccept,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_accept_exit",
@@ -273,7 +273,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeAccept,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_bind_entry",
@@ -283,7 +283,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeBind,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_bind_exit",
@@ -293,7 +293,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeBind,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_connect_entry",
@@ -303,7 +303,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KprobeConnect,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 		{
 			Id: "__x64_sys_connect_exit",
@@ -313,7 +313,7 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeConnect,
-			ShouldAttach: true,
+			ShouldAttach: false,
 		},
 	}
 
