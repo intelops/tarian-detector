@@ -4,28 +4,34 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
 	bpf "github.com/intelops/tarian-detector/pkg/eBPF"
-	"k8s.io/client-go/rest"
+	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
 func main() {
 	// Start kubernetes watcher
-	watcher, err := K8Watcher()
-	if err != nil {
-		if !errors.Is(err, rest.ErrNotInCluster) {
-			log.Fatal(err)
-		}
+	// watcher, err := K8Watcher()
+	// if err != nil {
+	// 	if !errors.Is(err, rest.ErrNotInCluster) {
+	// 		log.Fatal(err)
+	// 	}
 
-		log.Print(NotInClusterErrMsg)
-	} else {
-		watcher.Start()
-	}
+	// 	log.Print(NotInClusterErrMsg)
+	// } else {
+	// 	watcher.Start()
+	// }
+
+	stopper := make(chan os.Signal, 1)
+	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
 
 	BpfModules, err := bpf.GetDetectors()
 	if err != nil {
@@ -54,25 +60,44 @@ func main() {
 	// defer stats(eventsDetector, bpfLinker)
 
 	count := 0
+	var mutex sync.Mutex
+	go func() {
+
+		select {
+		case <-stopper:
+			// case <-time.After(10 * time.Second):
+			eventsDetector.Close()
+			fmt.Println("records captured count in 10s: ", count)
+			os.Exit(0)
+		}
+	}()
+
 	// Loop read events
 	go func() {
 		for {
-			e, err := eventsDetector.ReadAsInterface()
+			rc, e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			k8sCtx, err := GetK8sContext(watcher, e["host_pid"].(uint32))
-			if err != nil {
-				// log.Print(err)
-				e["kubernetes"] = err.Error()
-			} else {
-				e["kubernetes"] = k8sCtx
+			// k8sCtx, err := GetK8sContext(watcher, e["host_pid"].(uint32))
+			// if err != nil {
+			// 	// log.Print(err)
+			// 	e["kubernetes"] = err.Error()
+			// } else {
+			// 	e["kubernetes"] = k8sCtx
+			// }
+
+			// if e["cwd"] != "/home/cravela@appstekcorp.local/Projects/DOUBLE/DELETE/DELETE/tarian-detector/" {
+			// 	continue
+			// }
+
+			if err := utils.WriteJSONToFile(e, "exec_id.json", &mutex); err != nil {
+				fmt.Println("Error writing:", err)
 			}
 
-			// printEvent(e)
 			count++
-			fmt.Println("Total count:", count)
+			printEvent(rc, count, e)
 			// if count > 1000 {
 			// 	os.Exit(1)
 			// }
@@ -85,12 +110,12 @@ func main() {
 	}
 }
 
-func printEvent(data map[string]any) {
+func printEvent(rc int, t int, data map[string]any) {
 	div := "======================"
 	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
-	}
+	// for ky, val := range data {
+	// 	msg += fmt.Sprintf("%s: %v\n", ky, val)
+	// }
 
-	log.Printf("%s\n%s%s\n", div, msg, div)
+	log.Printf("%s\nStatus of ring buffer %d. Remaining %d, Total: %d\n%s%s\n", div, data["processor_id"], rc/14865, t, msg, div)
 }
