@@ -64,6 +64,10 @@ func DecodeByte(b []byte) (map[string]any, error) {
 	event_data["cgroup_id"] = ec.Context.Task.CgroupId
 	event_data["mount_ns_id"] = ec.Context.Task.MountNsId
 	event_data["pid_ns_id"] = ec.Context.Task.PidNsId
+	event_data["exec_id"] = ec.Context.Task.ExecId
+	event_data["exec_exec_id"] = ec.Context.Task.EexecId
+	event_data["parent_exec_id"] = ec.Context.Task.ParentExecId
+	event_data["exec_parent_exec_id"] = ec.Context.Task.EparentExecId
 	event_data["comm"] = utils.ToString(ec.Context.Task.Comm[:])
 
 	cwd_idx, err := utils.Uint16(ec.Context.Task.Cwd[:2])
