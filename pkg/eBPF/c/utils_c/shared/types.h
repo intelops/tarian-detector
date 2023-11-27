@@ -35,6 +35,12 @@ typedef struct __attribute__((__packed__)) task_context {
   u64 mount_ns_id; /* task's mount name space id */
   u64 pid_ns_id;   /* task's pid name space id */
 
+  u64 exec_id;
+  u64 parent_exec_id;
+  
+  u64 eexec_id;
+  u64 eparent_exec_id;
+
   u8 comm[TASK_COMM_LEN]; /* task's process name*/
   u8 cwd[MAX_STRING_SIZE]; /* current working directory of task */
 } task_context_t;           /* 4176B */
