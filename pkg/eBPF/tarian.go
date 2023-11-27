@@ -13,7 +13,7 @@ func GetDetectors() (BpfModule, error) {
 		return detectors, err
 	}
 
-	detectors.Map = bpfObjs.Events
+	detectors.Map = bpfObjs.PercpuRb
 	detectors.Programs = []BpfProgram{
 		{
 			Id: "__x64_sys_execve_entry",
@@ -313,6 +313,26 @@ func GetDetectors() (BpfModule, error) {
 				Opts: nil,
 			},
 			Name:         bpfObjs.KretprobeConnect,
+			ShouldAttach: true,
+		},
+		{
+			Id: "__x64_sys_clone_entry",
+			Hook: Hook{
+				Type: Kprobe,
+				Name: "__x64_sys_clone",
+				Opts: nil,
+			},
+			Name:         bpfObjs.KprobeClone,
+			ShouldAttach: true,
+		},
+		{
+			Id: "__x64_sys_clone_exit",
+			Hook: Hook{
+				Type: Kretprobe,
+				Name: "__x64_sys_clone",
+				Opts: nil,
+			},
+			Name:         bpfObjs.KretprobeClone,
 			ShouldAttach: true,
 		},
 	}
