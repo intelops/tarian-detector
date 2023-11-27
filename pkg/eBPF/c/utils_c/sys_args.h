@@ -34,7 +34,7 @@ stain int read_sys_ctx_into(sys_ctx_t *dst, struct pt_regs *src) {
   (*dst)[PARAM5] = PT_REGS_PARM5_CORE(ctx2);
   (*dst)[PARAM6] = PT_REGS_PARM6_CORE(ctx2);
   (*dst)[SYSCALL] = PT_REGS_SYSCALL_CORE(ctx2);
-  (*dst)[RETURN] = PT_REGS_RC_CORE(ctx2);
+  (*dst)[RETURN] = PT_REGS_RC_CORE(src);
 
   return OK;
 }
