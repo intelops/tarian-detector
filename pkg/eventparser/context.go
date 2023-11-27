@@ -7,20 +7,24 @@ type EventContext struct {
 	Context struct {
 		Ts   uint64
 		Task struct {
-			StartTime uint64
-			HostPid   uint32
-			HostTgid  uint32
-			HostPpid  uint32
-			Pid       uint32
-			Tgid      uint32
-			Ppid      uint32
-			Uid       uint32
-			Gid       uint32
-			CgroupId  uint64
-			MountNsId uint64
-			PidNsId   uint64
-			Comm      [16]byte
-			Cwd       [4096]byte
+			StartTime     uint64
+			HostPid       uint32
+			HostTgid      uint32
+			HostPpid      uint32
+			Pid           uint32
+			Tgid          uint32
+			Ppid          uint32
+			Uid           uint32
+			Gid           uint32
+			CgroupId      uint64
+			MountNsId     uint64
+			PidNsId       uint64
+			ExecId        uint64
+			ParentExecId  uint64
+			EexecId       uint64
+			EparentExecId uint64
+			Comm          [16]byte
+			Cwd           [4096]byte
 		}
 		EventId     uint32
 		Syscall     int32
