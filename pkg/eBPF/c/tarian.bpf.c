@@ -7,15 +7,47 @@
 
 const event_data_t *unused __attribute__((unused));
 
+SEC("kprobe/__x64_sys_clone")
+int kprobe_clone(struct pt_regs *ctx) {
+  program_data_t p = {};
+  int err = new_program(&p, ctx, SYS_ENTER_CLONE);
+  if (err != OK) {
+    dropped++;
+    return err;
+  }
+
+  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* binary file path */, ULONG_T, 0);
+  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* binary file path */, ULONG_T, 1);
+  save_to_buffer(&p, (void *)p.sys_ctx[PARAM3] /* binary file path */, INT_T, 2);
+  save_to_buffer(&p, (void *)p.sys_ctx[PARAM4] /* binary file path */, INT_T, 3);
+  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM5] /* binary file path */, ULONG_T, 4);
+
+  events_ringbuf_submit(&p);
+  return OK;
+}
+
+SEC("kretprobe/__x64_sys_clone")
+int kretprobe_clone(struct pt_regs *ctx) {
+  program_data_t p = {};
+  int err = new_program(&p, ctx, SYS_EXIT_CLONE);
+  if (err != OK) {
+    dropped++;
+    return err;
+  }
+
+  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+
+  events_ringbuf_submit(&p);
+  return OK;
+}
+
 SEC("kprobe/__x64_sys_execve")
 int kprobe_execve(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_EXECVE);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-  bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (char *)p.sys_ctx[PARAM1] /* binary file path */, STR_T, 0);
@@ -36,13 +68,11 @@ int kretprobe_execve(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_EXECVE);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-  bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
-  save_to_buffer(&p, (void *)PT_REGS_RC_CORE(ctx), INT_T, 0);
+  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
 
   events_ringbuf_submit(&p);
   return OK;
@@ -53,10 +83,8 @@ int kprobe_execveat(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_EXECVEAT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-  bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file_descriptor */, INT_T, 0);
@@ -72,13 +100,11 @@ int kretprobe_execveat(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_EXECVEAT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
-
-  save_to_buffer(&p, (void *)PT_REGS_RC_CORE(ctx), INT_T, 0);
+ 
+  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
 
   events_ringbuf_submit(&p);
   return OK;
@@ -89,10 +115,8 @@ int kprobe_open(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_OPEN);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)p.sys_ctx[PARAM1] /* filename */, STR_T, 0);
@@ -108,10 +132,8 @@ int kretprobe_open(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_OPEN);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
@@ -125,10 +147,8 @@ int kprobe_openat(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_OPENAT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* directory file descriptor */, INT_T, 0);
@@ -145,10 +165,8 @@ int kretprobe_openat(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_OPENAT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
@@ -162,10 +180,8 @@ int kprobe_openat2(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_OPENAT2);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* directory file descriptor */, INT_T, 0);
@@ -182,10 +198,8 @@ int kretprobe_openat2(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_OPENAT2);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  } else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
@@ -199,10 +213,8 @@ int kprobe_close(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_CLOSE);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
@@ -216,10 +228,8 @@ int kretprobe_close(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_CLOSE);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
@@ -233,10 +243,8 @@ int kprobe_read(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_READ);
   if (err != OK) {
-    bpf_printk("read test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("read test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, UINT_T, 0);
@@ -252,10 +260,8 @@ int kretprobe_read(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_READ);
   if (err != OK) {
-    bpf_printk("read test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("read test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes read */, LONG_T, 0);
@@ -269,10 +275,8 @@ int kprobe_readv(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_READV);
   if (err != OK) {
-    bpf_printk("readv test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("readv test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, ULONG_T, 0);
@@ -287,10 +291,8 @@ int kretprobe_readv(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_READV);
   if (err != OK) {
-    bpf_printk("readv test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }  else {
-    bpf_printk("readv test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes read */, LONG_T, 0);
@@ -304,10 +306,8 @@ int kprobe_write(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_WRITE);
   if (err != OK) {
-    bpf_printk("write test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("write test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, UINT_T, 0);
@@ -323,10 +323,8 @@ int kretprobe_write(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_WRITE);
   if (err != OK) {
-    bpf_printk("write test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("write test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes wrote */, LONG_T, 0);
@@ -339,13 +337,10 @@ SEC("kprobe/__x64_sys_writev")
 int kprobe_writev(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_WRITEV);
- if (err != OK) {
-    bpf_printk("writev test total %ld dropped %ld error code %ld", total, ++dropped, err);
+  if (err != OK) {
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("writev test total %ld dropped %ld", total, dropped);
   }
-
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, ULONG_T, 0);
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* vlen */, ULONG_T, 2);
 
@@ -357,13 +352,10 @@ SEC("kretprobe/__x64_sys_writev")
 int kretprobe_writev(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_WRITEV);
- if (err != OK) {
-    bpf_printk("writev test total %ld dropped %ld error code %ld", total, ++dropped, err);
+  if (err != OK) {
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("writev test total %ld dropped %ld", total, dropped);
   }
-
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes wrote */, LONG_T, 0);
 
   events_ringbuf_submit(&p);
@@ -375,10 +367,8 @@ int kprobe_listen(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_LISTEN);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
@@ -393,10 +383,8 @@ int kretprobe_listen(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_LISTEN);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
-  }   else {
-    bpf_printk("test total %ld dropped %ld", total, dropped);
   }
 
   save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
@@ -410,7 +398,7 @@ int kprobe_socket(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_SOCKET);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -427,7 +415,7 @@ int kretprobe_socket(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_SOCKET);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -442,7 +430,7 @@ int kprobe_accept(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_ACCEPT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -459,7 +447,7 @@ int kretprobe_accept(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_ACCEPT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -474,7 +462,7 @@ int kprobe_bind(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_BIND);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -491,7 +479,7 @@ int kretprobe_bind(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_BIND);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -506,7 +494,7 @@ int kprobe_connect(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_ENTER_CONNECT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
@@ -523,7 +511,7 @@ int kretprobe_connect(struct pt_regs *ctx) {
   program_data_t p = {};
   int err = new_program(&p, ctx, SYS_EXIT_CONNECT);
   if (err != OK) {
-    bpf_printk("test total %ld dropped %ld error code %ld", total, ++dropped, err);
+    dropped++;
     return err;
   }
 
