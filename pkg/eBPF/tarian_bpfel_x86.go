@@ -16,20 +16,24 @@ type tarianEventDataT struct {
 	Context struct {
 		Ts   uint64
 		Task struct {
-			StartTime uint64
-			HostPid   uint32
-			HostTgid  uint32
-			HostPpid  uint32
-			Pid       uint32
-			Tgid      uint32
-			Ppid      uint32
-			Uid       uint32
-			Gid       uint32
-			CgroupId  uint64
-			MountNsId uint64
-			PidNsId   uint64
-			Comm      [16]uint8
-			Cwd       [4096]uint8
+			StartTime     uint64
+			HostPid       uint32
+			HostTgid      uint32
+			HostPpid      uint32
+			Pid           uint32
+			Tgid          uint32
+			Ppid          uint32
+			Uid           uint32
+			Gid           uint32
+			CgroupId      uint64
+			MountNsId     uint64
+			PidNsId       uint64
+			ExecId        uint64
+			ParentExecId  uint64
+			EexecId       uint64
+			EparentExecId uint64
+			Comm          [16]uint8
+			Cwd           [4096]uint8
 		}
 		EventId     uint32
 		Syscall     int32
@@ -93,6 +97,7 @@ type tarianSpecs struct {
 type tarianProgramSpecs struct {
 	KprobeAccept      *ebpf.ProgramSpec `ebpf:"kprobe_accept"`
 	KprobeBind        *ebpf.ProgramSpec `ebpf:"kprobe_bind"`
+	KprobeClone       *ebpf.ProgramSpec `ebpf:"kprobe_clone"`
 	KprobeClose       *ebpf.ProgramSpec `ebpf:"kprobe_close"`
 	KprobeConnect     *ebpf.ProgramSpec `ebpf:"kprobe_connect"`
 	KprobeExecve      *ebpf.ProgramSpec `ebpf:"kprobe_execve"`
@@ -108,6 +113,7 @@ type tarianProgramSpecs struct {
 	KprobeWritev      *ebpf.ProgramSpec `ebpf:"kprobe_writev"`
 	KretprobeAccept   *ebpf.ProgramSpec `ebpf:"kretprobe_accept"`
 	KretprobeBind     *ebpf.ProgramSpec `ebpf:"kretprobe_bind"`
+	KretprobeClone    *ebpf.ProgramSpec `ebpf:"kretprobe_clone"`
 	KretprobeClose    *ebpf.ProgramSpec `ebpf:"kretprobe_close"`
 	KretprobeConnect  *ebpf.ProgramSpec `ebpf:"kretprobe_connect"`
 	KretprobeExecve   *ebpf.ProgramSpec `ebpf:"kretprobe_execve"`
@@ -127,7 +133,24 @@ type tarianProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianMapSpecs struct {
-	Events *ebpf.MapSpec `ebpf:"events"`
+	Events   *ebpf.MapSpec `ebpf:"events"`
+	PercpuRb *ebpf.MapSpec `ebpf:"percpu_rb"`
+	RbCpu0   *ebpf.MapSpec `ebpf:"rb_cpu0"`
+	RbCpu1   *ebpf.MapSpec `ebpf:"rb_cpu1"`
+	RbCpu10  *ebpf.MapSpec `ebpf:"rb_cpu10"`
+	RbCpu11  *ebpf.MapSpec `ebpf:"rb_cpu11"`
+	RbCpu12  *ebpf.MapSpec `ebpf:"rb_cpu12"`
+	RbCpu13  *ebpf.MapSpec `ebpf:"rb_cpu13"`
+	RbCpu14  *ebpf.MapSpec `ebpf:"rb_cpu14"`
+	RbCpu15  *ebpf.MapSpec `ebpf:"rb_cpu15"`
+	RbCpu2   *ebpf.MapSpec `ebpf:"rb_cpu2"`
+	RbCpu3   *ebpf.MapSpec `ebpf:"rb_cpu3"`
+	RbCpu4   *ebpf.MapSpec `ebpf:"rb_cpu4"`
+	RbCpu5   *ebpf.MapSpec `ebpf:"rb_cpu5"`
+	RbCpu6   *ebpf.MapSpec `ebpf:"rb_cpu6"`
+	RbCpu7   *ebpf.MapSpec `ebpf:"rb_cpu7"`
+	RbCpu8   *ebpf.MapSpec `ebpf:"rb_cpu8"`
+	RbCpu9   *ebpf.MapSpec `ebpf:"rb_cpu9"`
 }
 
 // tarianObjects contains all objects after they have been loaded into the kernel.
@@ -149,12 +172,46 @@ func (o *tarianObjects) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianMaps struct {
-	Events *ebpf.Map `ebpf:"events"`
+	Events   *ebpf.Map `ebpf:"events"`
+	PercpuRb *ebpf.Map `ebpf:"percpu_rb"`
+	RbCpu0   *ebpf.Map `ebpf:"rb_cpu0"`
+	RbCpu1   *ebpf.Map `ebpf:"rb_cpu1"`
+	RbCpu10  *ebpf.Map `ebpf:"rb_cpu10"`
+	RbCpu11  *ebpf.Map `ebpf:"rb_cpu11"`
+	RbCpu12  *ebpf.Map `ebpf:"rb_cpu12"`
+	RbCpu13  *ebpf.Map `ebpf:"rb_cpu13"`
+	RbCpu14  *ebpf.Map `ebpf:"rb_cpu14"`
+	RbCpu15  *ebpf.Map `ebpf:"rb_cpu15"`
+	RbCpu2   *ebpf.Map `ebpf:"rb_cpu2"`
+	RbCpu3   *ebpf.Map `ebpf:"rb_cpu3"`
+	RbCpu4   *ebpf.Map `ebpf:"rb_cpu4"`
+	RbCpu5   *ebpf.Map `ebpf:"rb_cpu5"`
+	RbCpu6   *ebpf.Map `ebpf:"rb_cpu6"`
+	RbCpu7   *ebpf.Map `ebpf:"rb_cpu7"`
+	RbCpu8   *ebpf.Map `ebpf:"rb_cpu8"`
+	RbCpu9   *ebpf.Map `ebpf:"rb_cpu9"`
 }
 
 func (m *tarianMaps) Close() error {
 	return _TarianClose(
 		m.Events,
+		m.PercpuRb,
+		m.RbCpu0,
+		m.RbCpu1,
+		m.RbCpu10,
+		m.RbCpu11,
+		m.RbCpu12,
+		m.RbCpu13,
+		m.RbCpu14,
+		m.RbCpu15,
+		m.RbCpu2,
+		m.RbCpu3,
+		m.RbCpu4,
+		m.RbCpu5,
+		m.RbCpu6,
+		m.RbCpu7,
+		m.RbCpu8,
+		m.RbCpu9,
 	)
 }
 
@@ -164,6 +221,7 @@ func (m *tarianMaps) Close() error {
 type tarianPrograms struct {
 	KprobeAccept      *ebpf.Program `ebpf:"kprobe_accept"`
 	KprobeBind        *ebpf.Program `ebpf:"kprobe_bind"`
+	KprobeClone       *ebpf.Program `ebpf:"kprobe_clone"`
 	KprobeClose       *ebpf.Program `ebpf:"kprobe_close"`
 	KprobeConnect     *ebpf.Program `ebpf:"kprobe_connect"`
 	KprobeExecve      *ebpf.Program `ebpf:"kprobe_execve"`
@@ -179,6 +237,7 @@ type tarianPrograms struct {
 	KprobeWritev      *ebpf.Program `ebpf:"kprobe_writev"`
 	KretprobeAccept   *ebpf.Program `ebpf:"kretprobe_accept"`
 	KretprobeBind     *ebpf.Program `ebpf:"kretprobe_bind"`
+	KretprobeClone    *ebpf.Program `ebpf:"kretprobe_clone"`
 	KretprobeClose    *ebpf.Program `ebpf:"kretprobe_close"`
 	KretprobeConnect  *ebpf.Program `ebpf:"kretprobe_connect"`
 	KretprobeExecve   *ebpf.Program `ebpf:"kretprobe_execve"`
@@ -198,6 +257,7 @@ func (p *tarianPrograms) Close() error {
 	return _TarianClose(
 		p.KprobeAccept,
 		p.KprobeBind,
+		p.KprobeClone,
 		p.KprobeClose,
 		p.KprobeConnect,
 		p.KprobeExecve,
@@ -213,6 +273,7 @@ func (p *tarianPrograms) Close() error {
 		p.KprobeWritev,
 		p.KretprobeAccept,
 		p.KretprobeBind,
+		p.KretprobeClone,
 		p.KretprobeClose,
 		p.KretprobeConnect,
 		p.KretprobeExecve,
