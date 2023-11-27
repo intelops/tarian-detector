@@ -71,7 +71,9 @@ enum event_id_e {
     SYS_ENTER_BIND,
     SYS_EXIT_BIND,
     SYS_ENTER_CONNECT,
-    SYS_EXIT_CONNECT
+    SYS_EXIT_CONNECT,
+    SYS_ENTER_CLONE,
+    SYS_EXIT_CLONE
 };
 
 #endif
