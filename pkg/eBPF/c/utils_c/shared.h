@@ -99,17 +99,31 @@ stain struct qstr get_d_name_from_dentry(struct dentry *dentry){
   return BPF_CORE_READ(dentry, d_name);
 }
 
-stain void *events_reserve_space(u16 cpu, int size) {
+stain struct ringbuffer *get_cpu_ringbuffer()
+{
+	uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
+	return (struct ringbuffer *)bpf_map_lookup_elem(&percpu_rb, &cpu_id);
+}
+
+stain void *events_reserve_space(int size) {
   // int zero = 0;
 
   // return (struct event_data *)bpf_map_lookup_elem(&heap, &zero);
-  return BPF_RINGBUF_RESERVE(EVENT_RINGBUF_MAP_NAME, size);
+  struct ringbuffer *rb = get_cpu_ringbuffer();
+  if (!rb) {
+    // bpf_printk("Failed to reserve space in per-CPU ring buffer\n %ld %ld", total, mapp);
+    return NULL;
+  }
+
+  // bpf_printk("reserve space in per-CPU ring buffer\n %ld %ld", total, mapp);
+  return bpf_ringbuf_reserve(rb, size, 0);
 }
 
 stain int events_ringbuf_submit(program_data_t *ptr) {
   if (ptr == NULL)
     return NULL_POINTER_ERROR;
   
+  bpf_printk("test: Total triggers: %ld, total drops: %ld", total, dropped);
   BPF_RINGBUF_SUBMIT(ptr->event);
 
   return OK;
@@ -135,4 +149,32 @@ stain int flush(u8 *buf, int n) {
   }
   return OK;
 }
+
+stain u64 execId(u32 processId, u64 start_time){
+    u64 unique_id = processId;
+    unique_id = (unique_id << 32) | start_time;
+
+    // for (int i = 0; i < (command_size & (TASK_COMM_LEN - 1)); i++) {
+    //     if (command[i] == '\0') 
+    //       break;
+
+    //     unique_id = (unique_id << 8) | (u8)command[i & (TASK_COMM_LEN - 1)];
+    // }
+
+    return unique_id;
+}
+
+stain u64 getExecId(u32 processId, struct task_struct *task) {
+  u64 start_time = get_task_start_time(task);
+  return execId(processId, start_time); 
+}
+
+stain u64 getParentExecId(u32 processId, struct task_struct *task) {
+  struct task_struct *parent = get_task_parent(task);
+  u64 start_time = get_task_start_time(parent);
+
+  return execId(processId, start_time);
+}
+
+
 #endif
