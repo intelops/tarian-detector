@@ -48,7 +48,7 @@ type BpfModule struct {
 
 type Handler struct {
 	Id         string
-	MapReader  *ringbuf.Reader
+	MapReader  []*ringbuf.Reader
 	ProbeLinks []link.Link
 }
 
@@ -142,13 +142,12 @@ func (bm *BpfModule) Start() (*Handler, error) {
 	return &handler, nil
 }
 
-func (h *Handler) ReadAsInterface() ([]byte, error) {
-	record, err := h.MapReader.Read()
-	if err != nil {
-		return []byte{}, err
-	}
+var received int32
 
-	return record.RawSample, nil
+func (h *Handler) ReadAsInterface() ([]*ringbuf.Reader, error) {
+
+	return h.MapReader, nil
+	// fmt.Printf("Records left in ringbuf map: %d Total: %d\n", record.Remaining/14865, received)
 }
 
 func (h *Handler) Close() error {
@@ -159,9 +158,35 @@ func (h *Handler) Close() error {
 		}
 	}
 
-	return h.MapReader.Close()
+	return closeMaps(h.MapReader)
 }
 
-func createMapReader(name *ebpf.Map) (*ringbuf.Reader, error) {
-	return ringbuf.NewReader(name)
+func createMapReader(name *ebpf.Map) ([]*ringbuf.Reader, error) {
+	var innerMaps []*ringbuf.Reader
+	for i := uint32(0); i < name.MaxEntries(); i++ {
+		var innerMap *ebpf.Map
+		if err := name.Lookup(&i, &innerMap); err != nil {
+			return innerMaps, err
+		}
+
+		idxMap, err := ringbuf.NewReader(innerMap)
+		if err != nil {
+			return innerMaps, err
+		}
+
+		innerMaps = append(innerMaps, idxMap)
+	}
+
+	return innerMaps, nil
+}
+
+func closeMaps(readers []*ringbuf.Reader) error {
+	for _, reader := range readers {
+		err := reader.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
