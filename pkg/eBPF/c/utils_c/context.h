@@ -7,12 +7,29 @@
 stain int read_cwd_into(struct path *, u8 *);
 stain int new_program(program_data_t *pd, void *, int);
 stain int read_node_info_into(node_info_t *, struct task_struct *);
-stain int init_task_context(task_context_t *, struct task_struct *);
+stain int init_task_context(task_context_t *, struct task_struct *, int);
 stain int init_event_context(event_context_t *, struct task_struct *, int, int);
 
-stain int new_program(program_data_t *pd, void *ctx, int event_id) {
-  total++;
+stain int new_program(program_data_t *pd, void *ctx, int event_id) {  
+  // char test[16];
+  // bpf_probe_read_str(&test, TASK_COMM_LEN, get_task_comm_into((struct task_struct *)bpf_get_current_task()));
   
+  // char targetComm[] = "ls";
+  // int i = 0;
+  // bool commbool = true;
+  // while (i < sizeof(test) && i < sizeof(targetComm)) {
+  //     if (test[i] != targetComm[i]) {
+  //         commbool = false;
+  //         break;
+  //     }
+  //     i++;
+  // }
+
+  // if (!commbool) {
+  //   return 7890;
+  // }
+
+  total++;
   pd->ctx = ctx; /* pt regs ctx*/
   pd->task = (struct task_struct *)bpf_get_current_task(); /* task struct pointer*/
   pd->cursor = 0;
@@ -22,9 +39,10 @@ stain int new_program(program_data_t *pd, void *ctx, int event_id) {
   if (err != OK)
     return err;
 
-  pd->event = events_reserve_space((u16)bpf_get_smp_processor_id(), (int)sizeof(*pd->event));
-  if (!pd->event)
+  pd->event = events_reserve_space((int)sizeof(*pd->event));
+  if (!pd->event){
     return RINGBUF_CAPACITY_REACHED_ERR;
+  }
 
   pd->event->buf.num_fields = 0;
   pd->event->buf.field_types = 0;
@@ -44,7 +62,7 @@ stain int new_program(program_data_t *pd, void *ctx, int event_id) {
 };
 
 stain int init_event_context(event_context_t *e, struct task_struct *t, int event_id, int syscall_id) {
-  int err = init_task_context(&e->task, t);
+  int err = init_task_context(&e->task, t, event_id);
   if (err != OK)
     return err;
 
@@ -56,7 +74,7 @@ stain int init_event_context(event_context_t *e, struct task_struct *t, int even
   return OK;
 }
 
-stain int init_task_context(task_context_t *tc, struct task_struct *t) {
+stain int init_task_context(task_context_t *tc, struct task_struct *t, int event_id) {
   tc->start_time = get_task_start_time(t);
 
   u64 tpid = bpf_get_current_pid_tgid();
@@ -79,12 +97,36 @@ stain int init_task_context(task_context_t *tc, struct task_struct *t) {
   tc->mount_ns_id = get_mnt_ns_id(get_task_nsproxy(t));
   tc->pid_ns_id = get_pid_ns_id(get_task_nsproxy(t));
 
+  tc->exec_id = get_task_self_exec_id(t);
+  tc->parent_exec_id = get_task_parent_exec_id(t);
+
   flush(tc->comm, sizeof(tc->comm));
-  if (BPF_GET_COMM(tc->comm) < 0)
+  u64 csz = bpf_probe_read_str(tc->comm, TASK_COMM_LEN, get_task_comm(t));
+  if (csz < 0)
     return NOT_OK;
+
+  // !(tc->host_pid == 171055 || tc->host_ppid == 171055) || 
+  // if (!(tc->host_pid == 1600837 || tc->host_ppid == 1600837)) {
+  //   return 500;
+  // }
 
   struct path path = BPF_CORE_READ(t, fs, pwd);
   flush(tc->cwd, sizeof(tc->cwd));
+
+  // u32 cule = read_cwd_into(&path, tc->cwd);
+  // u16 cur = 0, sz = 0;
+  // sz = cule;
+  // cur = cule >> 16;
+
+  // char test[256];
+  // bpf_probe_read_str(&test, 256, &tc->cwd[cur & (MAX_STRING_SIZE - 1)]);
+  // bpf_printk("string: %d, %d == %s", cur, sz, test);
+
+  // bpf_printk("string: %ld %ld", get_task_self_exec_id(t), get_task_parent_exec_id(t));
+  
+  tc->eexec_id = getExecId(tc->host_pid, t);
+  tc->eparent_exec_id = getParentExecId(tc->host_ppid, t);
+
   return read_cwd_into(&path, tc->cwd);
 }
 
@@ -171,6 +213,10 @@ stain int read_cwd_into(struct path *path, u8 *buf) {
   // write start index of string to buffer
   bpf_probe_read(&(buf[0]), sizeof(short), &cursor);
   bpf_probe_read(&(buf[2]), sizeof(short), &str_len);
+
+  // bpf_printk("string: cwd %d, %d", cursor, str_len);
+
+  // u32 ret = ((u32)cursor << 16) | str_len;
 
   return OK;
 };
