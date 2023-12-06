@@ -33,6 +33,7 @@ help:
 	@echo "make uinstall - uinstalls the project dependencies"
 	@echo "make bpf_helpers - generates the header files"
 	@echo "make lint - analyze the project code"
+	@echo "make module NAME=<module-name> - create ebpf module with basic template. A module is a collection of *.c and *.go file together bascally ebpf with kernelspace and userspace programs."
 	@echo "make file FILE_PATH=</your/file/path/filename.ext> - create a file with copyrights and license comments"
 	@echo "make clean - deletes all object files(*.o)"
 	@echo "make help - prints the available commands"
@@ -92,7 +93,43 @@ lint: fmt vet
 	staticcheck ./...
 
 
-.PHONY: clean file
+.PHONY: clean file module
+
+# recipe to create a bpf module with basic template. A module is a collection of *.c and *.go file together bascally ebpf with kernelspace and userspace programs.
+module: 
+ifeq ($(NAME),)
+	@echo "ERROR: Please provide a valid module name. \n\n\tUsage: make $@ NAME=__x64_sys_open\n"
+	@exit 1
+else 
+	@if [ -e "$(shell pwd)/pkg/eBPF/c/bpf/$(NAME)" ]; then \
+		echo "ERROR: module already exists at $(shell pwd)/pkg/eBPF/c/bpf/$(NAME) and is as follows:\n"; \
+		ls "./pkg/eBPF/c/bpf/$(NAME)"; \
+	else \
+		echo "Creating bpf module: $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)"; \
+		mkdir $(shell pwd)/pkg/eBPF/c/bpf/$(NAME); \
+		\
+		# c template - start	\
+		echo "// SPDX-License-Identifier: Apache-2.0\n// Copyright 2023 Authors of Tarian & the Organization created Tarian\n\n//go:build ignore\n" > $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "#include \"includes.h\"\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "// data gathered by this program \nstruct event_data {\n\tint id;\n\tevent_context_t eventContext;\n};\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "// Force emits struct event_data into the elf\nconst struct event_data *unused __attribute__((unused));\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "// ringbuffer map definition\nBPF_RINGBUF_MAP(event);\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		echo "SEC("")\nint $(NAME)(struct pt_regs *ctx){\n\tstruct event_data *ed;\n\n\t// allocate space for an event in map.\n\ted = BPF_RINGBUF_RESERVE(event, *ed);\n\tif (!ed) {\n\t\treturn -1;\n\t}\n\n\t// sets the context\n\tinit_context(&ed->eventContext);\n\n\tsys_args_t sys_args;\n\tread_sys_args_into(&sys_args, ctx);\n\n\t// pushes the information to ringbuf event map\n\tBPF_RINGBUF_SUBMIT(ed);\n\n\treturn 0;\n};" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).bpf.c; \
+		# c template - end	\
+		\
+		# go template - start \
+		echo "// SPDX-License-Identifier: Apache-2.0\n// Copyright 2023 Authors of Tarian & the Organization created Tarian\n" > $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		echo "package $(NAME)\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		echo "//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags \$$BPF_CFLAGS -type event_data -target \$$CURR_ARCH $(NAME) $(NAME).bpf.c -- -I../../../../../headers -I../../\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		echo "type $(NAME) struct{}\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		echo "func New$(NAME)() *$(NAME) {\n\treturn &$(NAME){}\n}\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		echo "func (ep *$(NAME)) NewEbpf() {}\n\nfunc (ep *$(NAME)) DataParser(data any) {}\n" >> $(shell pwd)/pkg/eBPF/c/bpf/$(NAME)/$(NAME).go; \
+		# go template - end \
+		echo "module successfully created!\n"; \
+		make fmt; \
+	fi
+endif
+
 
 # recipe to create a file with license and copyright details.
 file:
