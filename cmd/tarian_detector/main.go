@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	bpf "github.com/intelops/tarian-detector/pkg/eBPF"
+	"github.com/intelops/tarian-detector/pkg/linker"
 	"k8s.io/client-go/rest"
 )
 
@@ -27,12 +27,14 @@ func main() {
 		watcher.Start()
 	}
 
-	BpfModules, err := bpf.GetDetectors()
+	// Loads the ebpf programs
+	bpfLinker, err := LoadPrograms(BpfModules)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	detectors, err := BpfModules.Start()
+	// Converts bpf handlers to detectors
+	eventDetectors, err := GetDetectors(bpfLinker.ProbeHandlers)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +43,7 @@ func main() {
 	eventsDetector := detector.NewEventsDetector()
 
 	// Add ebpf programs to detectors
-	eventsDetector.Add(detectors)
+	eventsDetector.Add(eventDetectors)
 
 	// Start and defer Close
 	err = eventsDetector.Start()
@@ -51,9 +53,8 @@ func main() {
 	defer eventsDetector.Close()
 
 	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
-	// defer stats(eventsDetector, bpfLinker)
+	defer stats(eventsDetector, bpfLinker)
 
-	count := 0
 	// Loop read events
 	go func() {
 		for {
@@ -62,20 +63,15 @@ func main() {
 				fmt.Println(err)
 			}
 
-			k8sCtx, err := GetK8sContext(watcher, e["host_pid"].(uint32))
+			k8sCtx, err := GetK8sContext(watcher, e["process_id"].(uint32))
 			if err != nil {
-				// log.Print(err)
+				log.Print(err)
 				e["kubernetes"] = err.Error()
 			} else {
 				e["kubernetes"] = k8sCtx
 			}
 
-			// printEvent(e)
-			count++
-			fmt.Println("Total count:", count)
-			// if count > 1000 {
-			// 	os.Exit(1)
-			// }
+			printEvent(e)
 		}
 	}()
 
@@ -93,4 +89,29 @@ func printEvent(data map[string]any) {
 	}
 
 	log.Printf("%s\n%s%s\n", div, msg, div)
+}
+
+func stats(d *detector.EventsDetector, l *linker.Linker) {
+	// fmt.Print("\033[H\033[2J")
+	fmt.Printf("\n\n%d detectors running...\n", d.Count())
+	fmt.Printf("Total Record captured %d\n", d.TotalRecordsCount)
+
+	fmt.Printf("Event wise count...\n\n")
+	countTriggered := 0
+	for k, v := range l.ProbeIds {
+		if !v {
+			// skips the disabled probes
+			continue
+		}
+
+		_, keyExists := d.ProbeRecordsCount[k]
+		if keyExists {
+			countTriggered++
+			fmt.Printf("%s: %d\n", k, d.ProbeRecordsCount[k])
+		} else {
+			fmt.Printf("%s: 0\n", k)
+		}
+	}
+
+	fmt.Printf("\n%d events triggered in total.\n", countTriggered)
 }
