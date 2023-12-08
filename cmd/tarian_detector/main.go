@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	bpf "github.com/intelops/tarian-detector/pkg/eBPF"
 	"github.com/intelops/tarian-detector/pkg/utils"
+	"github.com/intelops/tarian-detector/tarian"
 )
 
 func main() {
@@ -33,12 +33,12 @@ func main() {
 	stopper := make(chan os.Signal, 1)
 	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
 
-	BpfModules, err := bpf.GetDetectors()
+	tarianEbpfModule, err := tarian.GetEBPFModule()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	detectors, err := BpfModules.Start()
+	tarianDetector, err := tarianEbpfModule.Prepare()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func main() {
 	eventsDetector := detector.NewEventsDetector()
 
 	// Add ebpf programs to detectors
-	eventsDetector.Add(detectors)
+	eventsDetector.Add(tarianDetector)
 
 	// Start and defer Close
 	err = eventsDetector.Start()
@@ -75,7 +75,7 @@ func main() {
 	// Loop read events
 	go func() {
 		for {
-			rc, e, err := eventsDetector.ReadAsInterface()
+			e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -97,7 +97,7 @@ func main() {
 			}
 
 			count++
-			printEvent(rc, count, e)
+			printEvent(0, count, e)
 			// if count > 1000 {
 			// 	os.Exit(1)
 			// }
@@ -113,9 +113,9 @@ func main() {
 func printEvent(rc int, t int, data map[string]any) {
 	div := "======================"
 	msg := ""
-	// for ky, val := range data {
-	// 	msg += fmt.Sprintf("%s: %v\n", ky, val)
-	// }
+	for ky, val := range data {
+		msg += fmt.Sprintf("%s: %v\n", ky, val)
+	}
 
 	log.Printf("%s\nStatus of ring buffer %d. Remaining %d, Total: %d\n%s%s\n", div, data["processor_id"], rc/14865, t, msg, div)
 }
