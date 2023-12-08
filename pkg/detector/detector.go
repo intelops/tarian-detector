@@ -4,20 +4,17 @@
 package detector
 
 import (
-	"fmt"
-
 	"github.com/cilium/ebpf/ringbuf"
 	"github.com/intelops/tarian-detector/pkg/eventparser"
 )
 
 type EventDetector interface {
 	Close() error
-	ReadAsInterface() ([]*ringbuf.Reader, error)
+	ReadAsInterface() ([]func() ([]byte, error), error)
 }
 
 type detectorReadReturn struct {
 	eventData []byte
-	restCount int
 	err       error
 }
 
@@ -50,17 +47,26 @@ func (t *EventsDetector) Add(detectors EventDetector) {
 func (t *EventsDetector) Start() error {
 	for _, detector := range t.detectors {
 		d := detector
-		mapReaders, _ := d.ReadAsInterface()
-		fmt.Printf("Monitoring %d maps for data.\n", len(mapReaders))
+		mapReaders, err := d.ReadAsInterface()
+		if err != nil {
+			return err
+		}
+
 		for _, reader := range mapReaders {
-			go func(r *ringbuf.Reader) {
+			go func(r func() ([]byte, error)) {
 				for {
 					if t.closed {
 						return
 					}
 
-					event, err := mapReader(r)
-					t.eventQueue <- detectorReadReturn{event.RawSample, event.Remaining, err}
+					event, err := r()
+					if err == nil {
+						if len(event) != 0 {
+							t.eventQueue <- detectorReadReturn{event, err}
+						}
+					} else {
+						t.eventQueue <- detectorReadReturn{[]byte{}, err}
+					}
 				}
 			}(reader)
 		}
@@ -84,14 +90,14 @@ func (t *EventsDetector) Close() error {
 	return nil
 }
 
-func (t *EventsDetector) ReadAsInterface() (int, map[string]any, error) {
+func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	r := <-t.eventQueue
 	if r.err != nil {
-		return r.restCount, map[string]any{}, r.err
+		return map[string]any{}, r.err
 	}
 
 	data, err := eventparser.DecodeByte(r.eventData)
-	return r.restCount, data, err
+	return data, err
 }
 
 func (t *EventsDetector) Count() int {
