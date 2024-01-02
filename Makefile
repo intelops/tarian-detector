@@ -13,8 +13,19 @@ HEADERS_PATH=headers
 # required C header files
 HEADERS_FILES = bpf_helpers bpf_helper_defs bpf_endian bpf_core_read bpf_tracing
 
+# extracts the major, minor, and patch version numbers of the kernel version
+KERNEL_VERSION = $(word 1, $(subst -, ,$(shell uname -r)))
+KV_S = $(subst ., ,$(KERNEL_VERSION))
+KV_MAJOR = $(word 1,$(KV_S))
+KV_MINOR = $(word 2,$(KV_S))
+KV_PATCH = $(word 3,$(KV_S))
+
 # flags to be passed to clang for compiling C files.
-CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
+CFLAGS := -O2 -g -Wall -Werror \
+	 	  -DLINUX_VERSION_MAJOR=$(KV_MAJOR) \
+		  -DLINUX_VERSION_MINOR=$(KV_MINOR) \
+		  -DLINUX_VERSION_PATCH=$(KV_PATCH) \
+		  $(CFLAGS)
 
 # architecture of the system.
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/g; s/aarch64/arm64/g')
@@ -54,6 +65,9 @@ run: execute
 dev_run: build execute
 
 # recipe to execute the executable file
+execute: export LINUX_VERSION_MAJOR := $(KV_MAJOR)
+execute: export LINUX_VERSION_MINOR := $(KV_MINOR)
+execute: export LINUX_VERSION_PATCH := $(KV_PATCH)
 execute:
 	./$(EXECUTABLE)/$(EXECUTABLE_FILE)
 
