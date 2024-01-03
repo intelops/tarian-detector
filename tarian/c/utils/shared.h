@@ -99,62 +99,64 @@ stain struct qstr get_d_name_from_dentry(struct dentry *dentry){
   return BPF_CORE_READ(dentry, d_name);
 }
 
-stain struct ringbuffer *get_cpu_ringbuffer()
-{
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)  
-	uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
-	return (struct ringbuffer *)bpf_map_lookup_elem(&events, &cpu_id);
-#else
-  return NULL;
-#endif
-}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 
-stain void *events_reserve_space(int size) {
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)  
-  struct ringbuffer *rb = get_cpu_ringbuffer();
-  if (!rb) {
-    // bpf_printk("Failed to reserve space in per-CPU ring buffer\n %ld %ld", total, mapp);
-    return NULL;
+  stain struct ringbuffer *get_cpu_ringbuffer() {
+    uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
+	  return (struct ringbuffer *)bpf_map_lookup_elem(&events, &cpu_id);
   }
 
-  // bpf_printk("reserve space in per-CPU ring buffer\n %ld %ld", total, mapp);
-  return bpf_ringbuf_reserve(rb, size, 0);
-#else
+  stain void *events_reserve_space(int size) {
+    struct ringbuffer *rbuf = get_cpu_ringbuffer();
+    if (!rbuf) {
+      return NULL;
+    }
 
-  int zero = 0;
+    return bpf_ringbuf_reserve(rbuf, size, 0);
+  }
 
-  return bpf_map_lookup_elem(&pea_per_cpu_array, &zero);
-#endif
-}
-
-stain int events_ringbuf_submit(program_data_t *ptr) {
-  if (ptr == NULL)
+  stain int events_ringbuf_submit(program_data_t *ptr){
+    if (ptr == NULL)
     return NULL_POINTER_ERROR;
   
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-  BPF_RINGBUF_SUBMIT(ptr->event);
-#else
-  bpf_perf_event_output(ptr->ctx, &events, BPF_F_CURRENT_CPU, ptr->event, sizeof(*ptr->event));
-#endif
+    bpf_ringbuf_submit(ptr->event, 0);
 
-  // bpf_printk("test: Total triggers: %ld, total drops: %ld", total, dropped);  
-  // bpf_printk("execve %d %d", ptr->event->context.task.host_pid , ptr->event->buf.num_fields);
-  // bpf_printk("Execve %ld %ld %d", sizeof(*ptr->event), sizeof(ptr->event), rl);
+    return OK;
+  }
 
-  return OK;
-}
-
-stain int events_ringbuf_discard(program_data_t *ptr){
-  if (ptr == NULL)
+  stain int events_ringbuf_discard(program_data_t *ptr){
+    if (ptr == NULL)
       return NULL_POINTER_ERROR;
-  
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-  BPF_RINGBUF_DISCARD(ptr->event);
-#endif
+    
+    BPF_RINGBUF_DISCARD(ptr->event);
 
-  return OK;
-}
+    return OK;
+  }
+
+#else
+
+  stain void *events_reserve_space(int size) {
+    int zero = 0;
+
+    return bpf_map_lookup_elem(&pea_per_cpu_array, &zero);
+  }
+
+  stain int events_ringbuf_submit(program_data_t *ptr){
+    if (ptr == NULL)
+    return NULL_POINTER_ERROR;
+  
+    bpf_perf_event_output(ptr->ctx, &events, BPF_F_CURRENT_CPU, ptr->event, sizeof(*ptr->event));
+
+    return OK;
+  }
+
+  stain int events_ringbuf_discard(program_data_t *ptr){
+    if (ptr == NULL)
+      return NULL_POINTER_ERROR;
+    
+    return OK;
+  }
+#endif
 
 stain int flush(u8 *buf, int n) {
   if (buf == NULL) 
