@@ -4,6 +4,8 @@
 package utils
 
 import (
+	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -56,4 +58,31 @@ func NanoSecToTimeFormat(t uint64) string {
 // converts time in miliseconds to readable time format
 func MiliSecToTimeFormat(t uint64) string {
 	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
+}
+
+func KernelVersion(a, b, c int) int {
+	if c > 255 {
+		c = 255
+	}
+
+	return (a << 16) + (b << 8) + c
+}
+
+func CurrentKernelVersion() (int, error) {
+	a, err := strconv.Atoi(os.Getenv("LINUX_VERSION_MAJOR"))
+	if err != nil {
+		return 0, err
+	}
+
+	b, err := strconv.Atoi(os.Getenv("LINUX_VERSION_MINOR"))
+	if err != nil {
+		return 0, err
+	}
+
+	c, err := strconv.Atoi(os.Getenv("LINUX_VERSION_PATCH"))
+	if err != nil {
+		return 0, err
+	}
+
+	return KernelVersion(a, b, c), nil
 }
