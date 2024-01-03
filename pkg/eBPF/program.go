@@ -6,23 +6,27 @@ package ebpf
 import "github.com/cilium/ebpf"
 
 type ProgramInfo struct {
-	Name         *ebpf.Program
-	Hook         *HookInfo
-	ShouldAttach bool
+	name         *ebpf.Program
+	hook         *HookInfo
+	shouldAttach bool
 }
 
 func NewProgram(n *ebpf.Program, h *HookInfo) *ProgramInfo {
 	return &ProgramInfo{
-		Name:         n,
-		Hook:         h,
-		ShouldAttach: true,
+		name:         n,
+		hook:         h,
+		shouldAttach: true,
 	}
 }
 
-func (pi *ProgramInfo) Enable() {
-	pi.ShouldAttach = true
+func (pi *ProgramInfo) Enable() *ProgramInfo {
+	pi.shouldAttach = true
+
+	return pi
 }
 
-func (pi *ProgramInfo) Disable() {
-	pi.ShouldAttach = false
+func (pi *ProgramInfo) Disable() *ProgramInfo {
+	pi.shouldAttach = false
+
+	return pi
 }

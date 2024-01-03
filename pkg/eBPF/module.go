@@ -7,35 +7,48 @@ import (
 	"github.com/intelops/tarian-detector/pkg/err"
 )
 
+type EbpfModule interface {
+	GetModule() (*Module, error)
+}
+
 type Module struct {
-	Name     string
-	Programs []*ProgramInfo
-	Map      *MapInfo
+	name     string
+	programs []*ProgramInfo
+	ebpfMap  *MapInfo
 }
 
 var moduleErr = err.New("ebpf.Module")
 
 func NewModule(n string) *Module {
 	return &Module{
-		Name:     n,
-		Programs: make([]*ProgramInfo, 0),
-		Map:      nil,
+		name:     n,
+		programs: make([]*ProgramInfo, 0),
+		ebpfMap:  nil,
 	}
 }
 
 func (m *Module) AddProgram(prog *ProgramInfo) {
-	m.Programs = append(m.Programs, prog)
+	m.programs = append(m.programs, prog)
+}
+
+func (m *Module) Map(mp *MapInfo) {
+	m.ebpfMap = mp
 }
 
 func (m *Module) Prepare() (*Handler, error) {
-	handler := NewHandler(m.Name)
+	handler := NewHandler(m.name)
 
-	for _, prog := range m.Programs {
-		if !prog.ShouldAttach {
+	/*
+	*
+	* attachs programs to the kernel hook points
+	*
+	 */
+	for _, prog := range m.programs {
+		if !prog.shouldAttach {
 			continue
 		}
 
-		pL, err := prog.Hook.AttachProbe(prog.Name)
+		pL, err := prog.hook.AttachProbe(prog.name)
 		if err != nil {
 			return nil, moduleErr.Throwf("%v", err)
 		}
@@ -43,7 +56,12 @@ func (m *Module) Prepare() (*Handler, error) {
 		handler.AddProbeLink(pL)
 	}
 
-	mrs, err := m.Map.CreateReaders()
+	/*
+	*
+	* creates map reader to receive data from kernel
+	*
+	 */
+	mrs, err := m.ebpfMap.CreateReaders()
 	if err != nil {
 		return nil, moduleErr.Throwf("%v", err)
 	}

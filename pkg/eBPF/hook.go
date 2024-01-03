@@ -14,10 +14,10 @@ import (
 type HookInfoType int
 
 type HookInfo struct {
-	Type  HookInfoType
-	Group string // HookInfoType: Tracepoint needs this Field
-	Name  string
-	Opts  any // expected values with relavant hook type: cilium/ebpf/link.*TracepointOptions | .RawTracepointOptions | .*KprobeOptions | .CgroupOptions
+	hookType HookInfoType
+	group    string // HookInfoType: Tracepoint needs this Field
+	name     string
+	opts     any // expected values with relavant hook type: cilium/ebpf/link.*TracepointOptions | .RawTracepointOptions | .*KprobeOptions | .CgroupOptions
 }
 
 // Supported ebpf hooks
@@ -39,115 +39,115 @@ var hookErr = err.New("ebpf.Hook")
 
 func NewHookInfo() *HookInfo {
 	return &HookInfo{
-		Name:  "",
-		Group: "",
-		Opts:  nil,
-		Type:  -1,
+		name:     "",
+		group:    "",
+		opts:     nil,
+		hookType: -1,
 	}
 }
 
 func (hi *HookInfo) Tracepoint(g string, n string, op ...*link.TracepointOptions) *HookInfo {
 	if len(op) > 0 {
-		hi.Opts = op[0]
+		hi.opts = op[0]
 	} else {
-		hi.Opts = &link.TracepointOptions{}
+		hi.opts = &link.TracepointOptions{}
 	}
 
-	hi.Type = Tracepoint
-	hi.Name = n
-	hi.Group = g
+	hi.hookType = Tracepoint
+	hi.name = n
+	hi.group = g
 
 	return hi
 }
 
 func (hi *HookInfo) RawTracepoint(op link.RawTracepointOptions) *HookInfo {
-	hi.Type = RawTracepoint
-	hi.Opts = op
+	hi.hookType = RawTracepoint
+	hi.opts = op
 
 	return hi
 }
 
 func (hi *HookInfo) Kprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	if len(op) > 0 {
-		hi.Opts = op[0]
+		hi.opts = op[0]
 	} else {
-		hi.Opts = &link.KprobeOptions{}
+		hi.opts = &link.KprobeOptions{}
 	}
 
-	hi.Type = Kprobe
-	hi.Name = n
+	hi.hookType = Kprobe
+	hi.name = n
 
 	return hi
 }
 
 func (hi *HookInfo) Kretprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	if len(op) > 0 {
-		hi.Opts = op[0]
+		hi.opts = op[0]
 	} else {
-		hi.Opts = &link.KprobeOptions{}
+		hi.opts = &link.KprobeOptions{}
 	}
 
-	hi.Type = Kretprobe
-	hi.Name = n
+	hi.hookType = Kretprobe
+	hi.name = n
 
 	return hi
 }
 
 func (hi *HookInfo) Cgroup(op link.CgroupOptions) *HookInfo {
-	hi.Type = Cgroup
-	hi.Opts = op
+	hi.hookType = Cgroup
+	hi.opts = op
 
 	return hi
 }
 
 func (hi *HookInfo) AttachProbe(programName *ebpf.Program) (link.Link, error) {
-	switch hi.Type {
+	switch hi.hookType {
 	case Tracepoint:
-		if len(hi.Name) == 0 {
-			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.Type)
+		if len(hi.name) == 0 {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.hookType)
 		}
 
-		if len(hi.Group) == 0 {
-			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Group'", hi.Type)
+		if len(hi.group) == 0 {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Group'", hi.hookType)
 		}
 
-		if isValid := areTypesEqual(hi.Opts, &link.TracepointOptions{}); !isValid {
-			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, &link.TracepointOptions{}, hi.Opts)
+		if isValid := areTypesEqual(hi.opts, &link.TracepointOptions{}); !isValid {
+			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, &link.TracepointOptions{}, hi.opts)
 		}
 
-		return link.Tracepoint(hi.Group, hi.Name, programName, hi.Opts.(*link.TracepointOptions))
+		return link.Tracepoint(hi.group, hi.name, programName, hi.opts.(*link.TracepointOptions))
 	case RawTracepoint:
-		if hi.Opts == nil {
-			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Opts'", hi.Type)
+		if hi.opts == nil {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Opts'", hi.hookType)
 		}
 
-		if isValid := areTypesEqual(hi.Opts, link.RawTracepointOptions{}); !isValid {
-			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, link.RawTracepointOptions{}, hi.Opts)
+		if isValid := areTypesEqual(hi.opts, link.RawTracepointOptions{}); !isValid {
+			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, link.RawTracepointOptions{}, hi.opts)
 		}
 
-		return link.AttachRawTracepoint(hi.Opts.(link.RawTracepointOptions))
+		return link.AttachRawTracepoint(hi.opts.(link.RawTracepointOptions))
 	case Kprobe, Kretprobe:
-		if len(hi.Name) == 0 {
-			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.Type)
+		if len(hi.name) == 0 {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.hookType)
 		}
 
-		if isValid := areTypesEqual(hi.Opts, &link.KprobeOptions{}); !isValid {
-			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, &link.KprobeOptions{}, hi.Opts)
+		if isValid := areTypesEqual(hi.opts, &link.KprobeOptions{}); !isValid {
+			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, &link.KprobeOptions{}, hi.opts)
 		}
 
-		return link.Kprobe(hi.Name, programName, hi.Opts.(*link.KprobeOptions))
+		return link.Kprobe(hi.name, programName, hi.opts.(*link.KprobeOptions))
 	case Cgroup:
-		if hi.Opts == nil {
-			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Opts'", hi.Type)
+		if hi.opts == nil {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Opts'", hi.hookType)
 		}
 
-		if isValid := areTypesEqual(hi.Opts, link.CgroupOptions{}); !isValid {
-			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, link.CgroupOptions{}, hi.Opts)
+		if isValid := areTypesEqual(hi.opts, link.CgroupOptions{}); !isValid {
+			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, link.CgroupOptions{}, hi.opts)
 		}
 
-		return link.AttachCgroup(hi.Opts.(link.CgroupOptions))
+		return link.AttachCgroup(hi.opts.(link.CgroupOptions))
 	default:
-		return nil, hookErr.Throwf(ErrInvalidBpfHookType, hi.Type)
+		return nil, hookErr.Throwf(ErrInvalidBpfHookType, hi.hookType)
 	}
 }
 

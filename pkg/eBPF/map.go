@@ -4,6 +4,7 @@
 package ebpf
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cilium/ebpf"
@@ -15,9 +16,10 @@ import (
 type MapInfoType int
 
 type MapInfo struct {
-	Type         MapInfoType
-	Map          *ebpf.Map
-	InnerMapType MapInfoType
+	mapType      MapInfoType
+	bpfMap       *ebpf.Map
+	bufferSize   int
+	innerMapType MapInfoType
 }
 
 // Supported ebpfmaps
@@ -41,40 +43,54 @@ var (
 
 func NewRingBuf(m *ebpf.Map) *MapInfo {
 	return &MapInfo{
-		Type:         RingBuffer,
-		Map:          m,
-		InnerMapType: -1,
+		mapType:      RingBuffer,
+		bpfMap:       m,
+		innerMapType: -1,
 	}
 }
 
 func NewPerfEvent(m *ebpf.Map) *MapInfo {
 	return &MapInfo{
-		Type:         PerfEventArray,
-		Map:          m,
-		InnerMapType: -1,
+		mapType:      PerfEventArray,
+		bpfMap:       m,
+		bufferSize:   os.Getpagesize(),
+		innerMapType: -1,
+	}
+}
+
+func NewPerfEventWithBuffer(m *ebpf.Map, b *ebpf.Map) *MapInfo {
+	return &MapInfo{
+		mapType:      PerfEventArray,
+		bpfMap:       m,
+		bufferSize:   int(b.ValueSize()),
+		innerMapType: -1,
 	}
 }
 
 func NewArrayOfPerfEvent(m *ebpf.Map) *MapInfo {
 	return &MapInfo{
-		Type:         ArrayOfMaps,
-		Map:          m,
-		InnerMapType: PerfEventArray,
+		mapType:      ArrayOfMaps,
+		bpfMap:       m,
+		innerMapType: PerfEventArray,
 	}
 }
 
 func NewArrayOfRingBuf(m *ebpf.Map) *MapInfo {
 	return &MapInfo{
-		Type:         ArrayOfMaps,
-		InnerMapType: RingBuffer,
-		Map:          m,
+		mapType:      ArrayOfMaps,
+		innerMapType: RingBuffer,
+		bpfMap:       m,
 	}
+}
+
+func (mi *MapInfo) String() string {
+	return fmt.Sprintf("%+v", *mi)
 }
 
 func (mi *MapInfo) CreateReaders() ([]any, error) {
 	var mr []any
 
-	switch mi.Type {
+	switch mi.mapType {
 	case RingBuffer:
 		rb, err := mi.ringbufReader()
 		mr = append(mr, rb)
@@ -88,28 +104,28 @@ func (mi *MapInfo) CreateReaders() ([]any, error) {
 	case ArrayOfMaps:
 		return mi.arrayOfMapsReader()
 	default:
-		return nil, mapErr.Throwf(ErrUnsupportedBpfMapType, mi.Type)
+		return nil, mapErr.Throwf(ErrUnsupportedBpfMapType, mi.mapType)
 	}
 }
 
 func (mi *MapInfo) arrayOfMapsReader() ([]any, error) {
-	if mi.Map == nil {
+	if mi.bpfMap == nil {
 		return nil, mapErr.Throw(ErrNilMapPointer)
 	}
 
 	var arrr []any
-	for i := uint32(0); i < mi.Map.MaxEntries(); i++ {
+	for i := uint32(0); i < mi.bpfMap.MaxEntries(); i++ {
 		var innerMap *ebpf.Map
 		var currMap MapInfo
 
-		if err := mi.Map.Lookup(&i, &innerMap); err != nil {
+		if err := mi.bpfMap.Lookup(&i, &innerMap); err != nil {
 			return nil, mapErr.Throwf("%v", err)
 		}
 
-		currMap.Map = innerMap
-		currMap.Type = mi.InnerMapType
+		currMap.bpfMap = innerMap
+		currMap.mapType = mi.innerMapType
 
-		switch mi.InnerMapType {
+		switch mi.innerMapType {
 		case RingBuffer:
 			rb, err := currMap.ringbufReader()
 			if err != nil {
@@ -125,7 +141,7 @@ func (mi *MapInfo) arrayOfMapsReader() ([]any, error) {
 
 			arrr = append(arrr, pf)
 		default:
-			return nil, mapErr.Throwf(ErrUnsupportedInnerBpfMapType, mi.InnerMapType)
+			return nil, mapErr.Throwf(ErrUnsupportedInnerBpfMapType, mi.innerMapType)
 		}
 	}
 
@@ -133,11 +149,11 @@ func (mi *MapInfo) arrayOfMapsReader() ([]any, error) {
 }
 
 func (mi *MapInfo) ringbufReader() (*ringbuf.Reader, error) {
-	if mi.Map == nil {
+	if mi.bpfMap == nil {
 		return nil, mapErr.Throw(ErrNilMapReader)
 	}
 
-	r, err := ringbuf.NewReader(mi.Map)
+	r, err := ringbuf.NewReader(mi.bpfMap)
 	if err != nil {
 		return nil, mapErr.Throwf("%v", err)
 	}
@@ -146,11 +162,11 @@ func (mi *MapInfo) ringbufReader() (*ringbuf.Reader, error) {
 }
 
 func (mi *MapInfo) perfReader() (*perf.Reader, error) {
-	if mi.Map == nil {
+	if mi.bpfMap == nil {
 		return nil, mapErr.Throw(ErrNilMapReader)
 	}
 
-	p, err := perf.NewReader(mi.Map, os.Getpagesize())
+	p, err := perf.NewReader(mi.bpfMap, mi.bufferSize)
 	if err != nil {
 		return nil, mapErr.Throwf("%v", err)
 	}
@@ -171,7 +187,6 @@ func read(readers []any) ([]func() ([]byte, error), error) {
 
 			funcs = append(funcs, f)
 		case *perf.Reader:
-			var funcs []func() ([]byte, error)
 			f, err := read_perf(r)
 			if err != nil {
 				return nil, err
@@ -194,7 +209,7 @@ func read_ringbuf(r *ringbuf.Reader) (func() ([]byte, error), error) {
 	return func() ([]byte, error) {
 		record, err := r.Read()
 		if err != nil {
-			return nil, mapErr.Throwf("%vGo", err)
+			return nil, mapErr.Throwf("%v", err)
 		}
 
 		return record.RawSample, nil
