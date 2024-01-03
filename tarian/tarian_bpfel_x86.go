@@ -133,24 +133,24 @@ type tarianProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianMapSpecs struct {
-	Events   *ebpf.MapSpec `ebpf:"events"`
-	PercpuRb *ebpf.MapSpec `ebpf:"percpu_rb"`
-	RbCpu0   *ebpf.MapSpec `ebpf:"rb_cpu0"`
-	RbCpu1   *ebpf.MapSpec `ebpf:"rb_cpu1"`
-	RbCpu10  *ebpf.MapSpec `ebpf:"rb_cpu10"`
-	RbCpu11  *ebpf.MapSpec `ebpf:"rb_cpu11"`
-	RbCpu12  *ebpf.MapSpec `ebpf:"rb_cpu12"`
-	RbCpu13  *ebpf.MapSpec `ebpf:"rb_cpu13"`
-	RbCpu14  *ebpf.MapSpec `ebpf:"rb_cpu14"`
-	RbCpu15  *ebpf.MapSpec `ebpf:"rb_cpu15"`
-	RbCpu2   *ebpf.MapSpec `ebpf:"rb_cpu2"`
-	RbCpu3   *ebpf.MapSpec `ebpf:"rb_cpu3"`
-	RbCpu4   *ebpf.MapSpec `ebpf:"rb_cpu4"`
-	RbCpu5   *ebpf.MapSpec `ebpf:"rb_cpu5"`
-	RbCpu6   *ebpf.MapSpec `ebpf:"rb_cpu6"`
-	RbCpu7   *ebpf.MapSpec `ebpf:"rb_cpu7"`
-	RbCpu8   *ebpf.MapSpec `ebpf:"rb_cpu8"`
-	RbCpu9   *ebpf.MapSpec `ebpf:"rb_cpu9"`
+	ErbCpu0        *ebpf.MapSpec `ebpf:"erb_cpu0"`
+	ErbCpu1        *ebpf.MapSpec `ebpf:"erb_cpu1"`
+	ErbCpu10       *ebpf.MapSpec `ebpf:"erb_cpu10"`
+	ErbCpu11       *ebpf.MapSpec `ebpf:"erb_cpu11"`
+	ErbCpu12       *ebpf.MapSpec `ebpf:"erb_cpu12"`
+	ErbCpu13       *ebpf.MapSpec `ebpf:"erb_cpu13"`
+	ErbCpu14       *ebpf.MapSpec `ebpf:"erb_cpu14"`
+	ErbCpu15       *ebpf.MapSpec `ebpf:"erb_cpu15"`
+	ErbCpu2        *ebpf.MapSpec `ebpf:"erb_cpu2"`
+	ErbCpu3        *ebpf.MapSpec `ebpf:"erb_cpu3"`
+	ErbCpu4        *ebpf.MapSpec `ebpf:"erb_cpu4"`
+	ErbCpu5        *ebpf.MapSpec `ebpf:"erb_cpu5"`
+	ErbCpu6        *ebpf.MapSpec `ebpf:"erb_cpu6"`
+	ErbCpu7        *ebpf.MapSpec `ebpf:"erb_cpu7"`
+	ErbCpu8        *ebpf.MapSpec `ebpf:"erb_cpu8"`
+	ErbCpu9        *ebpf.MapSpec `ebpf:"erb_cpu9"`
+	Events         *ebpf.MapSpec `ebpf:"events"`
+	PeaPerCpuArray *ebpf.MapSpec `ebpf:"pea_per_cpu_array"`
 }
 
 // tarianObjects contains all objects after they have been loaded into the kernel.
@@ -172,46 +172,46 @@ func (o *tarianObjects) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianMaps struct {
-	Events   *ebpf.Map `ebpf:"events"`
-	PercpuRb *ebpf.Map `ebpf:"percpu_rb"`
-	RbCpu0   *ebpf.Map `ebpf:"rb_cpu0"`
-	RbCpu1   *ebpf.Map `ebpf:"rb_cpu1"`
-	RbCpu10  *ebpf.Map `ebpf:"rb_cpu10"`
-	RbCpu11  *ebpf.Map `ebpf:"rb_cpu11"`
-	RbCpu12  *ebpf.Map `ebpf:"rb_cpu12"`
-	RbCpu13  *ebpf.Map `ebpf:"rb_cpu13"`
-	RbCpu14  *ebpf.Map `ebpf:"rb_cpu14"`
-	RbCpu15  *ebpf.Map `ebpf:"rb_cpu15"`
-	RbCpu2   *ebpf.Map `ebpf:"rb_cpu2"`
-	RbCpu3   *ebpf.Map `ebpf:"rb_cpu3"`
-	RbCpu4   *ebpf.Map `ebpf:"rb_cpu4"`
-	RbCpu5   *ebpf.Map `ebpf:"rb_cpu5"`
-	RbCpu6   *ebpf.Map `ebpf:"rb_cpu6"`
-	RbCpu7   *ebpf.Map `ebpf:"rb_cpu7"`
-	RbCpu8   *ebpf.Map `ebpf:"rb_cpu8"`
-	RbCpu9   *ebpf.Map `ebpf:"rb_cpu9"`
+	ErbCpu0        *ebpf.Map `ebpf:"erb_cpu0"`
+	ErbCpu1        *ebpf.Map `ebpf:"erb_cpu1"`
+	ErbCpu10       *ebpf.Map `ebpf:"erb_cpu10"`
+	ErbCpu11       *ebpf.Map `ebpf:"erb_cpu11"`
+	ErbCpu12       *ebpf.Map `ebpf:"erb_cpu12"`
+	ErbCpu13       *ebpf.Map `ebpf:"erb_cpu13"`
+	ErbCpu14       *ebpf.Map `ebpf:"erb_cpu14"`
+	ErbCpu15       *ebpf.Map `ebpf:"erb_cpu15"`
+	ErbCpu2        *ebpf.Map `ebpf:"erb_cpu2"`
+	ErbCpu3        *ebpf.Map `ebpf:"erb_cpu3"`
+	ErbCpu4        *ebpf.Map `ebpf:"erb_cpu4"`
+	ErbCpu5        *ebpf.Map `ebpf:"erb_cpu5"`
+	ErbCpu6        *ebpf.Map `ebpf:"erb_cpu6"`
+	ErbCpu7        *ebpf.Map `ebpf:"erb_cpu7"`
+	ErbCpu8        *ebpf.Map `ebpf:"erb_cpu8"`
+	ErbCpu9        *ebpf.Map `ebpf:"erb_cpu9"`
+	Events         *ebpf.Map `ebpf:"events"`
+	PeaPerCpuArray *ebpf.Map `ebpf:"pea_per_cpu_array"`
 }
 
 func (m *tarianMaps) Close() error {
 	return _TarianClose(
+		m.ErbCpu0,
+		m.ErbCpu1,
+		m.ErbCpu10,
+		m.ErbCpu11,
+		m.ErbCpu12,
+		m.ErbCpu13,
+		m.ErbCpu14,
+		m.ErbCpu15,
+		m.ErbCpu2,
+		m.ErbCpu3,
+		m.ErbCpu4,
+		m.ErbCpu5,
+		m.ErbCpu6,
+		m.ErbCpu7,
+		m.ErbCpu8,
+		m.ErbCpu9,
 		m.Events,
-		m.PercpuRb,
-		m.RbCpu0,
-		m.RbCpu1,
-		m.RbCpu10,
-		m.RbCpu11,
-		m.RbCpu12,
-		m.RbCpu13,
-		m.RbCpu14,
-		m.RbCpu15,
-		m.RbCpu2,
-		m.RbCpu3,
-		m.RbCpu4,
-		m.RbCpu5,
-		m.RbCpu6,
-		m.RbCpu7,
-		m.RbCpu8,
-		m.RbCpu9,
+		m.PeaPerCpuArray,
 	)
 }
 
