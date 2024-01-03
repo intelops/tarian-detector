@@ -3,18 +3,27 @@
 
 package tarian
 
-import ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
+import (
+	ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
+	"github.com/intelops/tarian-detector/pkg/utils"
+)
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data_t -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
-func GetEBPFModule() (*ebpf.Module, error) {
+func GetModule() (*ebpf.Module, error) {
 	bpfObjs, err := getBpfObject()
 	if err != nil {
 		return nil, err
 	}
 
 	tarianDetectorModule := ebpf.NewModule("tarian_detector")
-	tarianDetectorModule.Map = ebpf.NewArrayOfRingBuf(bpfObjs.PercpuRb)
+	ckv, err := utils.CurrentKernelVersion()
+
+	if ckv >= utils.KernelVersion(5, 8, 0) {
+		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.Events))
+	} else {
+		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
+	}
 
 	// kprobe & kretprobe clone
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClone, ebpf.NewHookInfo().Kprobe("__x64_sys_clone")))
