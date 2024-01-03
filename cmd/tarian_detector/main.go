@@ -33,7 +33,7 @@ func main() {
 	stopper := make(chan os.Signal, 1)
 	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
 
-	tarianEbpfModule, err := tarian.GetEBPFModule()
+	tarianEbpfModule, err := tarian.GetModule()
 	if err != nil {
 		log.Fatal(err)
 	}
