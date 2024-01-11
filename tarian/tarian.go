@@ -18,6 +18,9 @@ func GetModule() (*ebpf.Module, error) {
 
 	tarianDetectorModule := ebpf.NewModule("tarian_detector")
 	ckv, err := utils.CurrentKernelVersion()
+	if err != nil {
+		return nil, err
+	}
 
 	if ckv >= utils.KernelVersion(5, 8, 0) {
 		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.Events))
