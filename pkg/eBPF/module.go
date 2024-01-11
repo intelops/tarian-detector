@@ -61,12 +61,14 @@ func (m *Module) Prepare() (*Handler, error) {
 	* creates map reader to receive data from kernel
 	*
 	 */
-	mrs, err := m.ebpfMap.CreateReaders()
-	if err != nil {
-		return nil, moduleErr.Throwf("%v", err)
-	}
+	if m.ebpfMap != nil {
+		mrs, err := m.ebpfMap.CreateReaders()
+		if err != nil {
+			return nil, moduleErr.Throwf("%v", err)
+		}
 
-	handler.AddMapReaders(mrs)
+		handler.AddMapReaders(mrs)
+	}
 
 	return handler, nil
 }
