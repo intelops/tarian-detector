@@ -126,7 +126,7 @@ func (hi *HookInfo) AttachProbe(programName *ebpf.Program) (link.Link, error) {
 		}
 
 		return link.AttachRawTracepoint(hi.opts.(link.RawTracepointOptions))
-	case Kprobe, Kretprobe:
+	case Kprobe:
 		if len(hi.name) == 0 {
 			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.hookType)
 		}
@@ -136,6 +136,16 @@ func (hi *HookInfo) AttachProbe(programName *ebpf.Program) (link.Link, error) {
 		}
 
 		return link.Kprobe(hi.name, programName, hi.opts.(*link.KprobeOptions))
+	case Kretprobe:
+		if len(hi.name) == 0 {
+			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Name'", hi.hookType)
+		}
+
+		if isValid := areTypesEqual(hi.opts, &link.KprobeOptions{}); !isValid {
+			return nil, hookErr.Throwf(ErrInvalidOptionsTypeForBpfHookType, &link.KprobeOptions{}, hi.opts)
+		}
+
+		return link.Kretprobe(hi.name, programName, hi.opts.(*link.KprobeOptions))
 	case Cgroup:
 		if hi.opts == nil {
 			return nil, hookErr.Throwf(ErrMissingOptionsForBpfHookType, "'Opts'", hi.hookType)
