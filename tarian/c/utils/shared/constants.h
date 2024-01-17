@@ -6,7 +6,8 @@
 #define MAX_STR_ARR_ELEM 38
 #define MAX_NODE_FIELD_SIZE 65    /* 65B */
 #define MAX_STRING_SIZE 4096      /* 4KB */
-#define SYS_BUF_SIZE 1024 * 10    /* 10kB */
+#define SYS_BUF_SIZE 1024 * 10
+#define MAX_BUFFER_SIZE 1024 * 128    /* 128kB */
 #define MAX_PERCPU_BUFSIZE (1 << 15 /* 32768 */) // set by the kernel as an upper bound
 
 #define TASK_COMM_LEN 16
@@ -44,12 +45,33 @@ enum argument_type_e {
     ULONG_T,
     STR_T,
     STR_ARR_T,
+    BYTE_ARR_T,
     ARG_TYPE_MAX = 255UL
 };
 
+enum tarian_param_type_e{
+    TDT_NONE = 0,
+    TDT_U8,
+    TDT_U16,
+    TDT_U32,
+    TDT_U64,
+    TDT_S8,
+    TDT_S16,
+    TDT_S32,
+    TDT_S64,
+    TDT_IPV6,
+    TDT_STR,
+    TDT_STR_ARR,
+    TDT_BYTE_ARR,
+};  
+typedef enum {
+    TDE_SYSCALL_EXECVE_E = 2,
+    TDE_SYSCALL_EXECVE_R = 3
+} tarian_event_code;
+
 enum event_id_e {
-    SYS_ENTER_EXECVE = 0UL,
-    SYS_EXIT_EXECVE,
+    SYS_EXECVE_E = 0UL,
+    SYS_EXECVE_X,
     SYS_ENTER_EXECVEAT,
     SYS_EXIT_EXECVEAT,
     SYS_ENTER_OPEN,
@@ -81,5 +103,15 @@ enum event_id_e {
     SYS_ENTER_CLONE,
     SYS_EXIT_CLONE
 };
+
+
+/*****Event Data Size - START****/
+#define MD_SIZE sizeof(tarian_meta_data_t) /* sizeof tarian meta data for each event*/
+#define PARAM_SIZE sizeof(u16)
+
+#define TDS_EXECVE_E (MD_SIZE + MAX_STRING_SIZE*6 + PARAM_SIZE*4)
+#define TDS_EXECVE_R (MD_SIZE + sizeof(int) + PARAM_SIZE)
+
+/*****Event Data Size - END*****/
 
 #endif

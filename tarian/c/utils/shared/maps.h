@@ -101,6 +101,35 @@
     __uint(key_size, sizeof(u32));
     __uint(value_size, 1);
   } pea_per_cpu_array SEC(".maps");
+
+  stain struct ringbuffer *get_cpu_ringbuffer(void *map) {
+    uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
+	  return (struct ringbuffer *)bpf_map_lookup_elem(map, &cpu_id);
+  }
+
+  stain void *map__reserve_space(void *map, u64 size) {
+    struct ringbuffer *rbuf = get_cpu_ringbuffer(map);
+    if (!rbuf) return NULL;
+
+    return bpf_ringbuf_reserve(rbuf, size, 0);
+  };
+
+  stain int map__submit(void *data) {
+    if (!data) return TDCE_NULL_POINTER;
+    
+    bpf_ringbuf_submit(data, 0);
+
+    return TDC_SUCCESS;
+  };
+
+  stain int map__discard(void *data) {
+    if (!data) return TDCE_NULL_POINTER;
+    
+    bpf_ringbuf_discard(data, 0);
+
+    return TDC_SUCCESS;
+  };
+
 #else
   /*
   * 
@@ -129,6 +158,20 @@
     __uint(value_size, sizeof(u32));
     // __uint(max_entries, 1024);
   } events SEC(".maps");
+
+  stain void *map__reserve_space(void *map) {
+    int zero = 0;
+
+    return bpf_map_lookup_elem(map, &zero);
+  };
+
+  stain int map__submit(void *ctx, void *map, void *data, u64 size) {
+    if (!map || !data) return TDCE_NULL_POINTER;
+
+    if (bpf_perf_event_output(ctx, map, BPF_F_CURRENT_CPU, data, size) != 0) return TDCE_MAP_SUBMIT;
+
+    return TDC_SUCCESS;
+  };
 #endif
 
 #endif

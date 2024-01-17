@@ -1,5 +1,5 @@
-#ifndef __UTILS_SHARED_ERROR_CODES_H__
-#define __UTILS_SHARED_ERROR_CODES_H__
+#ifndef __UTILS_SHARED_CODES_H__
+#define __UTILS_SHARED_CODES_H__
 
 /* general status codes represented in format 1xx*/
 enum general_codes_e {
@@ -16,4 +16,12 @@ enum map_codes_e {
   ZERO_SIZE_ERR,
   MAP_ERROR_MAX = 299UL
 };
+
+#define TDC_SUCCESS 100
+#define TDC_FAILURE 101
+
+#define TDCE_RESERVE_SPACE 400
+#define TDCE_NULL_POINTER 401
+#define TDCE_MAP_SUBMIT 402
+#define TDCE_UNKNOWN_TYPE 403
 #endif

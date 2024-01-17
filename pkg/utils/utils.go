@@ -4,9 +4,11 @@
 package utils
 
 import (
+	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -85,4 +87,40 @@ func CurrentKernelVersion() (int, error) {
 	}
 
 	return KernelVersion(a, b, c), nil
+}
+
+// WriteJSONToFile appends a JSON object to a file in JSON array format
+func WriteJSONToFile(data map[string]interface{}, filename string, mutex *sync.Mutex) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var objects []map[string]interface{}
+
+	// Read existing JSON from the file, if it exists
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	err = json.NewDecoder(file).Decode(&objects)
+	if err != nil && err.Error() != "EOF" {
+		return err
+	}
+
+	// Append the new JSON object to the array
+	objects = append(objects, data)
+
+	// Write the updated JSON array to the file
+	file.Seek(0, 0)
+	file.Truncate(0)
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "   ")
+
+	if err := encoder.Encode(objects); err != nil {
+		return err
+	}
+
+	return nil
 }

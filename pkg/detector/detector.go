@@ -24,6 +24,7 @@ type EventsDetector struct {
 	started    bool
 	closed     bool
 
+	/*TODO: UPDATE THIS as unexported fields and provide getters and setters for this*/
 	ProbeRecordsCount map[string]int
 	TotalRecordsCount int
 }

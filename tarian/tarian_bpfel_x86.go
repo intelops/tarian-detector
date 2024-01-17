@@ -12,37 +12,29 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type tarianEventDataT struct {
-	Context struct {
-		Ts   uint64
-		Task struct {
-			StartTime     uint64
-			HostPid       uint32
-			HostTgid      uint32
-			HostPpid      uint32
-			Pid           uint32
-			Tgid          uint32
-			Ppid          uint32
-			Uid           uint32
-			Gid           uint32
-			CgroupId      uint64
-			MountNsId     uint64
-			PidNsId       uint64
-			ExecId        uint64
-			ParentExecId  uint64
-			EexecId       uint64
-			EparentExecId uint64
-			Comm          [16]uint8
-			Cwd           [4096]uint8
+type tarianTarianMetaDataT struct {
+	MetaData struct {
+		Ts        uint64
+		Event     uint32
+		Syscall   int32
+		Processor uint16
+		Task      struct {
+			StartTime    uint64
+			HostPid      uint32
+			HostTgid     uint32
+			HostPpid     uint32
+			Pid          uint32
+			Tgid         uint32
+			Ppid         uint32
+			Uid          uint32
+			Gid          uint32
+			CgroupId     uint64
+			MountNsId    uint64
+			PidNsId      uint64
+			ExecId       uint64
+			ParentExecId uint64
+			Comm         [16]uint8
 		}
-		EventId     uint32
-		Syscall     int32
-		ProcessorId uint16
-	}
-	Buf struct {
-		NumFields  uint8
-		FieldTypes uint64
-		Data       [10240]uint8
 	}
 	SystemInfo struct {
 		Sysname    [65]uint8
@@ -95,38 +87,7 @@ type tarianSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianProgramSpecs struct {
-	KprobeAccept      *ebpf.ProgramSpec `ebpf:"kprobe_accept"`
-	KprobeBind        *ebpf.ProgramSpec `ebpf:"kprobe_bind"`
-	KprobeClone       *ebpf.ProgramSpec `ebpf:"kprobe_clone"`
-	KprobeClose       *ebpf.ProgramSpec `ebpf:"kprobe_close"`
-	KprobeConnect     *ebpf.ProgramSpec `ebpf:"kprobe_connect"`
-	KprobeExecve      *ebpf.ProgramSpec `ebpf:"kprobe_execve"`
-	KprobeExecveat    *ebpf.ProgramSpec `ebpf:"kprobe_execveat"`
-	KprobeListen      *ebpf.ProgramSpec `ebpf:"kprobe_listen"`
-	KprobeOpen        *ebpf.ProgramSpec `ebpf:"kprobe_open"`
-	KprobeOpenat      *ebpf.ProgramSpec `ebpf:"kprobe_openat"`
-	KprobeOpenat2     *ebpf.ProgramSpec `ebpf:"kprobe_openat2"`
-	KprobeRead        *ebpf.ProgramSpec `ebpf:"kprobe_read"`
-	KprobeReadv       *ebpf.ProgramSpec `ebpf:"kprobe_readv"`
-	KprobeSocket      *ebpf.ProgramSpec `ebpf:"kprobe_socket"`
-	KprobeWrite       *ebpf.ProgramSpec `ebpf:"kprobe_write"`
-	KprobeWritev      *ebpf.ProgramSpec `ebpf:"kprobe_writev"`
-	KretprobeAccept   *ebpf.ProgramSpec `ebpf:"kretprobe_accept"`
-	KretprobeBind     *ebpf.ProgramSpec `ebpf:"kretprobe_bind"`
-	KretprobeClone    *ebpf.ProgramSpec `ebpf:"kretprobe_clone"`
-	KretprobeClose    *ebpf.ProgramSpec `ebpf:"kretprobe_close"`
-	KretprobeConnect  *ebpf.ProgramSpec `ebpf:"kretprobe_connect"`
-	KretprobeExecve   *ebpf.ProgramSpec `ebpf:"kretprobe_execve"`
-	KretprobeExecveat *ebpf.ProgramSpec `ebpf:"kretprobe_execveat"`
-	KretprobeListen   *ebpf.ProgramSpec `ebpf:"kretprobe_listen"`
-	KretprobeOpen     *ebpf.ProgramSpec `ebpf:"kretprobe_open"`
-	KretprobeOpenat   *ebpf.ProgramSpec `ebpf:"kretprobe_openat"`
-	KretprobeOpenat2  *ebpf.ProgramSpec `ebpf:"kretprobe_openat2"`
-	KretprobeRead     *ebpf.ProgramSpec `ebpf:"kretprobe_read"`
-	KretprobeReadv    *ebpf.ProgramSpec `ebpf:"kretprobe_readv"`
-	KretprobeSocket   *ebpf.ProgramSpec `ebpf:"kretprobe_socket"`
-	KretprobeWrite    *ebpf.ProgramSpec `ebpf:"kretprobe_write"`
-	KretprobeWritev   *ebpf.ProgramSpec `ebpf:"kretprobe_writev"`
+	TdfExecveE *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
 }
 
 // tarianMapSpecs contains maps before they are loaded into the kernel.
@@ -219,74 +180,12 @@ func (m *tarianMaps) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianPrograms struct {
-	KprobeAccept      *ebpf.Program `ebpf:"kprobe_accept"`
-	KprobeBind        *ebpf.Program `ebpf:"kprobe_bind"`
-	KprobeClone       *ebpf.Program `ebpf:"kprobe_clone"`
-	KprobeClose       *ebpf.Program `ebpf:"kprobe_close"`
-	KprobeConnect     *ebpf.Program `ebpf:"kprobe_connect"`
-	KprobeExecve      *ebpf.Program `ebpf:"kprobe_execve"`
-	KprobeExecveat    *ebpf.Program `ebpf:"kprobe_execveat"`
-	KprobeListen      *ebpf.Program `ebpf:"kprobe_listen"`
-	KprobeOpen        *ebpf.Program `ebpf:"kprobe_open"`
-	KprobeOpenat      *ebpf.Program `ebpf:"kprobe_openat"`
-	KprobeOpenat2     *ebpf.Program `ebpf:"kprobe_openat2"`
-	KprobeRead        *ebpf.Program `ebpf:"kprobe_read"`
-	KprobeReadv       *ebpf.Program `ebpf:"kprobe_readv"`
-	KprobeSocket      *ebpf.Program `ebpf:"kprobe_socket"`
-	KprobeWrite       *ebpf.Program `ebpf:"kprobe_write"`
-	KprobeWritev      *ebpf.Program `ebpf:"kprobe_writev"`
-	KretprobeAccept   *ebpf.Program `ebpf:"kretprobe_accept"`
-	KretprobeBind     *ebpf.Program `ebpf:"kretprobe_bind"`
-	KretprobeClone    *ebpf.Program `ebpf:"kretprobe_clone"`
-	KretprobeClose    *ebpf.Program `ebpf:"kretprobe_close"`
-	KretprobeConnect  *ebpf.Program `ebpf:"kretprobe_connect"`
-	KretprobeExecve   *ebpf.Program `ebpf:"kretprobe_execve"`
-	KretprobeExecveat *ebpf.Program `ebpf:"kretprobe_execveat"`
-	KretprobeListen   *ebpf.Program `ebpf:"kretprobe_listen"`
-	KretprobeOpen     *ebpf.Program `ebpf:"kretprobe_open"`
-	KretprobeOpenat   *ebpf.Program `ebpf:"kretprobe_openat"`
-	KretprobeOpenat2  *ebpf.Program `ebpf:"kretprobe_openat2"`
-	KretprobeRead     *ebpf.Program `ebpf:"kretprobe_read"`
-	KretprobeReadv    *ebpf.Program `ebpf:"kretprobe_readv"`
-	KretprobeSocket   *ebpf.Program `ebpf:"kretprobe_socket"`
-	KretprobeWrite    *ebpf.Program `ebpf:"kretprobe_write"`
-	KretprobeWritev   *ebpf.Program `ebpf:"kretprobe_writev"`
+	TdfExecveE *ebpf.Program `ebpf:"tdf_execve_e"`
 }
 
 func (p *tarianPrograms) Close() error {
 	return _TarianClose(
-		p.KprobeAccept,
-		p.KprobeBind,
-		p.KprobeClone,
-		p.KprobeClose,
-		p.KprobeConnect,
-		p.KprobeExecve,
-		p.KprobeExecveat,
-		p.KprobeListen,
-		p.KprobeOpen,
-		p.KprobeOpenat,
-		p.KprobeOpenat2,
-		p.KprobeRead,
-		p.KprobeReadv,
-		p.KprobeSocket,
-		p.KprobeWrite,
-		p.KprobeWritev,
-		p.KretprobeAccept,
-		p.KretprobeBind,
-		p.KretprobeClone,
-		p.KretprobeClose,
-		p.KretprobeConnect,
-		p.KretprobeExecve,
-		p.KretprobeExecveat,
-		p.KretprobeListen,
-		p.KretprobeOpen,
-		p.KretprobeOpenat,
-		p.KretprobeOpenat2,
-		p.KretprobeRead,
-		p.KretprobeReadv,
-		p.KretprobeSocket,
-		p.KretprobeWrite,
-		p.KretprobeWritev,
+		p.TdfExecveE,
 	)
 }
 

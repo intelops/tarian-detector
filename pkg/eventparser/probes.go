@@ -8,7 +8,8 @@ import "fmt"
 type SysArg struct {
 	Name        string
 	Description string
-	Type        string
+	TarianType  string
+	LinuxType   string
 	Function    func(any) (string, error)
 }
 
@@ -59,16 +60,16 @@ var syscalls = map[int32]Syscall{
 		Name: "sys_open",
 		Args: []SysArg{
 			0: {
-				Name: "filename",
-				Type: "unsigned int",
+				Name:      "filename",
+				LinuxType: "unsigned int",
 			},
 			1: {
-				Name: "flags",
-				Type: "int",
+				Name:      "flags",
+				LinuxType: "int",
 			},
 			2: {
-				Name: "mode",
-				Type: "short unsigned int",
+				Name:      "mode",
+				LinuxType: "short unsigned int",
 			},
 		},
 	},
@@ -77,8 +78,8 @@ var syscalls = map[int32]Syscall{
 		Name: "sys_close",
 		Args: []SysArg{
 			0: {
-				Name: "file_descriptor",
-				Type: "unsigned int",
+				Name:      "file_descriptor",
+				LinuxType: "unsigned int",
 			},
 		},
 	},
@@ -150,7 +151,7 @@ var syscalls = map[int32]Syscall{
 				Name: "family",
 			},
 			1: {
-				Name: "type",
+				Name: "LinuxType",
 			},
 			2: {
 				Name: "protocol",
@@ -204,19 +205,19 @@ var syscalls = map[int32]Syscall{
 		Name: "sys_openat",
 		Args: []SysArg{
 			0: {
-				Name: "directory_file_descriptor",
-				Type: "int",
+				Name:      "directory_file_descriptor",
+				LinuxType: "int",
 			},
 			1: {
-				Name: "filename",
-				Type: "int",
+				Name:      "filename",
+				LinuxType: "int",
 			},
 			2: {
 				Name: "flags",
 			},
 			3: {
-				Name: "mode",
-				Type: "short unsigned int",
+				Name:      "mode",
+				LinuxType: "short unsigned int",
 			},
 		},
 	},
@@ -246,20 +247,20 @@ var syscalls = map[int32]Syscall{
 		Name: "sys_openat2",
 		Args: []SysArg{
 			0: {
-				Name: "directory_file_descriptor",
-				Type: "int",
+				Name:      "directory_file_descriptor",
+				LinuxType: "int",
 			},
 			1: {
-				Name: "filename",
-				Type: "int",
+				Name:      "filename",
+				LinuxType: "int",
 			},
 			2: {
-				Name: "how",
-				Type: "struct open_how",
+				Name:      "how",
+				LinuxType: "struct open_how",
 			},
 			3: {
-				Name: "usize",
-				Type: "size_t",
+				Name:      "usize",
+				LinuxType: "size_t",
 			},
 		},
 	},

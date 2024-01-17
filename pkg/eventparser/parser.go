@@ -51,40 +51,36 @@ func DecodeByte(b []byte) (map[string]any, error) {
 		return map[string]any{}, err
 	}
 
-	event_data["ts"] = ec.Context.Ts
-	event_data["start_time"] = ec.Context.Task.StartTime
-	event_data["host_pid"] = ec.Context.Task.HostPid
-	event_data["host_tgid"] = ec.Context.Task.HostTgid
-	event_data["host_ppid"] = ec.Context.Task.HostPpid
-	event_data["pid"] = ec.Context.Task.Pid
-	event_data["tgid"] = ec.Context.Task.Tgid
-	event_data["ppid"] = ec.Context.Task.Ppid
-	event_data["uid"] = ec.Context.Task.Uid
-	event_data["gid"] = ec.Context.Task.Gid
-	event_data["cgroup_id"] = ec.Context.Task.CgroupId
-	event_data["mount_ns_id"] = ec.Context.Task.MountNsId
-	event_data["pid_ns_id"] = ec.Context.Task.PidNsId
-	event_data["exec_id"] = ec.Context.Task.ExecId
-	event_data["exec_exec_id"] = ec.Context.Task.EexecId
-	event_data["parent_exec_id"] = ec.Context.Task.ParentExecId
-	event_data["exec_parent_exec_id"] = ec.Context.Task.EparentExecId
-	event_data["comm"] = utils.ToString(ec.Context.Task.Comm[:])
+	event_data["ts"] = ec.MetaData.Ts
+	event_data["start_time"] = ec.MetaData.Task.StartTime
+	event_data["host_pid"] = ec.MetaData.Task.HostPid
+	event_data["host_tgid"] = ec.MetaData.Task.HostTgid
+	event_data["host_ppid"] = ec.MetaData.Task.HostPpid
+	event_data["pid"] = ec.MetaData.Task.Pid
+	event_data["tgid"] = ec.MetaData.Task.Tgid
+	event_data["ppid"] = ec.MetaData.Task.Ppid
+	event_data["uid"] = ec.MetaData.Task.Uid
+	event_data["gid"] = ec.MetaData.Task.Gid
+	event_data["cgroup_id"] = ec.MetaData.Task.CgroupId
+	event_data["mount_ns_id"] = ec.MetaData.Task.MountNsId
+	event_data["pid_ns_id"] = ec.MetaData.Task.PidNsId
+	event_data["exec_id"] = ec.MetaData.Task.ExecId
+	event_data["parent_exec_id"] = ec.MetaData.Task.ParentExecId
+	event_data["comm"] = utils.ToString(ec.MetaData.Task.Comm[:])
 
-	cwd_idx, err := utils.Uint16(ec.Context.Task.Cwd[:2])
-	if err != nil {
-		return map[string]any{}, nil
-	}
+	// cwd_idx, err := utils.Uint16(ec.MetaData.Task.Cwd[:2])
+	// if err != nil {
+	// 	return map[string]any{}, nil
+	// }
 
-	cwd_sz, err := utils.Uint16(ec.Context.Task.Cwd[2:4])
-	if err != nil {
-		return map[string]any{}, nil
-	}
+	// cwd_sz, err := utils.Uint16(ec.MetaData.Task.Cwd[2:4])
+	// if err != nil {
+	// 	return map[string]any{}, nil
+	// }
 
-	event_data["cwd"] = utils.ToString(ec.Context.Task.Cwd[cwd_idx : cwd_idx+cwd_sz])
-
-	event_data["event_id"] = ec.Context.EventId
-	event_data["syscall"] = ec.Context.Syscall
-	event_data["processor_id"] = ec.Context.ProcessorId
+	event_data["event_id"] = ec.MetaData.Event
+	event_data["syscall"] = ec.MetaData.Syscall
+	event_data["processor_id"] = ec.MetaData.Processor
 
 	event_data["sysname"] = utils.ToString(ec.SystemInfo.Sysname[:])
 	event_data["nodename"] = utils.ToString(ec.SystemInfo.Nodename[:])
@@ -93,15 +89,16 @@ func DecodeByte(b []byte) (map[string]any, error) {
 	event_data["machine"] = utils.ToString(ec.SystemInfo.Machine[:])
 	event_data["domain_name"] = utils.ToString(ec.SystemInfo.Domainname[:])
 
-	be := New(ec.Buf.Data[:], ec.Buf.NumFields)
-	args, err := be.GetArgs(ec.Context.Syscall)
-	if err != nil {
-		return map[string]any{}, err
-	}
+	fmt.Println(b[504 : 504+70])
+	// be := New(ec.Buf.Data[:], ec.Buf.NumFields)
+	// args, err := be.GetArgs(ec.MetaData.Syscall)
+	// if err != nil {
+	// 	return map[string]any{}, err
+	// }
 
-	for _, arg := range args {
-		event_data[arg.Name] = arg.Value
-	}
+	// for _, arg := range args {
+	// 	event_data[arg.Name] = arg.Value
+	// }
 
 	return event_data, nil
 }

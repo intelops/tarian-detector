@@ -3,8 +3,10 @@
 
 #include "shared/index.h"
 #include "shared.h"
+#include "tarian.h"
 
 #include "sys_args.h"
+#include "meta.h"
 #include "context.h"
 #include "buffer.h"
 

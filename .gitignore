@@ -1,2 +1,6 @@
 /bin
 /vendor
+
+*.json
+Dockerfile
+docker-compose.yml
