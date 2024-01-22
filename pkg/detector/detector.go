@@ -97,7 +97,8 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 		return map[string]any{}, r.err
 	}
 
-	data, err := eventparser.DecodeByte(r.eventData)
+	eventparser.LoadTarianEvents()
+	data, err := eventparser.ParseByteArray(r.eventData)
 	return data, err
 }
 

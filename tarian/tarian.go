@@ -12,7 +12,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type tarian_meta_data_t -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type tarian_events_e -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
 func GetModule() (*ebpf.Module, error) {
 
@@ -22,6 +22,7 @@ func GetModule() (*ebpf.Module, error) {
 		if errors.As(err, &verr) {
 			fmt.Printf("HERE: %+v\n", verr)
 		}
+
 		return nil, err
 	}
 
@@ -38,7 +39,7 @@ func GetModule() (*ebpf.Module, error) {
 	}
 
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveE, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.ExecveR, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat")))
+	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveR, ebpf.NewHookInfo().Kretprobe("__x64_sys_execve")))
 
 	// // kprobe & kretprobe clone
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClone, ebpf.NewHookInfo().Kprobe("__x64_sys_clone")))

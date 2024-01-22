@@ -134,6 +134,62 @@ stain int init_task_context(task_context_t *tc, struct task_struct *t, int event
   return OK;
 }
 
+#if(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+#define MAX_NUM_COMPONENTS 48
+#else
+#define MAX_NUM_COMPONENTS 24
+#endif
+
+stain u16 get_d_path_len(struct path *path) {
+  // struct path file_path;
+  // bpf_probe_read(&file_path, sizeof(struct path), path);
+
+  // struct dentry *dentry = file_path.dentry;
+  // struct vfsmount *vfsmnt = file_path.mnt;
+
+  // struct mount *mnt_parent_p;
+  // struct mount *mnt_p = real_mount(vfsmnt);
+
+  // bpf_probe_read(&mnt_parent_p, sizeof(struct mount *), &mnt_p->mnt_parent);
+
+  // struct dentry *mnt_root;
+  // struct dentry *d_parent;
+  // struct qstr d_name;
+
+  u16 slen = 0;
+  // unsigned int len = 0;
+
+// #pragma unroll
+//   for (int i = 0; i < 20; i++){
+//     mnt_root = get_mnt_root_ptr(vfsmnt);
+//     d_parent = get_d_parent_ptr(dentry);
+
+//     if (dentry == mnt_root || dentry == d_parent) {
+//       if (dentry != mnt_root) {
+//         break;
+//       }
+//       if (mnt_p != mnt_parent_p) {
+//         bpf_probe_read(&dentry, sizeof(struct dentry *), &mnt_p->mnt_mountpoint);
+//         bpf_probe_read(&mnt_p, sizeof(struct mount *), &mnt_p->mnt_parent);
+//         bpf_probe_read(&mnt_parent_p, sizeof(struct mount *), &mnt_p->mnt_parent);
+//         vfsmnt = &mnt_p->mnt;
+
+//         continue;
+//       }
+
+//       break;
+//     }
+
+//     d_name = get_d_name_from_dentry(dentry);
+//     len = (d_name.len + 1) & (MAX_STRING_SIZE - 1);
+//     slen += len + 1 /*for slash '/'*/;
+
+//     dentry = d_parent;
+//   }
+
+  return slen;
+}
+
 // stain int read_cwd_into(struct path *path, u8 *buf) {
 //   /*
 //     Data saved to buf: [start index of string 2byte][size of the string 2byte]....[...string....]

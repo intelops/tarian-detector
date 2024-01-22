@@ -11,22 +11,52 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define KPROBE(__hook) SEC("kprobe/"#__hook)
 #define KRETPROBE(__hook) SEC("kprobe/"#__hook)
 
-#define SAFE_ACCESS(x) x &(MAX_PARAM_SIZE)
+// #define SAFE_ACCESS(x) x &(MAX_PARAM_SIZE)
 
 /* Given a variable, this returns its `char` pointer. */
 #define CHAR_POINTER(x) (char *)&x
 
 #if defined(bpf_target_x86)
-#define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), r9)
+#define __PT_PARM6_REG r9
+#define __PT_SYSCALL_ID orig_ax
 #elif defined(bpf_target_arm64)
-#define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), regs[5])
+#define __PT_PARM6_REG regs[5]
+#define __PT_SYSCALL_ID syscallno
 #endif
 
-#if defined(bpf_target_x86)
-#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), orig_ax)
-#elif defined(bpf_target_arm64)
-#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), syscallno)
-#endif
+#define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), __PT_PARM6_REG)
+#define PT_REGS_PARM6_CORE_SYSCALL(x) PT_REGS_PARM6_CORE(x)
+#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), __PT_SYSCALL_ID)
+
+stain uint32_t get_syscall_id(struct pt_regs *regs) {
+  return (uint32_t)PT_REGS_SYSCALL_CORE(regs);
+};
+
+stain unsigned long get_syscall_param(struct pt_regs *regs, int idx) {
+  switch (idx)
+  {
+  case 0:
+    return PT_REGS_PARM1_CORE_SYSCALL(regs);
+  case 1:
+    return PT_REGS_PARM2_CORE_SYSCALL(regs);
+  case 2:
+    return PT_REGS_PARM3_CORE_SYSCALL(regs);
+  case 3:
+    return PT_REGS_PARM4_CORE_SYSCALL(regs);
+  case 4: 
+    return PT_REGS_PARM5_CORE_SYSCALL(regs);
+  case 5:
+    return PT_REGS_PARM6_CORE_SYSCALL(regs);
+  default:
+    return TDCE_UNDEFINED_INDEX;
+  }
+}
+
+// #if defined(bpf_target_x86)
+// #define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), r9)
+// #elif defined(bpf_target_arm64)
+// #define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), regs[5])
+// #endif
 
 // bpf_probe_read_str
 #define BPF_READ_STR(__from_ptr__, __to_ptr__)                                 \
@@ -124,11 +154,11 @@ stain int flush(u8 *buf, u16 n) {
   if (!buf) 
     return TDCE_NULL_POINTER;
 
-  // u8 zero = 0;
+  u8 zero = 0;
 
-  // for (int i = 0; i < n; i++){
-  //   if(bpf_probe_read(&buf[i], sizeof(u8), &zero) != 0) return TDC_FAILURE;    
-  // }
+  for (int i = 0; i < n; i++){
+    if(bpf_probe_read(&buf[i], sizeof(u8), &zero) != 0) return TDC_FAILURE;    
+  }
   return TDC_SUCCESS;
 }
 

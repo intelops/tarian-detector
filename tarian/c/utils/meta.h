@@ -3,18 +3,19 @@
 
 #include "index.h"
 
-stain int new_event(void *, int, tarian_event_t *, int);
+stain int new_event(void *, int, tarian_event_t *, enum allocation_type,int);
 stain int init_tarian_meta_data_t(tarian_event_t *, int);
 stain int init_task_meta_data_t(tarian_event_t *);
 stain int init_event_meta_data_t(tarian_event_t *, int);
 stain int read_node_info_into(node_meta_data_t *ni, struct task_struct *t);
 stain int read_cwd_into(struct path *, u8 *);
 
-stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, int req_buf_sz) {
+stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at,int req_buf_sz) {
+  te->allocation_mode = 0;
   te->ctx = ctx;
   te->task = (struct task_struct *)bpf_get_current_task();
   
-  int resp = tdf_reserve_space(te, req_buf_sz);
+  int resp = tdf_reserve_space(te, at ,req_buf_sz);
   if (resp != TDC_SUCCESS) return resp;
 
   resp = flush(te->buf.data, te->buf.reserved_space);
@@ -30,9 +31,12 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, int req_buf
 };
 
 stain int init_tarian_meta_data_t(tarian_event_t *te, int event) {
+  // write_u16(te->buf.data, &te->buf.pos, sizeof(tarian_meta_data_t));
+
+  // bpf_printk("Execve Len >>>>>>>>>>>>>>>>> %d", te->buf.pos);
   te->tarian = (tarian_meta_data_t *)te->buf.data;
   te->buf.pos = sizeof(tarian_meta_data_t);
-  bpf_printk("Execve e -%ld--", te->buf.pos);
+  // bpf_printk("Execve after meta_event -%ld--", te->buf.pos);
 
   int resp = init_event_meta_data_t(te, event);
   if (resp != TDC_SUCCESS) return resp;
@@ -45,7 +49,13 @@ stain int init_event_meta_data_t(tarian_event_t *te, int event) {
 
     em->ts = bpf_ktime_get_ns();
     em->event = event;
-    em->syscall = -34;
+    em->nparams = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 17, 0)
+    em->syscall = get_syscall_id(te->ctx);
+#else
+    struct pt_regs *regs = PT_REGS_SYSCALL_REGS(te->ctx);
+    em->syscall = get_syscall_id(regs);
+#endif
     em->processor = (uint16_t)bpf_get_smp_processor_id();
 
     return init_task_meta_data_t(te);

@@ -8,12 +8,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	"github.com/intelops/tarian-detector/pkg/utils"
 	"github.com/intelops/tarian-detector/tarian"
 )
 
@@ -60,7 +58,7 @@ func main() {
 	// defer stats(eventsDetector, bpfLinker)
 
 	count := 0
-	var mutex sync.Mutex
+	// var mutex sync.Mutex
 	go func() {
 
 		select {
@@ -92,9 +90,9 @@ func main() {
 			// 	continue
 			// }
 
-			if err := utils.WriteJSONToFile(e, "exec_id.json", &mutex); err != nil {
-				fmt.Println("Error writing:", err)
-			}
+			// if err := utils.WriteJSONToFile(e, "exec_id.json", &mutex); err != nil {
+			// 	fmt.Println("Error writing:", err)
+			// }
 
 			count++
 			printEvent(0, count, e)

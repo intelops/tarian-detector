@@ -1,21 +1,41 @@
 #ifndef __UTLIS_TARIAN_H__
 #define __UTLIS_TARIAN_H__
 
-stain int tdf_reserve_space(tarian_event_t *, u64);
+enum allocation_type{
+    FIXED,
+    VARIABLE
+};
+
+stain int tdf_reserve_space(tarian_event_t *, enum allocation_type, u64);
 stain int tdf_submit_event(tarian_event_t *);
 stain int tdf_discard_event(tarian_event_t *);
 stain int tdf_save(tarian_event_t *, int, void *);
-stain int tdf_reserve_space(tarian_event_t *te, u64 size) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)    
-    u8 *store = map__reserve_space(&events, size);
-    if (!store) return TDCE_RESERVE_SPACE;
-    
-    u64 sz = size;
+
+stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 size) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+    u64 sz = 0;
+    u8 *store = NULL;
+
+    if (at == FIXED) {
+        te->allocation_mode = 2;
+        store = map__reserve_space(&events, size);
+        if (!store) return TDCE_RESERVE_SPACE;
+        
+        sz = size;
+    } else if ( at == VARIABLE) {
+        te->allocation_mode = 3;
+        store = map__allocate_space(&pea_per_cpu_array);
+        if (!store) return TDCE_RESERVE_SPACE;
+
+        sz = MAX_EVENT_SIZE;
+    }
+
 #else
-    u8 *store = map__reserve_space(&pea_per_cpu_array);
+    te->allocation_mode = 1;
+    u8 *store = map__allocate_space(&pea_per_cpu_array);
     if (!store) return TDCE_RESERVE_SPACE;
 
-    u64 sz = MAX_BUFFER_SIZE;
+    u64 sz = MAX_EVENT_SIZE;
 #endif
 
     te->buf.reserved_space = sz;
@@ -28,7 +48,12 @@ stain int tdf_reserve_space(tarian_event_t *te, u64 size) {
 
 stain int tdf_submit_event(tarian_event_t *te) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
-    int resp = map__submit(te->buf.data);
+    int resp = 0;
+    if (te->allocation_mode == 2) {
+        resp = map__reserve_submit(te->buf.data);
+    } else if (te->allocation_mode == 3) {
+        resp = map__pringbuf_submit(&events, te->buf.data, te->buf.pos);
+    }
 #else
     int resp = map__submit(te->ctx, &events, te->buf.data, te->buf.pos);
 #endif
@@ -84,6 +109,7 @@ stain int tdf_save(tarian_event_t *te, int type, void *src) {
         return TDCE_UNKNOWN_TYPE;
     }
 
+    te->tarian->meta_data.nparams++;
     return TDC_SUCCESS;
 };
 
@@ -105,6 +131,7 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint16_
             return TDCE_UNKNOWN_TYPE;
     }
     
+    te->tarian->meta_data.nparams++;
     return TDC_SUCCESS;
 };
 

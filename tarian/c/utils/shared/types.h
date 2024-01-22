@@ -3,7 +3,10 @@
 
 #include "index.h"
 
-typedef u8 buffer_t[MAX_BUFFER_SIZE];
+typedef struct {
+  uint8_t data[128*1024];
+} per_cpu_buffer_t;
+
 typedef struct __attribute__((__packed__)) event_buffer {
   u64 reserved_space; /* length of 'data' array; */
   u64 pos;           /* current empty position of byte in data array */
@@ -47,10 +50,10 @@ typedef struct __attribute__((__packed__)) task_meta_data {
 } task_meta_data_t;        /* 4176B */
 
 typedef struct __attribute__((__packed__)) event_meta_data {
-  u64 ts; /* event timestamp */
-  u32 event;      /* event id associated with the event */
+  s32 event;      /* event id associated with the event */
+  u8 nparams;       /* no of params*/
   s32 syscall;       /* syscall id (system call) associated with the event */
-  // u16 nparams;       /* no of params*/
+  u64 ts; /* event timestamp */
   u16 processor;  /* processor id where the event was processed */
   task_meta_data_t task; /* event's task meta data */
 } event_meta_data_t; /* 4194B */
@@ -61,6 +64,7 @@ typedef struct __attribute__((__packed__)) tarian_meta_data {
 } tarian_meta_data_t;           /* 14833B or 15KB */
 
 typedef struct event {
+  u8 allocation_mode; /* 1 - buf on per cpu array for perf event 2 - ringbuf map 3 - buf on per cpu array for ringbuf */
   struct task_struct *task /* pointer to the task_struct representing the task */;
   struct pt_regs *ctx;      /* pointer to register context */
   tarian_meta_data_t *tarian;
