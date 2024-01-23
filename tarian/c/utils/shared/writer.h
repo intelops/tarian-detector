@@ -92,7 +92,7 @@ stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr,
   return (uint16_t)written_bytes;
 };
 
-#define MAX_CHARBUF_POINTERS 23
+#define MAX_CHARBUF_POINTERS 16
 
 stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **data_ptr, uint16_t n) {  
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
@@ -110,9 +110,7 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
     if (!charbuf_pointer)
       break;
 
-    bpf_printk("execve write %d", n);
     if (total_len!=0) {
-      bpf_printk("execve space %d", n);
       write_u8(buf, pos, space);
       total_len++;
     }
@@ -129,7 +127,6 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
   *len = total_len;
   *pos = initial_pos + total_len;
 
-  bpf_printk("execve write total len %d", total_len);
   return total_len;
 }
 

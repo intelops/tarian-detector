@@ -26,6 +26,7 @@ type TarianMetaData struct {
 			ExecId       uint64
 			ParentExecId uint64
 			Comm         [16]uint8
+			Cwd          [256]uint8
 		}
 	}
 	SystemInfo struct {
@@ -61,4 +62,5 @@ type TarianEventsE int
 const (
 	TDE_SYSCALL_EXECVE_E int = 2
 	TDE_SYSCALL_EXECVE_R int = 3
+	TDE_SYSCALL_CLOSE_E  int = 4
 )

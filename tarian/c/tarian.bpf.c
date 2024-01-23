@@ -8,7 +8,7 @@
 stain bool Continue() {
   // struct task_struct *task = (struct task_struct *)bpf_get_current_task();
   // int ppid = BPF_CORE_READ(task, parent, pid);
-  // if (ppid != 1839670)
+  // if (ppid != 449929)
   //   return false;
 
   return true;
@@ -35,7 +35,6 @@ int BPF_KPROBE(tdf_execve_e, struct pt_regs *regs) {
   tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2), MAX_STRING_SIZE, USER);
 
   // print_event(&te);
-  // bpf_printk("Execve e %ld --syscall %d--", te.buf.pos, 0);
 
   // bpf_override_return(ctx, -88);
   
@@ -50,17 +49,32 @@ int BPF_KPROBE(tdf_execve_e, struct pt_regs *regs) {
   return TDC_SUCCESS;
 }
 
-// KRETPROBE("__x64_sys_execve")
-// int BPF_KRETPROBE(tdf_execve_r, int ret) {
-//   // if (!Continue())
-//   //   return TDC_FAILURE;
+KRETPROBE("__x64_sys_execve")
+int BPF_KRETPROBE(tdf_execve_r, int ret) {
+  if (!Continue())
+    return TDC_FAILURE;
+
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_EXECVE_R, &te, FIXED, TDS_EXECVE_R);
+  if (resp != TDC_SUCCESS)
+    return resp;
+
+  tdf_save(&te, TDT_S32, &ret);
+
+  return tdf_submit_event(&te);
+}
+
+// KPROBE("__x64_sys_close")
+// int BPF_KPROBE(tdf_close_e, struct pt_regs *regs) {
+//   if (!Continue())
+//     return TDC_FAILURE;
 
 //   tarian_event_t te;
-//   int resp = new_event(ctx, TDE_SYSCALL_EXECVE_R, &te, TDS_EXECVE_R);
-//   if (resp != TDC_SUCCESS)
-//     return resp;
-
-//   tdf_save(&te, TDT_S32, &ret);
+//   int resp = new_event(ctx, TDE_SYSCALL_CLOSE_E, &te, FIXED, TDS_CLOSE_E);
+//   if (resp != TDC_SUCCESS) return resp;
+  
+//   int fd = get_syscall_param(regs, 0);
+//   tdf_save(&te, TDT_S32, &fd);
 
 //   return tdf_submit_event(&te);
 // }

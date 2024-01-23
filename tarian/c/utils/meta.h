@@ -15,7 +15,10 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
   te->ctx = ctx;
   te->task = (struct task_struct *)bpf_get_current_task();
   
-  int resp = tdf_reserve_space(te, at ,req_buf_sz);
+  scratch_space_t *ss = get__scratch_space();
+  if (!ss) return TDCE_SCRATCH_SPACE_ALLOCATION;
+
+  int resp = tdf_reserve_space(te, at , req_buf_sz);
   if (resp != TDC_SUCCESS) return resp;
 
   resp = flush(te->buf.data, te->buf.reserved_space);
@@ -27,16 +30,17 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
   resp = init_tarian_meta_data_t(te, tarian_event);
   if (resp != TDC_SUCCESS) return resp;
   
+  uint32_t len = 0;
+  u8 *filepath = get__cwd_d_path(&len, ss, te->task);
+  
+  bpf_probe_read_kernel_str(te->tarian->meta_data.task.cwd, len & (MAX_TARIAN_PATH - 1), filepath);
+  
   return TDC_SUCCESS;
 };
 
 stain int init_tarian_meta_data_t(tarian_event_t *te, int event) {
-  // write_u16(te->buf.data, &te->buf.pos, sizeof(tarian_meta_data_t));
-
-  // bpf_printk("Execve Len >>>>>>>>>>>>>>>>> %d", te->buf.pos);
   te->tarian = (tarian_meta_data_t *)te->buf.data;
   te->buf.pos = sizeof(tarian_meta_data_t);
-  // bpf_printk("Execve after meta_event -%ld--", te->buf.pos);
 
   int resp = init_event_meta_data_t(te, event);
   if (resp != TDC_SUCCESS) return resp;
@@ -90,7 +94,7 @@ stain int init_task_meta_data_t(tarian_event_t *te) {
     tm->parent_exec_id = getParentExecId(tm->host_ppid, te->task);
 
     bpf_get_current_comm(tm->comm, TASK_COMM_LEN);
-
+    
     return TDC_SUCCESS;
 };
 

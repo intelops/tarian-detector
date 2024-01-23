@@ -14,12 +14,54 @@ import (
 
 type tarianPerCpuBufferT struct{ Data [131072]uint8 }
 
+type tarianScratchSpaceT struct {
+	Data [8192]uint8
+	Pos  uint64
+}
+
 type tarianTarianEventsE uint32
 
 const (
 	tarianTarianEventsETDE_SYSCALL_EXECVE_E tarianTarianEventsE = 2
 	tarianTarianEventsETDE_SYSCALL_EXECVE_R tarianTarianEventsE = 3
+	tarianTarianEventsETDE_SYSCALL_CLOSE_E  tarianTarianEventsE = 4
 )
+
+type tarianTarianMetaDataT struct {
+	MetaData struct {
+		Event     int32
+		Nparams   uint8
+		Syscall   int32
+		Ts        uint64
+		Processor uint16
+		Task      struct {
+			StartTime    uint64
+			HostPid      uint32
+			HostTgid     uint32
+			HostPpid     uint32
+			Pid          uint32
+			Tgid         uint32
+			Ppid         uint32
+			Uid          uint32
+			Gid          uint32
+			CgroupId     uint64
+			MountNsId    uint64
+			PidNsId      uint64
+			ExecId       uint64
+			ParentExecId uint64
+			Comm         [16]uint8
+			Cwd          [256]uint8
+		}
+	}
+	SystemInfo struct {
+		Sysname    [65]uint8
+		Nodename   [65]uint8
+		Release    [65]uint8
+		Version    [65]uint8
+		Machine    [65]uint8
+		Domainname [65]uint8
+	}
+}
 
 // loadTarian returns the embedded CollectionSpec for tarian.
 func loadTarian() (*ebpf.CollectionSpec, error) {
@@ -63,6 +105,7 @@ type tarianSpecs struct {
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianProgramSpecs struct {
 	TdfExecveE *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
+	TdfExecveR *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
 }
 
 // tarianMapSpecs contains maps before they are loaded into the kernel.
@@ -87,6 +130,7 @@ type tarianMapSpecs struct {
 	ErbCpu9        *ebpf.MapSpec `ebpf:"erb_cpu9"`
 	Events         *ebpf.MapSpec `ebpf:"events"`
 	PeaPerCpuArray *ebpf.MapSpec `ebpf:"pea_per_cpu_array"`
+	ScratchSpace   *ebpf.MapSpec `ebpf:"scratch_space"`
 }
 
 // tarianObjects contains all objects after they have been loaded into the kernel.
@@ -126,6 +170,7 @@ type tarianMaps struct {
 	ErbCpu9        *ebpf.Map `ebpf:"erb_cpu9"`
 	Events         *ebpf.Map `ebpf:"events"`
 	PeaPerCpuArray *ebpf.Map `ebpf:"pea_per_cpu_array"`
+	ScratchSpace   *ebpf.Map `ebpf:"scratch_space"`
 }
 
 func (m *tarianMaps) Close() error {
@@ -148,6 +193,7 @@ func (m *tarianMaps) Close() error {
 		m.ErbCpu9,
 		m.Events,
 		m.PeaPerCpuArray,
+		m.ScratchSpace,
 	)
 }
 
@@ -156,11 +202,13 @@ func (m *tarianMaps) Close() error {
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianPrograms struct {
 	TdfExecveE *ebpf.Program `ebpf:"tdf_execve_e"`
+	TdfExecveR *ebpf.Program `ebpf:"tdf_execve_r"`
 }
 
 func (p *tarianPrograms) Close() error {
 	return _TarianClose(
 		p.TdfExecveE,
+		p.TdfExecveR,
 	)
 }
 

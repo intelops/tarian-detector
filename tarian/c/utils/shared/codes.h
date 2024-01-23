@@ -25,5 +25,7 @@ enum map_codes_e {
 #define TDCE_MAP_SUBMIT 402
 #define TDCE_UNKNOWN_TYPE 403
 #define TDCE_UNDEFINED_INDEX 404
+#define TDCE_write_CWD 405
+#define TDCE_SCRATCH_SPACE_ALLOCATION 406
 
 #endif

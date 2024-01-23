@@ -39,6 +39,17 @@
 #define BPF_RINGBUF_RESERVE(__map_name__, __size__)                            \
   bpf_ringbuf_reserve(&__map_name__, __size__, 0)
 
+struct scratch{
+__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+__uint(max_entries, 1);
+__type(key, uint32_t);
+__type(value, scratch_space_t);
+} scratch_space SEC(".maps");
+
+stain void *get__scratch_space() {
+  uint32_t index = 0;
+  return bpf_map_lookup_elem(&scratch_space, &index);
+}
 /*
 * 
 * PER_CPU_ARRAY

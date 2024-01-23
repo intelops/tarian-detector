@@ -229,6 +229,13 @@ func (r RawArgInfo) GetArg(event TarianEvent) (arg, error) {
 // }
 
 func ParseByteArray(data []byte) (map[string]any, error) {
+	/*
+		Assumption of bytes pattern in byte array
+
+		metadata + current_working_directory + params
+		sizeof(TarianMetaData)+ variable size + varaible size
+
+	*/
 	fmt.Println(len(data))
 
 	eventId, err := getEventId(data)
@@ -252,12 +259,19 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	record := toMap(metaData)
 	record["event_id"] = event.name
 
+	// fmt.Println(data[lenMetaData : lenMetaData+100])
 	bs := NewByteStream(data[lenMetaData:], metaData.MetaData.Nparams)
+	// cwd, err := bs.readCwd()
+	// if err != nil {
+	// 	return nil, err
+	// }
+
 	ps, err := bs.parseParams(event)
 	if err != nil {
 		return nil, err
 	}
 
+	// record["cwd"] = cwd
 	record["context"] = ps
 
 	return record, nil
@@ -266,6 +280,10 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	fmt.Println(bs.nparams)
 	tParams := event.params
+	if len(tParams) <= 0 {
+		return nil, fmt.Errorf("Missing params in TarianEvent")
+	}
+
 	args := []arg{}
 
 	for i := 0; i < int(bs.nparams); i++ {
@@ -393,6 +411,21 @@ func (bs *ByteStream) readShort() (uint16, error) {
 	return sh, nil
 }
 
+func (bs *ByteStream) readCwd() (string, error) {
+	cp := Param{
+		name:      "cwd",
+		paramType: TDT_STR,
+	}
+
+	res, err := bs.parseParam(cp)
+	if err != nil {
+		return "", err
+	}
+
+	fmt.Println(res.Value, len(res.Value))
+
+	return res.Value, err
+}
 func getEventId(data []byte) (int, error) {
 	if len(data) < 4 {
 		return 0, fmt.Errorf("input data length is %d, expected at least %d", len(data), 4)
@@ -431,6 +464,7 @@ func toMap(t TarianMetaData) map[string]any {
 	m["exec_id"] = t.MetaData.Task.ExecId
 	m["parent_exec_id"] = t.MetaData.Task.ParentExecId
 	m["process_name"] = utils.ToString(t.MetaData.Task.Comm[:])
+	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:])
 
 	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:])
 	m["nodename"] = utils.ToString(t.SystemInfo.Nodename[:])
