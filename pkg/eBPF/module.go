@@ -4,6 +4,7 @@
 package ebpf
 
 import (
+	"github.com/cilium/ebpf/rlimit"
 	"github.com/intelops/tarian-detector/pkg/err"
 )
 
@@ -37,6 +38,11 @@ func (m *Module) Map(mp *MapInfo) {
 
 func (m *Module) Prepare() (*Handler, error) {
 	handler := NewHandler(m.name)
+
+	err := rlimit.RemoveMemlock()
+	if err != nil {
+		return nil, err
+	}
 
 	/*
 	*
