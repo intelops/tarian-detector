@@ -5,9 +5,8 @@ package tarian
 
 import (
 	"errors"
-	"fmt"
 
-	e "github.com/cilium/ebpf"
+	cilium_ebpf "github.com/cilium/ebpf"
 	ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
@@ -15,12 +14,11 @@ import (
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type tarian_meta_data_t -type tarian_events_e -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
 func GetModule() (*ebpf.Module, error) {
-
 	bpfObjs, err := getBpfObject()
 	if err != nil {
-		var verr *e.VerifierError
+		var verr *cilium_ebpf.VerifierError
 		if errors.As(err, &verr) {
-			fmt.Printf("HERE: %+v\n", verr)
+			return nil, verr
 		}
 
 		return nil, err
