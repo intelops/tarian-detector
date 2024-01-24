@@ -7,6 +7,11 @@ import (
 	"fmt"
 )
 
+type arg struct {
+	Name  string
+	Value string
+}
+
 type Param struct {
 	name        string
 	description string
@@ -38,11 +43,6 @@ func NewTarianEvent(id int, name string, size uint32, params ...Param) TarianEve
 	}
 }
 
-type arg struct {
-	Name  string
-	Value string
-}
-
 func LoadTarianEvents() {
 	Events = GenerateTarianEvents()
 }
@@ -70,7 +70,7 @@ func GenerateTarianEvents() TarianEventMap {
 	return events
 }
 
-func (p *Param) ParseArg(val interface{}) (arg, error) {
+func (p *Param) processValue(val interface{}) (arg, error) {
 	arg := arg{}
 
 	if p.function != nil {
