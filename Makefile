@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2023 Authors of Tarian & the Organization created Tarian
+# Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 # executable Files Path
 EXECUTABLE=bin
@@ -118,7 +118,7 @@ endif
 		echo "ERROR: File already exists at $(FILE_PATH)"; \
 		exit 1; \
 	else \
-		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2023 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
+		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2024 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
 	fi
 
 
