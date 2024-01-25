@@ -60,6 +60,7 @@ typedef enum tarian_events_e{
 
     // close
     TDE_SYSCALL_CLOSE_E,
+    TDE_SYSCALL_CLOSE_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -76,6 +77,7 @@ typedef enum tarian_events_e{
 #define TDS_CLONE_R (MD_SIZE + sizeof(int))
 
 #define TDS_CLOSE_E (MD_SIZE + sizeof(int))
+#define TDS_CLOSE_R (MD_SIZE + sizeof(int))
 
 /*****Event Data Size - END*****/
 

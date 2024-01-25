@@ -95,6 +95,11 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_CLOSE_E, close_e)
 
+	close_r := NewTarianEvent(3, "sys_close_exit", 765,
+		Param{name: "return", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_CLOSE_R, close_r)
+
 	return events
 }
 

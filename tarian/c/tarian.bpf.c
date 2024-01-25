@@ -121,17 +121,29 @@ int BPF_KRETPROBE(tdf_clone_r, int ret) {
   return tdf_submit_event(&te);
 }
 
-// KPROBE("__x64_sys_close")
-// int BPF_KPROBE(tdf_close_e, struct pt_regs *regs) {
-//   if (!Continue())
-//     return TDC_FAILURE;
+KPROBE("__x64_sys_close")
+int BPF_KPROBE(tdf_close_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLOSE_E, &te, FIXED, TDS_CLOSE_E);
+  if (resp != TDC_SUCCESS) return resp;
 
-//   tarian_event_t te;
-//   int resp = new_event(ctx, TDE_SYSCALL_CLOSE_E, &te, FIXED, TDS_CLOSE_E);
-//   if (resp != TDC_SUCCESS) return resp;
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
+  /*====================== PARAMETERS ======================*/
 
-//   int fd = get_syscall_param(regs, 0);
-//   tdf_save(&te, TDT_S32, &fd);
+  return tdf_submit_event(&te);
+}
 
-//   return tdf_submit_event(&te);
-// }
+KRETPROBE("__x64_sys_close")
+int BPF_KRETPROBE(tdf_close_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLOSE_R, &te, FIXED, TDS_CLOSE_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
