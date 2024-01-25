@@ -76,6 +76,20 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_EXECVEAT_R, execveat_r)
 
+	clone_e := NewTarianEvent(56, "sys_clone_entry", 793,
+		Param{name: "clone_flags", paramType: TDT_U64, function: parseCloneFlags},
+		Param{name: "newsp", paramType: TDT_S64},
+		Param{name: "parent_tid", paramType: TDT_S32},
+		Param{name: "child_tid", paramType: TDT_S32},
+		Param{name: "tls", paramType: TDT_S64},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_CLONE_E, clone_e)
+
+	clone_r := NewTarianEvent(56, "sys_clone_exit", 765,
+		Param{name: "return", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_CLONE_R, clone_r)
+
 	close_e := NewTarianEvent(3, "sys_close_entry", 765,
 		Param{name: "fd", paramType: TDT_S32},
 	)

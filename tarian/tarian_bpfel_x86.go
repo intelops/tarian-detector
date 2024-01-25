@@ -26,7 +26,9 @@ const (
 	tarianTarianEventsETDE_SYSCALL_EXECVE_R   tarianTarianEventsE = 3
 	tarianTarianEventsETDE_SYSCALL_EXECVEAT_E tarianTarianEventsE = 4
 	tarianTarianEventsETDE_SYSCALL_EXECVEAT_R tarianTarianEventsE = 5
-	tarianTarianEventsETDE_SYSCALL_CLOSE_E    tarianTarianEventsE = 6
+	tarianTarianEventsETDE_SYSCALL_CLONE_E    tarianTarianEventsE = 6
+	tarianTarianEventsETDE_SYSCALL_CLONE_R    tarianTarianEventsE = 7
+	tarianTarianEventsETDE_SYSCALL_CLOSE_E    tarianTarianEventsE = 8
 )
 
 type tarianTarianMetaDataT struct {
@@ -106,6 +108,8 @@ type tarianSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianProgramSpecs struct {
+	TdfCloneE    *ebpf.ProgramSpec `ebpf:"tdf_clone_e"`
+	TdfCloneR    *ebpf.ProgramSpec `ebpf:"tdf_clone_r"`
 	TdfExecveE   *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
 	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
@@ -205,6 +209,8 @@ func (m *tarianMaps) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianPrograms struct {
+	TdfCloneE    *ebpf.Program `ebpf:"tdf_clone_e"`
+	TdfCloneR    *ebpf.Program `ebpf:"tdf_clone_r"`
 	TdfExecveE   *ebpf.Program `ebpf:"tdf_execve_e"`
 	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
@@ -213,6 +219,8 @@ type tarianPrograms struct {
 
 func (p *tarianPrograms) Close() error {
 	return _TarianClose(
+		p.TdfCloneE,
+		p.TdfCloneR,
 		p.TdfExecveE,
 		p.TdfExecveR,
 		p.TdfExecveatE,

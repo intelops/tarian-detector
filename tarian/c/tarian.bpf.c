@@ -8,7 +8,7 @@
 // stain bool Continue() {
 //   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
 //   int ppid = BPF_CORE_READ(task, parent, pid);
-//   if (ppid != 707575)
+//   if (ppid != 165387)
 //     return false;
 
 //   return true;
@@ -70,6 +70,45 @@ int BPF_KRETPROBE(tdf_execveat_r, int ret) {
 
   tdf_save(&te, TDT_S32, &ret);
 
+  return tdf_submit_event(&te);
+}
+
+KPROBE("__x64_sys_clone")
+int BPF_KPROBE(tdf_clone_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLONE_E, &te, FIXED, TDS_CLONE_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  uint64_t flags = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_U64, &flags);
+  
+  uint64_t newsp = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_U64, &newsp);
+
+  int parent_tid;
+  bpf_probe_read_user_str(&parent_tid, sizeof(parent_tid), (void *)get_syscall_param(regs, 2));
+  tdf_save(&te, TDT_S32, &parent_tid);
+
+  int child_tid;
+  bpf_probe_read_user_str(&child_tid, sizeof(child_tid), (void *)get_syscall_param(regs, 3));
+  tdf_save(&te, TDT_S32, &child_tid);
+
+  uint64_t tls = get_syscall_param(regs, 4);
+  tdf_save(&te, TDT_U64, &tls);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te); 
+}
+
+KRETPROBE("__x64_sys_clone")
+int BPF_KRETPROBE(tdf_clone_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLONE_R, &te, FIXED, TDS_CLONE_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  tdf_save(&te, TDT_S32, &ret);
+  
   return tdf_submit_event(&te);
 }
 

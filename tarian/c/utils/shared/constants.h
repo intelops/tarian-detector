@@ -29,29 +29,6 @@
 
 #define stain static __always_inline
 
-enum pt_regs_idx_e{
-    PARAM1 = 0,
-    PARAM2,
-    PARAM3,
-    PARAM4,
-    PARAM5,
-    PARAM6,
-    SYSCALL,
-    RETURN
-};
-
-enum argument_type_e {
-    NONE_T = 0UL,
-    INT_T,
-    UINT_T,
-    LONG_T,
-    ULONG_T,
-    STR_T,
-    STR_ARR_T,
-    BYTE_ARR_T,
-    ARG_TYPE_MAX = 255UL
-};
-
 enum tarian_param_type_e{
     TDT_NONE = 0,
     TDT_U8,
@@ -76,6 +53,10 @@ typedef enum tarian_events_e{
     // execveat
     TDE_SYSCALL_EXECVEAT_E,
     TDE_SYSCALL_EXECVEAT_R,
+    
+    // clone
+    TDE_SYSCALL_CLONE_E,
+    TDE_SYSCALL_CLONE_R,
 
     // close
     TDE_SYSCALL_CLOSE_E,
@@ -90,6 +71,9 @@ typedef enum tarian_events_e{
 
 #define TDS_EXECVEAT_E (MD_SIZE + sizeof(int)*2 + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
 #define TDS_EXECVEAT_R (MD_SIZE + sizeof(int))
+
+#define TDS_CLONE_E (MD_SIZE + sizeof(unsigned long) * 3 + sizeof(int) * 2)
+#define TDS_CLONE_R (MD_SIZE + sizeof(int))
 
 #define TDS_CLOSE_E (MD_SIZE + sizeof(int))
 
