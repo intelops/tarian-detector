@@ -68,47 +68,18 @@ enum tarian_param_type_e{
     TDT_BYTE_ARR,
 };  
 typedef enum tarian_events_e{
+    
+    // execve
     TDE_SYSCALL_EXECVE_E = 2,
-    TDE_SYSCALL_EXECVE_R = 3,
+    TDE_SYSCALL_EXECVE_R,
 
-    TDE_SYSCALL_CLOSE_E = 4,
+    // execveat
+    TDE_SYSCALL_EXECVEAT_E,
+    TDE_SYSCALL_EXECVEAT_R,
+
+    // close
+    TDE_SYSCALL_CLOSE_E,
 } tarian_event_code;
-
-enum event_id_e {
-    SYS_EXECVE_E = 0UL,
-    SYS_EXECVE_X,
-    SYS_ENTER_EXECVEAT,
-    SYS_EXIT_EXECVEAT,
-    SYS_ENTER_OPEN,
-    SYS_EXIT_OPEN,
-    SYS_ENTER_OPENAT,
-    SYS_EXIT_OPENAT,
-    SYS_ENTER_OPENAT2,
-    SYS_EXIT_OPENAT2,
-    SYS_ENTER_CLOSE,
-    SYS_EXIT_CLOSE,
-    SYS_ENTER_READ,
-    SYS_EXIT_READ,
-    SYS_ENTER_READV,
-    SYS_EXIT_READV,
-    SYS_ENTER_WRITE,
-    SYS_EXIT_WRITE,
-    SYS_ENTER_WRITEV,
-    SYS_EXIT_WRITEV,
-    SYS_ENTER_LISTEN,
-    SYS_EXIT_LISTEN,
-    SYS_ENTER_SOCKET,
-    SYS_EXIT_SOCKET,
-    SYS_ENTER_ACCEPT,
-    SYS_EXIT_ACCEPT,
-    SYS_ENTER_BIND,
-    SYS_EXIT_BIND,
-    SYS_ENTER_CONNECT,
-    SYS_EXIT_CONNECT,
-    SYS_ENTER_CLONE,
-    SYS_EXIT_CLONE
-};
-
 
 /*****Event Data Size - START****/
 #define MD_SIZE sizeof(tarian_meta_data_t) /* sizeof tarian meta data for each event*/
@@ -116,6 +87,9 @@ enum event_id_e {
 
 #define TDS_EXECVE_E (MD_SIZE + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
 #define TDS_EXECVE_R (MD_SIZE + sizeof(int))
+
+#define TDS_EXECVEAT_E (MD_SIZE + sizeof(int)*2 + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
+#define TDS_EXECVEAT_R (MD_SIZE + sizeof(int))
 
 #define TDS_CLOSE_E (MD_SIZE + sizeof(int))
 

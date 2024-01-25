@@ -22,9 +22,11 @@ type tarianScratchSpaceT struct {
 type tarianTarianEventsE uint32
 
 const (
-	tarianTarianEventsETDE_SYSCALL_EXECVE_E tarianTarianEventsE = 2
-	tarianTarianEventsETDE_SYSCALL_EXECVE_R tarianTarianEventsE = 3
-	tarianTarianEventsETDE_SYSCALL_CLOSE_E  tarianTarianEventsE = 4
+	tarianTarianEventsETDE_SYSCALL_EXECVE_E   tarianTarianEventsE = 2
+	tarianTarianEventsETDE_SYSCALL_EXECVE_R   tarianTarianEventsE = 3
+	tarianTarianEventsETDE_SYSCALL_EXECVEAT_E tarianTarianEventsE = 4
+	tarianTarianEventsETDE_SYSCALL_EXECVEAT_R tarianTarianEventsE = 5
+	tarianTarianEventsETDE_SYSCALL_CLOSE_E    tarianTarianEventsE = 6
 )
 
 type tarianTarianMetaDataT struct {
@@ -104,8 +106,10 @@ type tarianSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianProgramSpecs struct {
-	TdfExecveE *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
-	TdfExecveR *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
+	TdfExecveE   *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
+	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
+	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
+	TdfExecveatR *ebpf.ProgramSpec `ebpf:"tdf_execveat_r"`
 }
 
 // tarianMapSpecs contains maps before they are loaded into the kernel.
@@ -201,14 +205,18 @@ func (m *tarianMaps) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianPrograms struct {
-	TdfExecveE *ebpf.Program `ebpf:"tdf_execve_e"`
-	TdfExecveR *ebpf.Program `ebpf:"tdf_execve_r"`
+	TdfExecveE   *ebpf.Program `ebpf:"tdf_execve_e"`
+	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
+	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
+	TdfExecveatR *ebpf.Program `ebpf:"tdf_execveat_r"`
 }
 
 func (p *tarianPrograms) Close() error {
 	return _TarianClose(
 		p.TdfExecveE,
 		p.TdfExecveR,
+		p.TdfExecveatE,
+		p.TdfExecveatR,
 	)
 }
 

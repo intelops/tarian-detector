@@ -62,5 +62,10 @@ type TarianEventsE int
 const (
 	TDE_SYSCALL_EXECVE_E int = 2
 	TDE_SYSCALL_EXECVE_R int = 3
-	TDE_SYSCALL_CLOSE_E  int = 4
+
+	TDE_SYSCALL_EXECVEAT_E int = 4
+	TDE_SYSCALL_EXECVEAT_R int = 5
+
+	TDE_SYSCALL_CLOSE_E int = 6
+	TDE_SYSCALL_CLOSE_R int = 7
 )

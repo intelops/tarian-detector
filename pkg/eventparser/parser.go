@@ -33,7 +33,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 
 		tarianmetadata + params
 	*/
-
+	fmt.Println(len(data))
 	eventId, err := getEventId(data)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 
 	event, noEvent := Events[eventId]
 	if !noEvent {
-		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v", eventId)
+		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v %v", eventId, TDE_SYSCALL_EXECVEAT_E)
 	}
 
 	var metaData TarianMetaData

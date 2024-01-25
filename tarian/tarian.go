@@ -36,21 +36,20 @@ func GetModule() (*ebpf.Module, error) {
 		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
 	}
 
+	// kprobe & kretprobe execve
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveE, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfCloseE, ebpf.NewHookInfo().Kprobe("__x64_sys_close")))
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveR, ebpf.NewHookInfo().Kretprobe("__x64_sys_execve")))
+
+	// kprobe & kretprobe execveat
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveatE, ebpf.NewHookInfo().Kprobe("__x64_sys_execveat")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveatR, ebpf.NewHookInfo().Kretprobe("__x64_sys_execveat")))
 
 	// // kprobe & kretprobe clone
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClone, ebpf.NewHookInfo().Kprobe("__x64_sys_clone")))
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeClone, ebpf.NewHookInfo().Kretprobe("__x64_sys_clone")))
 
-	// // kprobe & kretprobe execve
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeExecve, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecve, ebpf.NewHookInfo().Kretprobe("__x64_sys_execve")))
-
-	// // kprobe & kretprobe execveat
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecveat, ebpf.NewHookInfo().Kprobe("__x64_sys_execveat")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecveat, ebpf.NewHookInfo().Kretprobe("__x64_sys_execveat")))
 
 	// // kprobe & kretprobe close
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClose, ebpf.NewHookInfo().Kprobe("__x64_sys_close")))
