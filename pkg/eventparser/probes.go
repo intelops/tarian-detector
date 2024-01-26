@@ -112,6 +112,18 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_READ_R, read_r)
 
+	write_e := NewTarianEvent(1, "sys_write_entry", 4867,
+		Param{name: "fd", paramType: TDT_S32},
+		Param{name: "buf", paramType: TDT_BYTE_ARR},
+		Param{name: "count", paramType: TDT_U32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_WRITE_E, write_e)
+
+	write_r := NewTarianEvent(1, "sys_write_exit", 769,
+		Param{name: "return", paramType: TDT_S64},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_WRITE_R, write_r)
+
 	return events
 }
 

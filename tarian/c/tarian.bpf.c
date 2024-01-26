@@ -5,14 +5,14 @@
 
 #include "common.h"
 
-// stain bool Continue() {
-//   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-//   int ppid = BPF_CORE_READ(task, parent, pid);
-//   if (ppid != 165387)
-//     return false;
+stain bool Continue() {
+  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+  int ppid = BPF_CORE_READ(task, parent, pid);
+  if (ppid != 165387)
+    return false;
 
-//   return true;
-// }
+  return true;
+}
 
 const tarian_meta_data_t *unused __attribute__((unused));
 const enum tarian_param_type_e *unsed_enum __attribute__((unused));
@@ -173,6 +173,41 @@ KRETPROBE("__x64_sys_read")
 int BPF_KRETPROBE(tdf_read_r, long ret) { 
   tarian_event_t te;
   int resp = new_event(ctx, TDE_SYSCALL_READ_R, &te, FIXED, TDS_READ_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KPROBE("__x64_sys_write")
+int BPF_KPROBE(tdf_write_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITE_E, &te, VARIABLE, TDS_WRITE_E);
+  if (resp != TDC_SUCCESS) return resp;
+ 
+  /*====================== PARAMETERS ======================*/
+  int32_t fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
+
+  uint32_t count = get_syscall_param(regs, 2);
+  bpf_printk("Execve %d", count);
+
+  tdf_flex_save(&te, TDT_BYTE_ARR, get_syscall_param(regs, 1), count, USER);
+
+  tdf_save(&te, TDT_U32, &count /* count */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+
+KRETPROBE("__x64_sys_write")
+int BPF_KRETPROBE(tdf_write_r, long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITE_R, &te, FIXED, TDS_WRITE_R);
   if (resp != TDC_SUCCESS) return resp;
 
   /*====================== PARAMETERS ======================*/
