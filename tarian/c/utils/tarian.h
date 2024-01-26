@@ -113,7 +113,7 @@ stain int tdf_save(tarian_event_t *te, int type, void *src) {
     return TDC_SUCCESS;
 };
 
-stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, enum memory mem) {
+stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_t n, enum memory mem) {
     /*
       Data save format: [len 2B][...data...sizeB]
     */
@@ -125,7 +125,7 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, enum me
             write_str_arr(te->buf.data, &te->buf.pos, te->buf.reserved_space,(char **)src, 0);
             break;
         case TDT_BYTE_ARR:
-            write_byte_arr(te->buf.data, &te->buf.pos, src, MAX_STRING_SIZE, mem);
+            write_byte_arr(te->buf.data, &te->buf.pos, src, n, mem);
             break;
         default:
             return TDCE_UNKNOWN_TYPE;

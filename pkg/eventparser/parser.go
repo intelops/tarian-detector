@@ -41,7 +41,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 
 	event, noEvent := Events[eventId]
 	if !noEvent {
-		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v %v", eventId, TDE_SYSCALL_EXECVEAT_E)
+		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v", eventId)
 	}
 
 	var metaData TarianMetaData
@@ -59,7 +59,6 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	record["event_id"] = event.name
 
 	bs := NewByteStream(data[lenMetaData:], metaData.MetaData.Nparams)
-
 	ps, err := bs.parseParams(event)
 	if err != nil {
 		return nil, err
@@ -169,6 +168,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 			return arg{}, err
 		}
 
+		fmt.Println(slen)
 		pVal = fmt.Sprintf("%v", bs.data[bs.position:bs.position+int(slen)])
 		bs.position += int(slen)
 	}

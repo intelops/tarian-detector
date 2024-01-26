@@ -25,9 +25,9 @@ int BPF_KPROBE(tdf_execve_e, struct pt_regs *regs) {
   if (resp != TDC_SUCCESS) return resp;
 
   /*====================== PARAMETERS ======================*/
-  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 0) /* filename */, USER);
-  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 1) /* argv */, USER);
-  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* envp */, USER);
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 0) /* filename */, 0,USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 1) /* argv */, 0,USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* envp */, 0,USER);
   /*====================== PARAMETERS ======================*/
 
   return tdf_submit_event(&te);
@@ -56,9 +56,9 @@ int BPF_KPROBE(tdf_execveat_e, struct pt_regs *regs) {
   int fd = get_syscall_param(regs, 0);
   tdf_save(&te, TDT_S32, &fd /* fd */);
 
-  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1) /* filename */, USER);
-  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* argv */, USER);
-  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 3) /* envp */, USER);
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1) /* filename */, 0, USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* argv */, 0, USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 3) /* envp */, 0, USER);
 
   int flags = get_syscall_param(regs, 4);
   tdf_save(&te, TDT_S32, &flags /* flags */);
@@ -143,6 +143,40 @@ int BPF_KRETPROBE(tdf_close_r, int ret) {
 
   /*====================== PARAMETERS ======================*/
   tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KPROBE("__x64_sys_read")
+int BPF_KPROBE(tdf_read_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READ_E, &te, VARIABLE, TDS_READ_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  int32_t fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
+
+  uint32_t count = get_syscall_param(regs, 2);
+  bpf_printk("Execve %d", count);
+
+  tdf_flex_save(&te, TDT_BYTE_ARR, get_syscall_param(regs, 1), count, USER);
+
+  tdf_save(&te, TDT_U32, &count /* count */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KRETPROBE("__x64_sys_read")
+int BPF_KRETPROBE(tdf_read_r, long ret) { 
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READ_R, &te, FIXED, TDS_READ_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
   /*====================== PARAMETERS ======================*/
 
   return tdf_submit_event(&te);

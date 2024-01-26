@@ -30,6 +30,8 @@ const (
 	tarianTarianEventsETDE_SYSCALL_CLONE_R    tarianTarianEventsE = 7
 	tarianTarianEventsETDE_SYSCALL_CLOSE_E    tarianTarianEventsE = 8
 	tarianTarianEventsETDE_SYSCALL_CLOSE_R    tarianTarianEventsE = 9
+	tarianTarianEventsETDE_SYSCALL_READ_E     tarianTarianEventsE = 10
+	tarianTarianEventsETDE_SYSCALL_READ_R     tarianTarianEventsE = 11
 )
 
 type tarianTarianMetaDataT struct {
@@ -117,6 +119,8 @@ type tarianProgramSpecs struct {
 	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
 	TdfExecveatR *ebpf.ProgramSpec `ebpf:"tdf_execveat_r"`
+	TdfReadE     *ebpf.ProgramSpec `ebpf:"tdf_read_e"`
+	TdfReadR     *ebpf.ProgramSpec `ebpf:"tdf_read_r"`
 }
 
 // tarianMapSpecs contains maps before they are loaded into the kernel.
@@ -220,6 +224,8 @@ type tarianPrograms struct {
 	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
 	TdfExecveatR *ebpf.Program `ebpf:"tdf_execveat_r"`
+	TdfReadE     *ebpf.Program `ebpf:"tdf_read_e"`
+	TdfReadR     *ebpf.Program `ebpf:"tdf_read_r"`
 }
 
 func (p *tarianPrograms) Close() error {
@@ -232,6 +238,8 @@ func (p *tarianPrograms) Close() error {
 		p.TdfExecveR,
 		p.TdfExecveatE,
 		p.TdfExecveatR,
+		p.TdfReadE,
+		p.TdfReadR,
 	)
 }
 
