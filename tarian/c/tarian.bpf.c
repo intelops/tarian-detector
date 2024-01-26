@@ -5,14 +5,14 @@
 
 #include "common.h"
 
-stain bool Continue() {
-  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-  int ppid = BPF_CORE_READ(task, parent, pid);
-  if (ppid != 165387)
-    return false;
+// stain bool Continue() {
+//   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+//   int ppid = BPF_CORE_READ(task, parent, pid);
+//   if (ppid != 165387)
+//     return false;
 
-  return true;
-}
+//   return true;
+// }
 
 const tarian_meta_data_t *unused __attribute__((unused));
 const enum tarian_param_type_e *unsed_enum __attribute__((unused));
@@ -212,6 +212,38 @@ int BPF_KRETPROBE(tdf_write_r, long ret) {
 
   /*====================== PARAMETERS ======================*/
   tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KPROBE("__x64_sys_open")
+int BPF_KPROBE(tdf_open_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPEN_E, &te, VARIABLE, TDS_OPEN_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 0), 0, USER);
+
+  int flags = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_S32, &flags);
+
+  unsigned int mode = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_U32, &mode);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KRETPROBE("__x64_sys_open")
+int BPF_KRETPROBE(tdf_open_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPEN_R, &te, FIXED, TDS_OPEN_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_U32, &ret);
   /*====================== PARAMETERS ======================*/
 
   return tdf_submit_event(&te);
