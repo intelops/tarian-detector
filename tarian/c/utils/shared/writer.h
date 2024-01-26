@@ -68,11 +68,11 @@ stain void write_ipv6(uint8_t *buf, uint64_t *pos, uint32_t ipv6[4]) {
   *pos += 16;
 }
 
-stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr,
-                         uint16_t n, enum memory mr) {
+stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
   int written_bytes = 0;
 
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
+  *len = 0;
   *pos += sizeof(uint16_t);
 
   if (mr == USER) {
@@ -89,6 +89,7 @@ stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr,
 
   *len = written_bytes;
   *pos += written_bytes;
+
   return (uint16_t)written_bytes;
 };
 
@@ -96,6 +97,7 @@ stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr,
 
 stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **data_ptr, uint16_t n) {  
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
+  *len = 0;
   *pos += sizeof(uint16_t);
 
   u8 space = 32;
@@ -130,26 +132,27 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
   return total_len;
 }
 
-stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos,
-                              unsigned long data_ptr, uint16_t n,
-                              enum memory mr) {
+stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
+  int written_bytes = 0;
+  
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
+  *len = 0;
   *pos += sizeof(uint16_t);
 
   if (mr == USER) {
-    if (bpf_probe_read_user(&buf[SAFE_ACCESS(*pos)], n, (void *)data_ptr) !=
-        0) {
-      return 0;
-    }
+    written_bytes = bpf_probe_read_user_str(&buf[SAFE_ACCESS(*pos)], n, (void *)data_ptr);
   } else {
-    if (bpf_probe_read_kernel(&buf[SAFE_ACCESS(*pos)], n, (void *)data_ptr) !=
-        0) {
-      return 0;
-    }
+    written_bytes = bpf_probe_read_kernel_str(&buf[SAFE_ACCESS(*pos)], n, (void *)data_ptr);
   }
 
-  *len = n;
-  *pos += n;
+  bpf_printk("write %d", written_bytes);
+  if (written_bytes <= 0) {
+    return 0;
+  }
+
+  *len = written_bytes;
+  *pos += written_bytes;
+
   return n;
 };
 
