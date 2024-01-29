@@ -81,6 +81,10 @@ typedef enum tarian_events_e{
     // writev
     TDE_SYSCALL_WRITEV_E,
     TDE_SYSCALL_WRITEV_R,
+
+    // openat
+    TDE_SYSCALL_OPENAT_E,
+    TDE_SYSCALL_OPENAT_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -113,6 +117,9 @@ typedef enum tarian_events_e{
 
 #define TDS_WRITEV_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE)
 #define TDS_WRITEV_R (MD_SIZE + sizeof(long))
+
+#define TDS_OPENAT_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint32_t))
+#define TDS_OPENAT_R (MD_SIZE + sizeof(int))
 /*****Event Data Size - END*****/
 
 #endif

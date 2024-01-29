@@ -160,6 +160,19 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_WRITEV_R, writev_r)
 
+	openat_e := NewTarianEvent(257, "sys_openat_entry", 4867,
+		Param{name: "dfd", paramType: TDT_S32, function: parseExecveatDird},
+		Param{name: "filename", paramType: TDT_STR},
+		Param{name: "flags", paramType: TDT_S32, function: parseOpenFlags},
+		Param{name: "mode", paramType: TDT_U32, function: parseOpenMode},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_OPENAT_E, openat_e)
+
+	openat_r := NewTarianEvent(257, "sys_openat_exit", 765,
+		Param{name: "return", paramType: TDT_U32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_OPENAT_R, openat_r)
+
 	return events
 }
 

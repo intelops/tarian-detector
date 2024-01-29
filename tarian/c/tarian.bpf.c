@@ -311,3 +311,38 @@ int BPF_KRETPROBE(tdf_writev_r,  long ret) {
 
   return tdf_submit_event(&te);
 }
+
+KPROBE("__x64_sys_openat")
+int BPF_KPROBE(tdf_openat_e, struct pt_regs  *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT_E, &te, VARIABLE, TDS_OPENAT_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  int dfd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32,  &dfd);
+
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1), 0, USER);
+
+  int flags = get_syscall_param(regs , 2);
+  tdf_save(&te, TDT_S32, &flags);
+
+  unsigned int  mode = get_syscall_param(regs, 3);
+  tdf_save(&te, TDT_U32, &mode);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KRETPROBE("__x64_sys_openat")
+int BPF_KRETPROBE(tdf_openat_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT_R, &te, FIXED, TDS_OPENAT_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32,  &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
