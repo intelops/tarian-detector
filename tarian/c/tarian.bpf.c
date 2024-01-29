@@ -280,3 +280,34 @@ int BPF_KRETPROBE(tdf_readv_r,  long ret) {
 
   return tdf_submit_event(&te);
 }
+
+
+KPROBE("__x64_sys_writev")
+int BPF_KPROBE(tdf_writev_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITEV_E, &te, VARIABLE, TDS_WRITEV_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
+
+  int vlen = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_S32, &vlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KRETPROBE("__x64_sys_writev")
+int BPF_KRETPROBE(tdf_writev_r,  long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITEV_R, &te, FIXED, TDS_WRITEV_R);
+  if (resp != TDC_SUCCESS) return resp;
+  
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
