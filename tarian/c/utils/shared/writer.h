@@ -6,7 +6,7 @@ enum memory { KERNEL = 0, USER = 1 };
 #define MAX_EVENT_SIZE 64 * 1024
 #define MAX_PARAM_SIZE MAX_EVENT_SIZE - 1
 
-#define SAFE_ACCESS(x) x &(MAX_BUFFER_SIZE - 1)
+#define SAFE_ACCESS(x) x &(MAX_PARAM_SIZE)
 #define CHAR_POINTER(x) (char *)&x
 
 stain void write_u8(uint8_t *, uint64_t *, uint8_t);
@@ -18,10 +18,8 @@ stain void write_s16(uint8_t *, uint64_t *, int16_t);
 stain void write_s32(uint8_t *, uint64_t *, int32_t);
 stain void write_s64(uint8_t *, uint64_t *, int64_t);
 stain void write_ipv6(uint8_t *, uint64_t *, uint32_t ipv6[16]);
-stain uint16_t write_str(uint8_t *, uint64_t *, unsigned long, uint16_t,
-                         enum memory);
-stain uint16_t write_byte_arr(uint8_t *, uint64_t *, unsigned long, uint16_t,
-                              enum memory);
+stain uint16_t write_str(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
+stain uint16_t write_byte_arr(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
 
 stain void write_u8(uint8_t *buf, uint64_t *pos, uint8_t data) {
   *((uint8_t *)&buf[SAFE_ACCESS(*pos)]) = data;
@@ -69,6 +67,10 @@ stain void write_ipv6(uint8_t *buf, uint64_t *pos, uint32_t ipv6[4]) {
 }
 
 stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
+  /*
+    [len..str....]
+  */
+
   int written_bytes = 0;
 
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
@@ -96,6 +98,10 @@ stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, ui
 #define MAX_CHARBUF_POINTERS 16
 
 stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **data_ptr, uint16_t n) {  
+  /*
+    [len..str....]
+  */
+
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
   *len = 0;
   *pos += sizeof(uint16_t);
@@ -133,6 +139,9 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
 }
 
 stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
+  /*
+    [len..str....]
+  */
   int written_bytes = 0;
   
   uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
@@ -156,4 +165,25 @@ stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_pt
   return n;
 };
 
+#define MAX_IOVEC_COUNT 32
+stain void write_iovec_arr(uint8_t *buf, uint64_t *pos, unsigned long iov_ptr, unsigned long iov_count) {
+  /*
+    [[count]...[len..str]...[len...str]...]
+  */
+
+  // uint16_t *count = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
+  // *count = (uint16_t)iov_count;
+  // *pos += sizeof(uint16_t);
+  
+  // uint32_t total_iovec_size = iov_count * bpf_core_type_size(struct iovec);
+  // if (bpf_probe_read_user((void *)&buf[MAX_PARAM_SIZE], SAFE_ACCESS(total_iovec_size), (void *)iov_ptr) != 0) return;
+
+  // uint32_t total_size_to_read = 0;
+
+  // const struct iovec *iovec = (const struct iovec *)&buf[MAX_PARAM_SIZE];
+  // for (int i = 0; i < MAX_IOVEC_COUNT; i++) {
+  //   if ( i == iov_count) break;
+  // }
+  // bpf_printk("iovec %d %d", *count, total_iovec_size);
+}
 #endif

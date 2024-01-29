@@ -64,6 +64,10 @@ func GetModule() (*ebpf.Module, error) {
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenE, ebpf.NewHookInfo().Kprobe("__x64_sys_open")))
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenR, ebpf.NewHookInfo().Kretprobe("__x64_sys_open")))
 
+	// kprobe & kretprobe readv
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadvE, ebpf.NewHookInfo().Kprobe("__x64_sys_readv")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadvR, ebpf.NewHookInfo().Kretprobe("__x64_sys_readv")))
+
 	// // kprobe & kretprobe openat
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeOpenat, ebpf.NewHookInfo().Kprobe("__x64_sys_openat")))
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeOpenat, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat")))
@@ -71,14 +75,6 @@ func GetModule() (*ebpf.Module, error) {
 	// // kprobe & kretprobe openat2
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeOpenat2, ebpf.NewHookInfo().Kprobe("__x64_sys_openat2")))
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeOpenat2, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat2")))
-
-	// // kprobe & kretprobe read
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeRead, ebpf.NewHookInfo().Kprobe("__x64_sys_read")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeRead, ebpf.NewHookInfo().Kretprobe("__x64_sys_read")))
-
-	// // kprobe & kretprobe readv
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeReadv, ebpf.NewHookInfo().Kprobe("__x64_sys_readv")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeReadv, ebpf.NewHookInfo().Kretprobe("__x64_sys_readv")))
 
 	// // kprobe & kretprobe writev
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeWritev, ebpf.NewHookInfo().Kprobe("__x64_sys_writev")))

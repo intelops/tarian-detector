@@ -8,7 +8,7 @@
 // stain bool Continue() {
 //   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
 //   int ppid = BPF_CORE_READ(task, parent, pid);
-//   if (ppid != 165387)
+//   if (ppid != 489466)
 //     return false;
 
 //   return true;
@@ -244,6 +244,38 @@ int BPF_KRETPROBE(tdf_open_r, int ret) {
 
   /*====================== PARAMETERS ======================*/
   tdf_save(&te, TDT_U32, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KPROBE("__x64_sys_readv")
+int BPF_KPROBE(tdf_readv_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READV_E, &te, VARIABLE, TDS_READV_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
+
+  int vlen = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_S32, &vlen);
+
+  // tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}
+
+KRETPROBE("__x64_sys_readv")
+int BPF_KRETPROBE(tdf_readv_r,  long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READV_R, &te, FIXED, TDS_READV_R);
+  if (resp != TDC_SUCCESS) return resp;
+  
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
   /*====================== PARAMETERS ======================*/
 
   return tdf_submit_event(&te);

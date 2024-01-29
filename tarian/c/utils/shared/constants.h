@@ -43,6 +43,7 @@ enum tarian_param_type_e{
     TDT_STR,
     TDT_STR_ARR,
     TDT_BYTE_ARR,
+    TDT_IOVEC_ARR,
 };  
 typedef enum tarian_events_e{
     // execve
@@ -72,6 +73,10 @@ typedef enum tarian_events_e{
     // open
     TDE_SYSCALL_OPEN_E,
     TDE_SYSCALL_OPEN_R,
+
+    // readv
+    TDE_SYSCALL_READV_E,
+    TDE_SYSCALL_READV_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -98,6 +103,9 @@ typedef enum tarian_events_e{
 
 #define TDS_OPEN_E (MD_SIZE + MAX_STRING_SIZE + PARAM_SIZE + sizeof(int) + sizeof(uint32_t))
 #define TDS_OPEN_R (MD_SIZE + sizeof(int))
+
+#define TDS_READV_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE)
+#define TDS_READV_R (MD_SIZE + sizeof(long))
 /*****Event Data Size - END*****/
 
 #endif
