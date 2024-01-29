@@ -31,7 +31,7 @@ CFLAGS := -O2 -g -Wall -Werror \
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/g; s/aarch64/arm64/g')
 
 # project dependencies
-DEPENDENCIES:=golang clang llvm libelf-dev libbpf-dev linux-tools-$(shell uname -r) linux-headers-$(shell uname -r)
+DEPENDENCIES:=golang clang-12 llvm-12 libelf-dev libbpf-dev linux-tools-$(shell uname -r) linux-headers-$(shell uname -r)
 
 # package manager
 PKG_MGR=apt-get 
