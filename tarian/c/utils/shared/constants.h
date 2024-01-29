@@ -85,6 +85,9 @@ typedef enum tarian_events_e{
     // openat
     TDE_SYSCALL_OPENAT_E,
     TDE_SYSCALL_OPENAT_R,
+
+    TDE_SYSCALL_OPENAT2_E,
+    TDE_SYSCALL_OPENAT2_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -120,6 +123,9 @@ typedef enum tarian_events_e{
 
 #define TDS_OPENAT_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint32_t))
 #define TDS_OPENAT_R (MD_SIZE + sizeof(int))
+
+#define TDS_OPENAT2_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint64_t) * 3)
+#define TDS_OPENAT2_R (MD_SIZE + sizeof(long))
 /*****Event Data Size - END*****/
 
 #endif

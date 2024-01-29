@@ -423,3 +423,69 @@ func parseOpenFlags(flags any) (string, error) {
 
 	return strings.Join(fs, "|"), nil
 }
+
+func parseOpenat2Flags(flags any) (string, error) {
+	f, ok := flags.(int64)
+	if !ok {
+		return fmt.Sprintf("%v", f), fmt.Errorf("parseOpenat2Flags: parse value error")
+	}
+
+	return parseOpenFlags(int32(f))
+}
+
+func parseOpenat2Mode(mode any) (string, error) {
+	m, ok := mode.(int64)
+	if !ok {
+		return fmt.Sprintf("%v", m), fmt.Errorf("parseOpenat2Mode: parse value error")
+	}
+
+	return parseOpenMode(uint32(m))
+}
+
+const (
+	RESOLVE_NO_XDEV       = 0x01
+	RESOLVE_NO_MAGICLINKS = 0x02
+	RESOLVE_NO_SYMLINKS   = 0x04
+	RESOLVE_BENEATH       = 0x08
+	RESOLVE_IN_ROOT       = 0x10
+	RESOLVE_CACHED        = 0x20
+)
+
+func parseOpenat2Resolve(resovle any) (string, error) {
+	r, ok := resovle.(int64)
+	if !ok {
+		return fmt.Sprintf("%v", r), fmt.Errorf("parseOpenat2Resolve: parse value error")
+	}
+
+	var rs []string
+
+	if r&RESOLVE_NO_XDEV == RESOLVE_NO_XDEV {
+		rs = append(rs, "RESOLVE_NO_XDEV")
+	}
+
+	if r&RESOLVE_NO_MAGICLINKS == RESOLVE_NO_MAGICLINKS {
+		rs = append(rs, "RESOLVE_NO_MAGICLINKS")
+	}
+
+	if r&RESOLVE_NO_SYMLINKS == RESOLVE_NO_SYMLINKS {
+		rs = append(rs, "RESOLVE_NO_SYMLINKS")
+	}
+
+	if r&RESOLVE_BENEATH == RESOLVE_BENEATH {
+		rs = append(rs, "RESOLVE_BENEATH")
+	}
+
+	if r&RESOLVE_IN_ROOT == RESOLVE_IN_ROOT {
+		rs = append(rs, "RESOLVE_IN_ROOT")
+	}
+
+	if r&RESOLVE_CACHED == RESOLVE_CACHED {
+		rs = append(rs, "RESOLVE_CACHED")
+	}
+
+	if len(rs) == 0 {
+		return fmt.Sprintf("%v", r), nil
+	}
+
+	return strings.Join(rs, "|"), nil
+}
