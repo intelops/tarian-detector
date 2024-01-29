@@ -188,6 +188,17 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_OPENAT2_R, openat2_r)
 
+	listen_e := NewTarianEvent(50, "sys_listen_entry", 4867,
+		Param{name: "fd", paramType: TDT_S32},
+		Param{name: "backlog", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_LISTEN_E, listen_e)
+
+	listen_r := NewTarianEvent(50, "sys_listen_exit", 769,
+		Param{name: "return", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_LISTEN_R, listen_r)
+
 	return events
 }
 

@@ -44,6 +44,8 @@ const (
 	tarianTarianEventsETDE_SYSCALL_OPENAT_R   tarianTarianEventsE = 21
 	tarianTarianEventsETDE_SYSCALL_OPENAT2E   tarianTarianEventsE = 22
 	tarianTarianEventsETDE_SYSCALL_OPENAT2R   tarianTarianEventsE = 23
+	tarianTarianEventsETDE_SYSCALL_LISTEN_E   tarianTarianEventsE = 24
+	tarianTarianEventsETDE_SYSCALL_LISTEN_R   tarianTarianEventsE = 25
 )
 
 type tarianTarianMetaDataT struct {
@@ -131,6 +133,8 @@ type tarianProgramSpecs struct {
 	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
 	TdfExecveatR *ebpf.ProgramSpec `ebpf:"tdf_execveat_r"`
+	TdfListenE   *ebpf.ProgramSpec `ebpf:"tdf_listen_e"`
+	TdfListenR   *ebpf.ProgramSpec `ebpf:"tdf_listen_r"`
 	TdfOpenE     *ebpf.ProgramSpec `ebpf:"tdf_open_e"`
 	TdfOpenR     *ebpf.ProgramSpec `ebpf:"tdf_open_r"`
 	TdfOpenat2E  *ebpf.ProgramSpec `ebpf:"tdf_openat2_e"`
@@ -248,6 +252,8 @@ type tarianPrograms struct {
 	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
 	TdfExecveatR *ebpf.Program `ebpf:"tdf_execveat_r"`
+	TdfListenE   *ebpf.Program `ebpf:"tdf_listen_e"`
+	TdfListenR   *ebpf.Program `ebpf:"tdf_listen_r"`
 	TdfOpenE     *ebpf.Program `ebpf:"tdf_open_e"`
 	TdfOpenR     *ebpf.Program `ebpf:"tdf_open_r"`
 	TdfOpenat2E  *ebpf.Program `ebpf:"tdf_openat2_e"`
@@ -274,6 +280,8 @@ func (p *tarianPrograms) Close() error {
 		p.TdfExecveR,
 		p.TdfExecveatE,
 		p.TdfExecveatR,
+		p.TdfListenE,
+		p.TdfListenR,
 		p.TdfOpenE,
 		p.TdfOpenR,
 		p.TdfOpenat2E,

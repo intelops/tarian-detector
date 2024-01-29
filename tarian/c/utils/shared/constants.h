@@ -86,25 +86,30 @@ typedef enum tarian_events_e{
     TDE_SYSCALL_OPENAT_E,
     TDE_SYSCALL_OPENAT_R,
 
+    // openat2
     TDE_SYSCALL_OPENAT2_E,
     TDE_SYSCALL_OPENAT2_R,
+    
+    // listen
+    TDE_SYSCALL_LISTEN_E,
+    TDE_SYSCALL_LISTEN_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
 #define MD_SIZE sizeof(tarian_meta_data_t) /* sizeof tarian meta data for each event*/
-#define PARAM_SIZE sizeof(u16)
+#define PARAM_SIZE sizeof(uint16_t)
 
 #define TDS_EXECVE_E (MD_SIZE + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
-#define TDS_EXECVE_R (MD_SIZE + sizeof(int))
+#define TDS_EXECVE_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_EXECVEAT_E (MD_SIZE + sizeof(int)*2 + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
-#define TDS_EXECVEAT_R (MD_SIZE + sizeof(int))
+#define TDS_EXECVEAT_E (MD_SIZE + sizeof(int32_t)*2 + MAX_STRING_SIZE*2 + PARAM_SIZE*2)
+#define TDS_EXECVEAT_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_CLONE_E (MD_SIZE + sizeof(unsigned long) * 3 + sizeof(int) * 2)
-#define TDS_CLONE_R (MD_SIZE + sizeof(int))
+#define TDS_CLONE_E (MD_SIZE + sizeof(uint64_t)*3 + sizeof(int32_t)*2)
+#define TDS_CLONE_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_CLOSE_E (MD_SIZE + sizeof(int))
-#define TDS_CLOSE_R (MD_SIZE + sizeof(int))
+#define TDS_CLOSE_E (MD_SIZE + sizeof(int32_t))
+#define TDS_CLOSE_R (MD_SIZE + sizeof(int32_t))
 
 #define TDS_READ_E (MD_SIZE + sizeof(int32_t) + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint32_t))
 #define TDS_READ_R (MD_SIZE + sizeof(long))
@@ -112,8 +117,8 @@ typedef enum tarian_events_e{
 #define TDS_WRITE_E (MD_SIZE + sizeof(int32_t) + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint32_t))
 #define TDS_WRITE_R (MD_SIZE + sizeof(long))
 
-#define TDS_OPEN_E (MD_SIZE + MAX_STRING_SIZE + PARAM_SIZE + sizeof(int) + sizeof(uint32_t))
-#define TDS_OPEN_R (MD_SIZE + sizeof(int))
+#define TDS_OPEN_E (MD_SIZE + MAX_STRING_SIZE + PARAM_SIZE + sizeof(int32_t) + sizeof(uint32_t))
+#define TDS_OPEN_R (MD_SIZE + sizeof(int32_t))
 
 #define TDS_READV_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE)
 #define TDS_READV_R (MD_SIZE + sizeof(long))
@@ -122,10 +127,13 @@ typedef enum tarian_events_e{
 #define TDS_WRITEV_R (MD_SIZE + sizeof(long))
 
 #define TDS_OPENAT_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint32_t))
-#define TDS_OPENAT_R (MD_SIZE + sizeof(int))
+#define TDS_OPENAT_R (MD_SIZE + sizeof(int32_t))
 
 #define TDS_OPENAT2_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_STRING_SIZE + PARAM_SIZE + sizeof(uint64_t) * 3)
 #define TDS_OPENAT2_R (MD_SIZE + sizeof(long))
+
+#define TDS_LISTEN_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_LISTEN_R (MD_SIZE + sizeof(int32_t))
 /*****Event Data Size - END*****/
 
 #endif
