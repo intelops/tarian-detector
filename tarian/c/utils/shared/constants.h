@@ -101,6 +101,10 @@ typedef enum tarian_events_e{
     // accept
     TDE_SYSCALL_ACCEPT_E,
     TDE_SYSCALL_ACCEPT_R,
+
+    // bind
+    TDE_SYSCALL_BIND_E,
+    TDE_SYSCALL_BIND_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -148,6 +152,9 @@ typedef enum tarian_events_e{
 
 #define TDS_ACCEPT_E (MD_SIZE + sizeof(int32_t) * 2)
 #define TDS_ACCEPT_R (MD_SIZE + sizeof(int32_t))
+
+#define TDS_BIND_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_BIND_R (MD_SIZE + sizeof(int32_t))
 /*****Event Data Size - END*****/
 
 #endif

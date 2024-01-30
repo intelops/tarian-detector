@@ -92,9 +92,9 @@ func GetModule() (*ebpf.Module, error) {
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfAcceptE, ebpf.NewHookInfo().Kprobe("__x64_sys_accept")))
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfAcceptR, ebpf.NewHookInfo().Kretprobe("__x64_sys_accept")))
 
-	// // kprobe & kretprobe bind
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeBind, ebpf.NewHookInfo().Kprobe("__x64_sys_bind")))
-	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeBind, ebpf.NewHookInfo().Kretprobe("__x64_sys_bind")))
+	// kprobe & kretprobe bind
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfBindE, ebpf.NewHookInfo().Kprobe("__x64_sys_bind")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfBindR, ebpf.NewHookInfo().Kretprobe("__x64_sys_bind")))
 
 	// // kprobe & kretprobe connect
 	// tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeConnect, ebpf.NewHookInfo().Kprobe("__x64_sys_connect")))
