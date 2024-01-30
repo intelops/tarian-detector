@@ -46,6 +46,8 @@ const (
 	tarianTarianEventsETDE_SYSCALL_OPENAT2R   tarianTarianEventsE = 23
 	tarianTarianEventsETDE_SYSCALL_LISTEN_E   tarianTarianEventsE = 24
 	tarianTarianEventsETDE_SYSCALL_LISTEN_R   tarianTarianEventsE = 25
+	tarianTarianEventsETDE_SYSCALL_SOCKET_E   tarianTarianEventsE = 26
+	tarianTarianEventsETDE_SYSCALL_SOCKET_R   tarianTarianEventsE = 27
 )
 
 type tarianTarianMetaDataT struct {
@@ -145,6 +147,8 @@ type tarianProgramSpecs struct {
 	TdfReadR     *ebpf.ProgramSpec `ebpf:"tdf_read_r"`
 	TdfReadvE    *ebpf.ProgramSpec `ebpf:"tdf_readv_e"`
 	TdfReadvR    *ebpf.ProgramSpec `ebpf:"tdf_readv_r"`
+	TdfSocketE   *ebpf.ProgramSpec `ebpf:"tdf_socket_e"`
+	TdfSocketR   *ebpf.ProgramSpec `ebpf:"tdf_socket_r"`
 	TdfWriteE    *ebpf.ProgramSpec `ebpf:"tdf_write_e"`
 	TdfWriteR    *ebpf.ProgramSpec `ebpf:"tdf_write_r"`
 	TdfWritevE   *ebpf.ProgramSpec `ebpf:"tdf_writev_e"`
@@ -264,6 +268,8 @@ type tarianPrograms struct {
 	TdfReadR     *ebpf.Program `ebpf:"tdf_read_r"`
 	TdfReadvE    *ebpf.Program `ebpf:"tdf_readv_e"`
 	TdfReadvR    *ebpf.Program `ebpf:"tdf_readv_r"`
+	TdfSocketE   *ebpf.Program `ebpf:"tdf_socket_e"`
+	TdfSocketR   *ebpf.Program `ebpf:"tdf_socket_r"`
 	TdfWriteE    *ebpf.Program `ebpf:"tdf_write_e"`
 	TdfWriteR    *ebpf.Program `ebpf:"tdf_write_r"`
 	TdfWritevE   *ebpf.Program `ebpf:"tdf_writev_e"`
@@ -292,6 +298,8 @@ func (p *tarianPrograms) Close() error {
 		p.TdfReadR,
 		p.TdfReadvE,
 		p.TdfReadvR,
+		p.TdfSocketE,
+		p.TdfSocketR,
 		p.TdfWriteE,
 		p.TdfWriteR,
 		p.TdfWritevE,

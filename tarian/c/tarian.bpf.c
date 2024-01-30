@@ -415,3 +415,36 @@ int BPF_KRETPROBE(tdf_listen_r, int ret) {
 
   return tdf_submit_event(&te);
 }
+
+KPROBE("__x64_sys_socket")
+int BPF_KPROBE(tdf_socket_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_SOCKET_E, &te, FIXED, TDS_SOCKET_E);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  int family = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &family);
+  
+  int type = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_S32, &type);
+
+  int protocol = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_S32, &protocol);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+};
+
+KRETPROBE("__x64_sys_socket")
+int BPF_KRETPROBE(tdf_socket_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_SOCKET_R, &te, FIXED, TDS_SOCKET_R);
+  if (resp != TDC_SUCCESS) return resp;
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32,  &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+}

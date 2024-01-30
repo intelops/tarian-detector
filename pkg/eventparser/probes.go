@@ -188,16 +188,28 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_OPENAT2_R, openat2_r)
 
-	listen_e := NewTarianEvent(50, "sys_listen_entry", 4867,
+	listen_e := NewTarianEvent(50, "sys_listen_entry", 769,
 		Param{name: "fd", paramType: TDT_S32},
 		Param{name: "backlog", paramType: TDT_S32},
 	)
 	events.AddTarianEvent(TDE_SYSCALL_LISTEN_E, listen_e)
 
-	listen_r := NewTarianEvent(50, "sys_listen_exit", 769,
+	listen_r := NewTarianEvent(50, "sys_listen_exit", 765,
 		Param{name: "return", paramType: TDT_S32},
 	)
 	events.AddTarianEvent(TDE_SYSCALL_LISTEN_R, listen_r)
+
+	socket_e := NewTarianEvent(41, "sys_socket_entry", 773,
+		Param{name: "family", paramType: TDT_S32, function: parseSocketFamily},
+		Param{name: "type", paramType: TDT_S32, function: parseSocketType},
+		Param{name: "protocol", paramType: TDT_S32, function: parseSocketProtocol},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_SOCKET_E, socket_e)
+
+	socket_r := NewTarianEvent(41, "sys_socket_exit", 765,
+		Param{name: "return", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_SOCKET_R, socket_r)
 
 	return events
 }

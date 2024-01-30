@@ -93,6 +93,10 @@ typedef enum tarian_events_e{
     // listen
     TDE_SYSCALL_LISTEN_E,
     TDE_SYSCALL_LISTEN_R,
+
+    // socket
+    TDE_SYSCALL_SOCKET_E,
+    TDE_SYSCALL_SOCKET_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -134,6 +138,9 @@ typedef enum tarian_events_e{
 
 #define TDS_LISTEN_E (MD_SIZE + sizeof(int32_t) * 2)
 #define TDS_LISTEN_R (MD_SIZE + sizeof(int32_t))
+
+#define TDS_SOCKET_E (MD_SIZE + sizeof(int32_t) * 3)
+#define TDS_SOCKET_R (MD_SIZE + sizeof(int32_t))
 /*****Event Data Size - END*****/
 
 #endif
