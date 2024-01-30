@@ -52,6 +52,8 @@ const (
 	tarianTarianEventsETDE_SYSCALL_ACCEPT_R   tarianTarianEventsE = 29
 	tarianTarianEventsETDE_SYSCALL_BIND_E     tarianTarianEventsE = 30
 	tarianTarianEventsETDE_SYSCALL_BIND_R     tarianTarianEventsE = 31
+	tarianTarianEventsETDE_SYSCALL_CONNECT_E  tarianTarianEventsE = 32
+	tarianTarianEventsETDE_SYSCALL_CONNECT_R  tarianTarianEventsE = 33
 )
 
 type tarianTarianMetaDataT struct {
@@ -139,6 +141,8 @@ type tarianProgramSpecs struct {
 	TdfCloneR    *ebpf.ProgramSpec `ebpf:"tdf_clone_r"`
 	TdfCloseE    *ebpf.ProgramSpec `ebpf:"tdf_close_e"`
 	TdfCloseR    *ebpf.ProgramSpec `ebpf:"tdf_close_r"`
+	TdfConnectE  *ebpf.ProgramSpec `ebpf:"tdf_connect_e"`
+	TdfConnectR  *ebpf.ProgramSpec `ebpf:"tdf_connect_r"`
 	TdfExecveE   *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
 	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
@@ -264,6 +268,8 @@ type tarianPrograms struct {
 	TdfCloneR    *ebpf.Program `ebpf:"tdf_clone_r"`
 	TdfCloseE    *ebpf.Program `ebpf:"tdf_close_e"`
 	TdfCloseR    *ebpf.Program `ebpf:"tdf_close_r"`
+	TdfConnectE  *ebpf.Program `ebpf:"tdf_connect_e"`
+	TdfConnectR  *ebpf.Program `ebpf:"tdf_connect_r"`
 	TdfExecveE   *ebpf.Program `ebpf:"tdf_execve_e"`
 	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
 	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
@@ -298,6 +304,8 @@ func (p *tarianPrograms) Close() error {
 		p.TdfCloneR,
 		p.TdfCloseE,
 		p.TdfCloseR,
+		p.TdfConnectE,
+		p.TdfConnectR,
 		p.TdfExecveE,
 		p.TdfExecveR,
 		p.TdfExecveatE,

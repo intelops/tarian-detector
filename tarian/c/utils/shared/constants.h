@@ -105,6 +105,10 @@ typedef enum tarian_events_e{
     // bind
     TDE_SYSCALL_BIND_E,
     TDE_SYSCALL_BIND_R,
+
+    // connect
+    TDE_SYSCALL_CONNECT_E,
+    TDE_SYSCALL_CONNECT_R,
 } tarian_event_code;
 
 /*****Event Data Size - START****/
@@ -155,6 +159,9 @@ typedef enum tarian_events_e{
 
 #define TDS_BIND_E (MD_SIZE + sizeof(int32_t) * 2)
 #define TDS_BIND_R (MD_SIZE + sizeof(int32_t))
+
+#define TDS_CONNECT_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_CONNECT_R (MD_SIZE + sizeof(int32_t))
 /*****Event Data Size - END*****/
 
 #endif

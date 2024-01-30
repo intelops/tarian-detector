@@ -233,6 +233,17 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_BIND_R, bind_r)
 
+	connect_e := NewTarianEvent(42, "sys_connect_entry", 773,
+		Param{name: "fd", paramType: TDT_S32},
+		Param{name: "addrlen", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_CONNECT_E, connect_e)
+
+	connect_r := NewTarianEvent(42, "sys_connect_exit", 765,
+		Param{name: "return", paramType: TDT_S32},
+	)
+	events.AddTarianEvent(TDE_SYSCALL_CONNECT_R, connect_r)
+
 	return events
 }
 
