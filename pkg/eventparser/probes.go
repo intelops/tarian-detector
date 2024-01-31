@@ -138,7 +138,7 @@ func GenerateTarianEvents() TarianEventMap {
 
 	readv_e := NewTarianEvent(19, "sys_readv_entry", 4867,
 		Param{name: "fd", paramType: TDT_S32},
-		// Param{name: "vec", paramType: TDT_STR},
+		Param{name: "vec", paramType: TDT_BYTE_ARR},
 		Param{name: "vlen", paramType: TDT_S32},
 	)
 	events.AddTarianEvent(TDE_SYSCALL_READV_E, readv_e)
@@ -150,7 +150,7 @@ func GenerateTarianEvents() TarianEventMap {
 
 	writev_e := NewTarianEvent(20, "sys_writev_entry", 4867,
 		Param{name: "fd", paramType: TDT_S32},
-		// Param{name: "vec", paramType: TDT_STR},
+		Param{name: "vec", paramType: TDT_BYTE_ARR},
 		Param{name: "vlen", paramType: TDT_S32},
 	)
 	events.AddTarianEvent(TDE_SYSCALL_WRITEV_E, writev_e)

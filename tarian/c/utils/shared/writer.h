@@ -154,7 +154,6 @@ stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_pt
     written_bytes = bpf_probe_read_kernel_str(&buf[SAFE_ACCESS(*pos)], n, (void *)data_ptr);
   }
 
-  bpf_printk("write %d", written_bytes);
   if (written_bytes <= 0) {
     return 0;
   }
@@ -168,22 +167,33 @@ stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_pt
 #define MAX_IOVEC_COUNT 32
 stain void write_iovec_arr(uint8_t *buf, uint64_t *pos, unsigned long iov_ptr, unsigned long iov_count) {
   /*
-    [[count]...[len..str]...[len...str]...]
+    [[len]...str...]
   */
 
-  // uint16_t *count = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
-  // *count = (uint16_t)iov_count;
-  // *pos += sizeof(uint16_t);
+  uint16_t *len = ((uint16_t *)&buf[SAFE_ACCESS(*pos)]);
+  *len = 0;
+  *pos += sizeof(uint16_t);
   
-  // uint32_t total_iovec_size = iov_count * bpf_core_type_size(struct iovec);
-  // if (bpf_probe_read_user((void *)&buf[MAX_PARAM_SIZE], SAFE_ACCESS(total_iovec_size), (void *)iov_ptr) != 0) return;
+  uint32_t total_len = 0;
+  uint16_t initial_pos = *pos;
 
-  // uint32_t total_size_to_read = 0;
+  uint32_t total_iovec_size = iov_count * bpf_core_type_size(struct iovec);
+  if (bpf_probe_read_user((void *)&buf[MAX_PARAM_SIZE], SAFE_ACCESS(total_iovec_size), (void *)iov_ptr) != 0) return;
 
-  // const struct iovec *iovec = (const struct iovec *)&buf[MAX_PARAM_SIZE];
-  // for (int i = 0; i < MAX_IOVEC_COUNT; i++) {
-  //   if ( i == iov_count) break;
-  // }
-  // bpf_printk("iovec %d %d", *count, total_iovec_size);
+  const struct iovec *iovs = (const struct iovec *)&buf[MAX_PARAM_SIZE];
+  
+  for (int i = 0; i < MAX_IOVEC_COUNT; i++) {
+    if (i == (iov_count & (MAX_IOVEC_COUNT - 1))) break;
+
+    uint16_t byte_read = bpf_probe_read_user(&buf[SAFE_ACCESS(*pos)], SAFE_ACCESS(iovs[i].iov_len), iovs[i].iov_base);
+    if (byte_read != 0) continue;
+
+    *pos += iovs[i].iov_len & (MAX_STRING_SIZE - 1);
+    total_len += iovs[i].iov_len;
+  }
+
+  total_len = total_len &  (MAX_STRING_SIZE - 1);
+  *len = total_len;
+  *pos = initial_pos + total_len;
 }
 #endif

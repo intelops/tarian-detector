@@ -260,9 +260,10 @@ int BPF_KPROBE(tdf_readv_e, struct pt_regs *regs) {
   tdf_save(&te, TDT_S32, &fd);
 
   int vlen = get_syscall_param(regs, 2);
-  tdf_save(&te, TDT_S32, &vlen);
 
-  // tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+  tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+
+  tdf_save(&te, TDT_S32, &vlen);
   /*====================== PARAMETERS ======================*/
 
   return tdf_submit_event(&te);
@@ -293,6 +294,8 @@ int BPF_KPROBE(tdf_writev_e, struct pt_regs *regs) {
   tdf_save(&te, TDT_S32, &fd);
 
   int vlen = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+
   tdf_save(&te, TDT_S32, &vlen);
   /*====================== PARAMETERS ======================*/
 
