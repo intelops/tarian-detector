@@ -9,50 +9,9 @@ import (
 	"net"
 	"os"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
-
-// converts [][4096]uint8 to string.
-func Uint8ArrtoString(arr [][4096]uint8) string {
-	var res_str string
-
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		if res_str != "" {
-			res_str += " " + temp
-		} else {
-			res_str += temp
-		}
-	}
-
-	return res_str
-}
-
-// converts [][4096]uint8 to []string.
-func Uint8ArrtoStringArr(arr [][4096]uint8) []string {
-	var res_arr_str []string
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		res_arr_str = append(res_arr_str, temp)
-	}
-
-	return res_arr_str
-}
-
-// converts []uint8 to string
-func Uint8toString(arr []uint8) string {
-	return strings.Trim(string(arr[:]), "\x00")
-}
 
 // converts time in nanoseconds to readable time format
 func NanoSecToTimeFormat(t uint64) string {
