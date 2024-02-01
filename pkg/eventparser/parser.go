@@ -185,13 +185,13 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 		case AF_INET:
 			{
 				type sockaddr_in struct {
-					Family  uint8
+					Family  string
 					Sa_addr string
 					Sa_port uint16
 				}
 
 				var addr sockaddr_in
-				addr.Family = uint8(family)
+				addr.Family = "AF_INET"
 
 				ipv4_arr := bs.data[bs.position : bs.position+4]
 				bs.position += 4
@@ -210,13 +210,13 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 		case AF_INET6:
 			{
 				type sockaddr_in6 struct {
-					Family  uint8
+					Family  string
 					Sa_addr string
 					Sa_port uint16
 				}
 
 				var addr sockaddr_in6
-				addr.Family = uint8(family)
+				addr.Family = "AF_INET6"
 
 				ipv6_arr := bs.data[bs.position : bs.position+16]
 				bs.position += 16
@@ -235,12 +235,12 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 		case AF_UNIX:
 			{
 				type sockaddr_un struct {
-					Family   uint8
+					Family   string
 					Sun_path string
 				}
 
 				var addr sockaddr_un
-				addr.Family = uint8(family)
+				addr.Family = "AF_UNIX"
 
 				slen, err := bs.readShort()
 				if err != nil {

@@ -518,15 +518,16 @@ int BPF_KRETPROBE(tdf_bind_r, int ret) {
 KPROBE("__x64_sys_connect")
 int BPF_KPROBE(tdf_connect_e, struct pt_regs *regs) {
   tarian_event_t te;
-  int resp = new_event(ctx, TDE_SYSCALL_CONNECT_E, &te, FIXED,  TDS_CONNECT_E);
+  int resp = new_event(ctx, TDE_SYSCALL_CONNECT_E, &te, VARIABLE,  TDS_CONNECT_E);
   if (resp != TDC_SUCCESS) return resp;
 
   /*====================== PARAMETERS ======================*/
   int fd = get_syscall_param(regs, 0);
   tdf_save(&te, TDT_S32, &fd);
 
-  int addrlen;
-  bpf_probe_read_user(&addrlen, sizeof(addrlen),  (void*)get_syscall_param(regs, 2));
+  int addrlen = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_SOCKADDR, get_syscall_param(regs, 1), addrlen, USER);
+
   tdf_save(&te, TDT_S32, &addrlen);
   /*====================== PARAMETERS ======================*/
 
