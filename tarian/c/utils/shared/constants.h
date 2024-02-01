@@ -19,9 +19,9 @@
 #define LINUX_VERSION_CODE KERNEL_VERSION(LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH)
 #endif
 
+#define AF_UNIX 1
 #define AF_INET 2
 #define AF_INET6 10
-#define AF_UNIX 1
 
 #define EVENT_RINGBUF_MAP_NAME events
 #define RINGBUF_MAX_ENTRIES 1024 * 1024 * 16 /* 16MB */
@@ -44,6 +44,7 @@ enum tarian_param_type_e{
     TDT_STR_ARR,
     TDT_BYTE_ARR,
     TDT_IOVEC_ARR,
+    TDT_SOCKADDR,
 };  
 typedef enum tarian_events_e{
     // execve

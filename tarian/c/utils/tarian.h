@@ -102,9 +102,6 @@ stain int tdf_save(tarian_event_t *te, int type, void *src) {
     case TDT_S64:
         write_s64(te->buf.data, &te->buf.pos, *((int64_t *)src));
         break;
-    case TDT_IPV6:
-        // write_ipv6(te->buf.data, te->buf.pos, *((int32_t *)src));
-        break;
     default:
         return TDCE_UNKNOWN_TYPE;
     }
@@ -129,6 +126,9 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_
             break;
         case TDT_IOVEC_ARR:
             write_iovec_arr(te->buf.data, &te->buf.pos, src, n);
+            break;
+        case TDT_SOCKADDR:
+            write_sockaddr(te->buf.data, &te->buf.pos, src, n);
             break;
         default:
             return TDCE_UNKNOWN_TYPE;

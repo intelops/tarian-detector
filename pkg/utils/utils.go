@@ -4,7 +4,9 @@
 package utils
 
 import (
+	"encoding/binary"
 	"encoding/json"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -87,6 +89,21 @@ func CurrentKernelVersion() (int, error) {
 	}
 
 	return KernelVersion(a, b, c), nil
+}
+
+func Ipv4(b [4]byte) string {
+	return net.IP(b[:]).String()
+}
+
+func Ipv6(b [16]byte) string {
+	return net.IP(b[:]).String()
+}
+
+func Ntohs(n uint16) uint16 {
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, n)
+
+	return binary.BigEndian.Uint16(b)
 }
 
 // WriteJSONToFile appends a JSON object to a file in JSON array format

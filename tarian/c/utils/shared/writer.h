@@ -196,4 +196,58 @@ stain void write_iovec_arr(uint8_t *buf, uint64_t *pos, unsigned long iov_ptr, u
   *len = total_len;
   *pos = initial_pos + total_len;
 }
+
+#define MAX_UNIX_SOCKET_PATH 108 + 1
+stain void write_sockaddr(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t addrlen) {
+  if (bpf_probe_read((void *)&buf[MAX_PARAM_SIZE], SAFE_ACCESS(addrlen), (void *)data_ptr) != 0) return;
+  
+  struct sockaddr *sockaddr = (struct sockaddr *)&buf[MAX_PARAM_SIZE];
+  uint16_t socket_family = sockaddr->sa_family;
+
+  switch (socket_family) {
+    case AF_INET: {
+      struct sockaddr_in *sockaddr_in = (struct sockaddr_in *)sockaddr;
+
+      uint32_t ipv4 = sockaddr_in->sin_addr.s_addr;
+      uint16_t port = sockaddr_in->sin_port;
+
+      write_u8(buf, pos, socket_family);      
+      write_u32(buf, pos, ipv4);
+      write_u16(buf, pos, port);
+      break;
+    }
+    case  AF_INET6: {
+      struct sockaddr_in6 *sockaddr_in6 = (struct sockaddr_in6 *)sockaddr;
+      
+      uint32_t ipv6[4] = {0, 0, 0, 0};
+      __builtin_memcpy(&ipv6, sockaddr_in6->sin6_addr.in6_u.u6_addr32, 16);
+      
+      uint16_t port = sockaddr_in6->sin6_port;
+
+      write_u8(buf, pos, socket_family);      
+      write_ipv6(buf, pos, ipv6);
+      write_u16(buf, pos,  port); 
+      break;
+    }
+    case  AF_UNIX: {
+      struct sockaddr_un *sockaddr_un = (struct sockaddr_un *)sockaddr;
+
+      unsigned long start_reading_point;
+      char first_path_byte = *(char *)sockaddr_un->sun_path;
+      if(first_path_byte == '\0')
+      {
+        start_reading_point = (unsigned long)sockaddr_un->sun_path + 1;
+      }
+      else
+      {
+        start_reading_point = (unsigned long)sockaddr_un->sun_path;
+      }
+
+      write_u8(buf, pos, socket_family);      
+      write_str(buf, pos, start_reading_point, MAX_UNIX_SOCKET_PATH, KERNEL);
+      break;
+    }
+  }
+}
+
 #endif

@@ -82,6 +82,10 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 			break
 		}
 
+		if i >= len(tParams) {
+			break
+		}
+
 		ag, err := bs.parseParam(tParams[i])
 		if err != nil {
 			return nil, err
@@ -168,12 +172,100 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 			return arg{}, err
 		}
 
-		fmt.Println(slen)
 		pVal = fmt.Sprintf("%v", bs.data[bs.position:bs.position+int(slen)])
 		bs.position += int(slen)
+
+	case TDT_SOCKADDR:
+		family, err := bs.readByte()
+		if err != nil {
+			return arg{}, err
+		}
+
+		switch family {
+		case AF_INET:
+			{
+				type sockaddr_in struct {
+					Family  uint8
+					Sa_addr string
+					Sa_port uint16
+				}
+
+				var addr sockaddr_in
+				addr.Family = uint8(family)
+
+				ipv4_arr := bs.data[bs.position : bs.position+4]
+				bs.position += 4
+
+				addr.Sa_addr = utils.Ipv4([4]byte(ipv4_arr))
+
+				port, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sa_port = utils.Ntohs(port)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		case AF_INET6:
+			{
+				type sockaddr_in6 struct {
+					Family  uint8
+					Sa_addr string
+					Sa_port uint16
+				}
+
+				var addr sockaddr_in6
+				addr.Family = uint8(family)
+
+				ipv6_arr := bs.data[bs.position : bs.position+16]
+				bs.position += 16
+
+				addr.Sa_addr = utils.Ipv6([16]byte(ipv6_arr))
+
+				port, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sa_port = utils.Ntohs(port)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		case AF_UNIX:
+			{
+				type sockaddr_un struct {
+					Family   uint8
+					Sun_path string
+				}
+
+				var addr sockaddr_un
+				addr.Family = uint8(family)
+
+				slen, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sun_path = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
+				bs.position += int(slen)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		}
 	}
 
 	return p.processValue(pVal)
+}
+
+func (bs *ByteStream) readByte() (uint8, error) {
+	bt, err := utils.Uint8(bs.data[bs.position : bs.position+1])
+	if err != nil {
+		return 0, err
+	}
+
+	bs.position += 1
+	return bt, nil
 }
 
 func (bs *ByteStream) readShort() (uint16, error) {
@@ -184,6 +276,16 @@ func (bs *ByteStream) readShort() (uint16, error) {
 
 	bs.position += 2
 	return sh, nil
+}
+
+func (bs *ByteStream) readInt() (uint32, error) {
+	it, err := utils.Uint32(bs.data[bs.position : bs.position+4])
+	if err != nil {
+		return 0, err
+	}
+
+	bs.position += 4
+	return it, nil
 }
 
 func getEventId(data []byte) (int, error) {

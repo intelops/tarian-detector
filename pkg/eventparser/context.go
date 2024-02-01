@@ -42,19 +42,21 @@ type TarianMetaData struct {
 type TarianParamType uint32
 
 const (
-	TDT_NONE     TarianParamType = 0
-	TDT_U8       TarianParamType = 1
-	TDT_U16      TarianParamType = 2
-	TDT_U32      TarianParamType = 3
-	TDT_U64      TarianParamType = 4
-	TDT_S8       TarianParamType = 5
-	TDT_S16      TarianParamType = 6
-	TDT_S32      TarianParamType = 7
-	TDT_S64      TarianParamType = 8
-	TDT_IPV6     TarianParamType = 9
-	TDT_STR      TarianParamType = 10
-	TDT_STR_ARR  TarianParamType = 11
-	TDT_BYTE_ARR TarianParamType = 12
+	TDT_NONE      TarianParamType = 0
+	TDT_U8        TarianParamType = 1
+	TDT_U16       TarianParamType = 2
+	TDT_U32       TarianParamType = 3
+	TDT_U64       TarianParamType = 4
+	TDT_S8        TarianParamType = 5
+	TDT_S16       TarianParamType = 6
+	TDT_S32       TarianParamType = 7
+	TDT_S64       TarianParamType = 8
+	TDT_IPV6      TarianParamType = 9
+	TDT_STR       TarianParamType = 10
+	TDT_STR_ARR   TarianParamType = 11
+	TDT_BYTE_ARR  TarianParamType = 12
+	TDT_IOVEC_ARR TarianParamType = 15
+	TDT_SOCKADDR  TarianParamType = 14
 )
 
 type TarianEventsE int
