@@ -314,27 +314,27 @@ func parseOpenMode(mode any) (string, error) {
 }
 
 const (
-	O_ACCMODE     = 0003
-	O_RDONLY      = 00
-	O_WRONLY      = 01
-	O_RDWR        = 02
-	O_CREAT       = 0100
-	O_EXCL        = 0200
-	O_NOCTTY      = 0400
-	O_TRUNC       = 01000
-	O_APPEND      = 02000
-	O_NONBLOCK    = 04000
-	O_SYNC        = 04010000
-	O_ASYNC       = 020000
-	__O_LARGEFILE = 0100000
-	__O_DIRECTORY = 0200000
-	__O_NOFOLLOW  = 0400000
-	__O_CLOEXEC   = 02000000
-	__O_DIRECT    = 040000
-	__O_NOATIME   = 01000000
-	__O_PATH      = 010000000
-	__O_DSYNC     = 010000
-	__O_TMPFILE   = 020000000
+	O_ACCMODE   = 0003
+	O_RDONLY    = 00
+	O_WRONLY    = 01
+	O_RDWR      = 02
+	O_CREAT     = 0100
+	O_EXCL      = 0200
+	O_NOCTTY    = 0400
+	O_TRUNC     = 01000
+	O_APPEND    = 02000
+	O_NONBLOCK  = 04000
+	O_SYNC      = 04010000
+	O_ASYNC     = 020000
+	O_LARGEFILE = 0100000
+	O_DIRECTORY = 0200000
+	O_NOFOLLOW  = 0400000
+	O_CLOEXEC   = 02000000
+	O_DIRECT    = 040000
+	O_NOATIME   = 01000000
+	O_PATH      = 010000000
+	O_DSYNC     = 010000
+	O_TMPFILE   = 020000000
 )
 
 func parseOpenFlags(flags any) (string, error) {
@@ -385,40 +385,40 @@ func parseOpenFlags(flags any) (string, error) {
 		fs = append(fs, "O_ASYNC")
 	}
 
-	if f&__O_LARGEFILE == __O_LARGEFILE {
-		fs = append(fs, "__O_LARGEFILE")
+	if f&O_LARGEFILE == O_LARGEFILE {
+		fs = append(fs, "O_LARGEFILE")
 	}
 
-	if f&__O_DIRECTORY == __O_DIRECTORY {
-		fs = append(fs, "__O_DIRECTORY")
+	if f&O_DIRECTORY == O_DIRECTORY {
+		fs = append(fs, "O_DIRECTORY")
 	}
 
-	if f&__O_NOFOLLOW == __O_NOFOLLOW {
-		fs = append(fs, "__O_NOFOLLOW")
+	if f&O_NOFOLLOW == O_NOFOLLOW {
+		fs = append(fs, "O_NOFOLLOW")
 	}
 
-	if f&__O_CLOEXEC == __O_CLOEXEC {
-		fs = append(fs, "__O_CLOEXEC")
+	if f&O_CLOEXEC == O_CLOEXEC {
+		fs = append(fs, "O_CLOEXEC")
 	}
 
-	if f&__O_DIRECT == __O_DIRECT {
-		fs = append(fs, "__O_DIRECT")
+	if f&O_DIRECT == O_DIRECT {
+		fs = append(fs, "O_DIRECT")
 	}
 
-	if f&__O_NOATIME == __O_NOATIME {
-		fs = append(fs, "__O_NOATIME")
+	if f&O_NOATIME == O_NOATIME {
+		fs = append(fs, "O_NOATIME")
 	}
 
-	if f&__O_PATH == __O_PATH {
-		fs = append(fs, "__O_PATH")
+	if f&O_PATH == O_PATH {
+		fs = append(fs, "O_PATH")
 	}
 
-	if f&__O_DSYNC == __O_DSYNC {
-		fs = append(fs, "__O_DSYNC")
+	if f&O_DSYNC == O_DSYNC {
+		fs = append(fs, "O_DSYNC")
 	}
 
-	if f&__O_TMPFILE == __O_TMPFILE {
-		fs = append(fs, "__O_TMPFILE")
+	if f&O_TMPFILE == O_TMPFILE {
+		fs = append(fs, "O_TMPFILE")
 	}
 
 	return strings.Join(fs, "|"), nil
