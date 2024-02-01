@@ -213,6 +213,7 @@ func GenerateTarianEvents() TarianEventMap {
 
 	accept_e := NewTarianEvent(43, "sys_accept_entry", 773,
 		Param{name: "fd", paramType: TDT_S32},
+		Param{name: "upeer_sockaddr", paramType: TDT_SOCKADDR},
 		Param{name: "upper_addrlen", paramType: TDT_S32},
 	)
 	events.AddTarianEvent(TDE_SYSCALL_ACCEPT_E, accept_e)

@@ -455,7 +455,7 @@ int BPF_KRETPROBE(tdf_socket_r, int ret) {
 KPROBE("__x64_sys_accept")
 int BPF_KPROBE(tdf_accept_e, struct pt_regs *regs) {
   tarian_event_t te;
-  int resp = new_event(ctx, TDE_SYSCALL_ACCEPT_E, &te, FIXED,  TDS_ACCEPT_E);
+  int resp = new_event(ctx, TDE_SYSCALL_ACCEPT_E, &te, VARIABLE,  TDS_ACCEPT_E);
   if (resp != TDC_SUCCESS) return resp;
 
   /*====================== PARAMETERS ======================*/
@@ -464,6 +464,9 @@ int BPF_KPROBE(tdf_accept_e, struct pt_regs *regs) {
 
   int addrlen;
   bpf_probe_read_user(&addrlen, sizeof(addrlen),  (void*)get_syscall_param(regs, 2));
+
+  tdf_flex_save(&te, TDT_SOCKADDR, get_syscall_param(regs, 1), addrlen, USER);
+
   tdf_save(&te, TDT_S32, &addrlen);
   /*====================== PARAMETERS ======================*/
 
