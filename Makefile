@@ -121,7 +121,6 @@ endif
 		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2024 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
 	fi
 
-
 # recipe to remove all object files(*.o)
 clean:
 	find -type f -name *.o -delete

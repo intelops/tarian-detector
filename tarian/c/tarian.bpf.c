@@ -5,19 +5,6 @@
 
 #include "common.h"
 
-// stain bool Continue() {
-//   struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-//   int ppid = BPF_CORE_READ(task, parent, pid);
-//   if (ppid != 489466)
-//     return false;
-
-//   return true;
-// }
-
-const tarian_meta_data_t *unused __attribute__((unused));
-const enum tarian_param_type_e *unsed_enum __attribute__((unused));
-const enum tarian_events_e *Unused_enum_event __attribute__((unused));
-
 KPROBE("__x64_sys_execve")
 int BPF_KPROBE(tdf_execve_e, struct pt_regs *regs) {
   tarian_event_t te;

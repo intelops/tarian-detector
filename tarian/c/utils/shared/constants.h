@@ -1,17 +1,13 @@
 #ifndef __UTLIS_SHARED_CONSTANTS_H
 #define __UTLIS_SHARED_CONSTANTS_H
 
-#define MAX_ARGS 8
 #define MAX_PATH_LOOP 20
-#define MAX_STR_ARR_ELEM 38
 #define MAX_NODE_FIELD_SIZE 65    /* 65B */
 #define MAX_STRING_SIZE 4096   
 #define MAX_TARIAN_PATH 256   
-#define SYS_BUF_SIZE 1024 * 10
 #define MAX_SCRATCH_SPACE 8192
 #define MAX_BUFFER_SIZE 1024 * 128    /* 128kB */
 #define MAX_EVENT_SIZE 64 * 1024    /* 64kB */
-#define MAX_PERCPU_BUFSIZE (1 << 15 /* 32768 */) // set by the kernel as an upper bound
 
 #define TASK_COMM_LEN 16
 

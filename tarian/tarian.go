@@ -11,7 +11,7 @@ import (
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type tarian_meta_data_t -type tarian_events_e -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
 func GetModule() (*ebpf.Module, error) {
 	bpfObjs, err := getBpfObject()

@@ -6,7 +6,6 @@
 #include "tarian.h"
 
 #include "meta.h"
-#include "context.h"
-#include "buffer.h"
+#include "filters.h"
 
 #endif
