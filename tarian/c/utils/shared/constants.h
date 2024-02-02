@@ -151,13 +151,13 @@ typedef enum tarian_events_e{
 #define TDS_SOCKET_E (MD_SIZE + sizeof(int32_t) * 3)
 #define TDS_SOCKET_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_ACCEPT_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_ACCEPT_E (MD_SIZE + sizeof(int32_t) * 2 + MAX_UNIX_SOCKET_PATH + PARAM_SIZE)
 #define TDS_ACCEPT_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_BIND_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_BIND_E (MD_SIZE + sizeof(int32_t) * 2 +  MAX_UNIX_SOCKET_PATH + PARAM_SIZE)
 #define TDS_BIND_R (MD_SIZE + sizeof(int32_t))
 
-#define TDS_CONNECT_E (MD_SIZE + sizeof(int32_t) * 2)
+#define TDS_CONNECT_E (MD_SIZE + sizeof(int32_t) * 2 +  MAX_UNIX_SOCKET_PATH + PARAM_SIZE)
 #define TDS_CONNECT_R (MD_SIZE + sizeof(int32_t))
 /*****Event Data Size - END*****/
 

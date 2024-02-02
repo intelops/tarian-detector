@@ -305,27 +305,27 @@ func getEventId(data []byte) (int, error) {
 func toMap(t TarianMetaData) map[string]any {
 	m := make(map[string]any)
 
-	m["event_id"] = t.MetaData.Event
-	m["ts"] = t.MetaData.Ts
-	m["syscall_id"] = t.MetaData.Syscall
+	m["eventName"] = t.MetaData.Event
+	m["timestamp"] = t.MetaData.Ts
+	m["syscallId"] = t.MetaData.Syscall
 	m["processor"] = t.MetaData.Processor
 
 	// task
-	m["start_time"] = t.MetaData.Task.StartTime
-	m["host_pid"] = t.MetaData.Task.HostPid
-	m["host_tgid"] = t.MetaData.Task.HostTgid
-	m["host_ppid"] = t.MetaData.Task.HostPpid
-	m["pid"] = t.MetaData.Task.Pid
-	m["tgid"] = t.MetaData.Task.Tgid
-	m["ppid"] = t.MetaData.Task.Ppid
-	m["uid"] = t.MetaData.Task.Uid
-	m["gid"] = t.MetaData.Task.Gid
-	m["cgroup_id"] = t.MetaData.Task.CgroupId
-	m["mount_ns_id"] = t.MetaData.Task.MountNsId
-	m["pid_ns_id"] = t.MetaData.Task.PidNsId
-	m["exec_id"] = t.MetaData.Task.ExecId
-	m["parent_exec_id"] = t.MetaData.Task.ParentExecId
-	m["process_name"] = utils.ToString(t.MetaData.Task.Comm[:])
+	m["threadStartTime"] = t.MetaData.Task.StartTime
+	m["hostProcessId"] = t.MetaData.Task.HostPid
+	m["hostThreadId"] = t.MetaData.Task.HostTgid
+	m["hostParentProcessId"] = t.MetaData.Task.HostPpid
+	m["processId"] = t.MetaData.Task.Pid
+	m["threadId"] = t.MetaData.Task.Tgid
+	m["parentProcessId"] = t.MetaData.Task.Ppid
+	m["userId"] = t.MetaData.Task.Uid
+	m["groupId"] = t.MetaData.Task.Gid
+	m["cgroupId"] = t.MetaData.Task.CgroupId
+	m["mountNamespace"] = t.MetaData.Task.MountNsId
+	m["pidNamespace"] = t.MetaData.Task.PidNsId
+	m["execId"] = t.MetaData.Task.ExecId
+	m["parentExecId"] = t.MetaData.Task.ParentExecId
+	m["processName"] = utils.ToString(t.MetaData.Task.Comm[:])
 	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:])
 
 	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:])

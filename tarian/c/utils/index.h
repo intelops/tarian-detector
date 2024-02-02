@@ -4,8 +4,8 @@
 #include "shared/index.h"
 #include "shared.h"
 #include "tarian.h"
+#include "filters.h"
 
 #include "meta.h"
-#include "filters.h"
 
 #endif
