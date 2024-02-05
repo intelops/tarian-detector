@@ -11,8 +11,6 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 #define KPROBE(__hook) SEC("kprobe/"#__hook)
 #define KRETPROBE(__hook) SEC("kprobe/"#__hook)
 
-// #define SAFE_ACCESS(x) x &(MAX_PARAM_SIZE)
-
 /* Given a variable, this returns its `char` pointer. */
 #define CHAR_POINTER(x) (char *)&x
 
@@ -52,102 +50,8 @@ stain unsigned long get_syscall_param(struct pt_regs *regs, int idx) {
   }
 }
 
-// #if defined(bpf_target_x86)
-// #define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), r9)
-// #elif defined(bpf_target_arm64)
-// #define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), regs[5])
-// #endif
-
-// bpf_probe_read_str
-#define BPF_READ_STR(__from_ptr__, __to_ptr__)                                 \
-  bpf_probe_read_str(__to_ptr__, sizeof(typeof(*__to_ptr__)), __from_ptr__)
-
-// bpf_probe_read
-#define BPF_READ(__from_ptr__, __to_ptr__)                                     \
-  bpf_probe_read(__to_ptr__, sizeof(typeof(*__to_ptr__)), __from_ptr__)
-
-// bpf_get_comm
-#define BPF_GET_COMM(__var__) bpf_get_current_comm(&__var__, sizeof(__var__))
-
-stain bool shouldContinue(char *target, int size){
-  char src[16];
-  bpf_get_current_comm(&src, 16);
-
-  for (int i = 0; i < size; i++){
-    if(target[i] != src[i])
-      return false;
-  }
-
-  return true;
-}
-
-// read array of strings
-// stain int read_str_arr_to_ptr(const char *const *from, u8 (*to)[MAX_STRING_SIZE]) {
-//   if (to == NULL || from == NULL)
-//     return -1;
-
-//   int i = 0;
-//   u8 *curr_ptr;
-
-//   while (i < 20) {
-//     BPF_READ(&from[i], &curr_ptr);
-//     if (curr_ptr == NULL) {
-//       break;
-//     }
-
-//     BPF_READ_STR(curr_ptr, &to[i]);
-//     i++;
-//   };
-
-//   return 0;
-// };
-
-// reads user id and group id to the pointers
-stain int get_uid_gid(void *ptr_uid, void *ptr_gid) {
-  if (ptr_uid == NULL || ptr_gid == NULL)
-    return -1;
-
-  u64 uid_gid = bpf_get_current_uid_gid();
-  *(u32 *)ptr_uid = uid_gid >> 32;
-  *(u32 *)ptr_gid = uid_gid;
-
-  return 0;
-}
-
-// reads cwd to the pointer
-stain int get_cwd(u8 (*to_ptr_arr)[32]) {
-  if (to_ptr_arr == NULL)
-    return -1;
-
-  struct task_struct *task = (struct task_struct *)bpf_get_current_task();
-  struct fs_struct *fs;
-  struct dentry *dentry;
-
-  fs = BPF_CORE_READ(task, fs);
-  if (fs == NULL)
-    return -1;
-
-  dentry = BPF_CORE_READ(fs, pwd.dentry);
-  if (dentry == NULL)
-    return -1;
-
-  return BPF_READ_STR(&dentry->d_iname, to_ptr_arr);
-}
-
 stain struct mount *real_mount(struct vfsmount *mnt) {
   return container_of(mnt, struct mount, mnt);
-}
-
-stain struct dentry *get_mnt_root_ptr(struct vfsmount *vfsmnt){
-  return BPF_CORE_READ(vfsmnt, mnt_root);
-}
-
-stain struct dentry *get_d_parent_ptr(struct dentry *dentry){
-  return BPF_CORE_READ(dentry, d_parent);
-}
-
-stain struct qstr get_d_name_from_dentry(struct dentry *dentry){
-  return BPF_CORE_READ(dentry, d_name);
 }
 
 stain int flush(u8 *buf, u16 n) {
@@ -199,12 +103,6 @@ stain void print_event(tarian_event_t *te) {
   bpf_printk("Execve 22. release %s 23. version %s", te->tarian->system_info.release, te->tarian->system_info.version);
   bpf_printk("Execve 24. machine %s 25. domainname %s", te->tarian->system_info.machine, te->tarian->system_info.domainname);
 };
-
-#if(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
-#define MAX_NUM_COMPONENTS 48
-#else
-#define MAX_NUM_COMPONENTS 24
-#endif
 
 #define SCRATCH_SAFE_ACCESS(x) (x) & (MAX_STRING_SIZE - 1)
 stain uint8_t *get__cwd_d_path(uint32_t *slen, scratch_space_t *s, struct task_struct *task) {
