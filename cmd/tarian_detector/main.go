@@ -115,5 +115,5 @@ func printEvent(rc int, t int, data map[string]any) {
 		msg += fmt.Sprintf("%s: %v\n", ky, val)
 	}
 
-	log.Printf("%s\nStatus of ring buffer %d. Remaining %d, Total: %d\n%s%s\n", div, data["processor"], rc/14865, t, msg, div)
+	log.Printf("%s\nStatus of ring buffer %d. Remaining %d, Total: %d\n%s%s\n", div, data["processor_id"], rc/14865, t, msg, div)
 }

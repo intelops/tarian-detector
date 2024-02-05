@@ -92,7 +92,7 @@ func WriteJSONToFile(data map[string]interface{}, filename string, mutex *sync.M
 	file.Truncate(0)
 
 	encoder := json.NewEncoder(file)
-	// encoder.SetIndent("", "   ")
+	encoder.SetIndent("", "   ")
 
 	if err := encoder.Encode(objects); err != nil {
 		return err
