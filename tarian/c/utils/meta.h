@@ -28,7 +28,7 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
 
   resp = init_tarian_meta_data_t(te, tarian_event);
   if (resp != TDC_SUCCESS) return resp;
-  
+
   uint32_t len = 0;
   u8 *filepath = get__cwd_d_path(&len, ss, te->task);
   
