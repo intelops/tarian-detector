@@ -20,7 +20,7 @@
 #define AF_INET6 10
 
 #define EVENT_RINGBUF_MAP_NAME events
-#define RINGBUF_MAX_ENTRIES 1024 * 1024 * 16 /* 16MB */
+#define RINGBUF_MAX_ENTRIES 1024 * 1024 * 128 /* 128MB */
 #define ARRAY_OF_MAPS_MAX_ENTRIES 16
 
 #define stain static __always_inline
