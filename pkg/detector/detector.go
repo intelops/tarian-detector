@@ -32,7 +32,7 @@ type EventsDetector struct {
 func NewEventsDetector() *EventsDetector {
 	return &EventsDetector{
 		detectors:  make([]EventDetector, 0),
-		eventQueue: make(chan detectorReadReturn, 8192*16),
+		eventQueue: make(chan detectorReadReturn, 8192*64),
 		started:    false,
 		closed:     false,
 
