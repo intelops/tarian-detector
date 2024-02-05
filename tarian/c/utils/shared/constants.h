@@ -25,6 +25,12 @@
 
 #define stain static __always_inline
 
+#if(LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
+#define MAX_NUM_COMPONENTS 48
+#else
+#define MAX_NUM_COMPONENTS 24
+#endif
+
 enum tarian_param_type_e{
     TDT_NONE = 0,
     TDT_U8,
