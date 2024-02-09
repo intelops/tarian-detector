@@ -179,3 +179,20 @@ func detachProbes(lns []link.Link) error {
 func detachProbe(l link.Link) error {
 	return l.Close()
 }
+
+func (hit HookInfoType) String() string {
+	switch hit {
+	case Tracepoint:
+		return "Tracepoint"
+	case RawTracepoint:
+		return "RawTracepoint"
+	case Kprobe:
+		return "Kprobe"
+	case Kretprobe:
+		return "Kretprobe"
+	case Cgroup:
+		return "Cgroup"
+	default:
+		return fmt.Sprintf("unknown HookInfoType(%d)", int(hit))
+	}
+}
