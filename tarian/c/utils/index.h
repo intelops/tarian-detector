@@ -3,6 +3,7 @@
 
 #include "shared/index.h"
 #include "shared.h"
+#include "stats.h"
 #include "tarian.h"
 #include "filters.h"
 
