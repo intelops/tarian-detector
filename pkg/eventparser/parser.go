@@ -33,7 +33,6 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 
 		tarianmetadata + params
 	*/
-	fmt.Println(len(data))
 	eventId, err := getEventId(data)
 	if err != nil {
 		return nil, err
