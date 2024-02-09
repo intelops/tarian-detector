@@ -42,7 +42,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
     te->buf.pos = 0;
     te->buf.data = store;
 
-    bpf_printk("Execve reserve %s %ld", "success", sz);
+    // bpf_printk("Execve reserve %s %ld", "success", sz);
     return TDC_SUCCESS;
 }
 
@@ -57,6 +57,7 @@ stain int tdf_submit_event(tarian_event_t *te) {
 #else
     int resp = map__submit(te->ctx, &events, te->buf.data, te->buf.pos);
 #endif
+    stats__add(resp);
     if (resp != TDC_SUCCESS) return resp;
 
     return TDC_SUCCESS;
@@ -114,15 +115,16 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_
     /*
       Data save format: [len 2B][...data...sizeB]
     */
+    int16_t resp = 0;
     switch(type) {
-        case TDT_STR:
-            write_str(te->buf.data, &te->buf.pos, src, MAX_STRING_SIZE, mem);
+        case TDT_STR:   
+            resp = write_str(te->buf.data, &te->buf.pos, src, MAX_STRING_SIZE, mem);
             break;
         case TDT_STR_ARR:
             write_str_arr(te->buf.data, &te->buf.pos, te->buf.reserved_space,(char **)src, 0);
             break;
         case TDT_BYTE_ARR:
-            write_byte_arr(te->buf.data, &te->buf.pos, src, n, mem);
+            resp = write_byte_arr(te->buf.data, &te->buf.pos, src, n, mem);
             break;
         case TDT_IOVEC_ARR:
             write_iovec_arr(te->buf.data, &te->buf.pos, src, n);
@@ -134,6 +136,10 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_
             return TDCE_UNKNOWN_TYPE;
     }
     
+    if (resp < 0) {
+        stats_add_read();
+    }
+
     te->tarian->meta_data.nparams++;
     return TDC_SUCCESS;
 };
