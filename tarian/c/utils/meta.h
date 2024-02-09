@@ -10,6 +10,8 @@ stain int init_event_meta_data_t(tarian_event_t *, int);
 stain int read_node_info_into(node_meta_data_t *ni, struct task_struct *t);
 
 stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at,int req_buf_sz) {
+  stats__add_trigger();
+
   te->allocation_mode = 0;
   te->ctx = ctx;
   te->task = (struct task_struct *)bpf_get_current_task();
@@ -32,6 +34,10 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
   uint32_t len = 0;
   u8 *filepath = get__cwd_d_path(&len, ss, te->task);
   
+  if (len > 255) {
+    stats__add_buffer();
+  }
+
   bpf_probe_read_kernel_str(te->tarian->meta_data.task.cwd, len & (MAX_TARIAN_PATH - 1), filepath);
   
   return TDC_SUCCESS;
