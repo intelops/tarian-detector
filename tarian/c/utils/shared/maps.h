@@ -39,6 +39,18 @@
 #define BPF_RINGBUF_RESERVE(__map_name__, __size__)                            \
   bpf_ringbuf_reserve(&__map_name__, __size__, 0)
 
+struct statistics{
+__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+__uint(max_entries, 1);
+__type(key, uint32_t);
+__type(value, tarian_stats_t);
+} tarian_stats SEC(".maps");
+
+stain void *get__stats_counter() {
+  uint32_t index = 0;
+  return bpf_map_lookup_elem(&tarian_stats, &index);
+}
+
 struct scratch{
 __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 __uint(max_entries, 1);
@@ -186,7 +198,7 @@ stain void *map__allocate_space(void *map) {
     __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
     __uint(key_size, sizeof(int));
     __uint(value_size, sizeof(u32));
-    // __uint(max_entries, 1024);
+    __uint(max_entries, 1024);
   } events SEC(".maps");
 
   stain int map__submit(void *ctx, void *map, void *data, u64 size) {
