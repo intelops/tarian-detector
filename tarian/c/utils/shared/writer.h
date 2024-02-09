@@ -18,8 +18,8 @@ stain void write_s16(uint8_t *, uint64_t *, int16_t);
 stain void write_s32(uint8_t *, uint64_t *, int32_t);
 stain void write_s64(uint8_t *, uint64_t *, int64_t);
 stain void write_ipv6(uint8_t *, uint64_t *, uint32_t ipv6[16]);
-stain uint16_t write_str(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
-stain uint16_t write_byte_arr(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
+stain int16_t write_str(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
+stain int16_t write_byte_arr(uint8_t *, uint64_t *, unsigned long, uint16_t, enum memory);
 
 stain void write_u8(uint8_t *buf, uint64_t *pos, uint8_t data) {
   *((uint8_t *)&buf[SAFE_ACCESS(*pos)]) = data;
@@ -66,7 +66,7 @@ stain void write_ipv6(uint8_t *buf, uint64_t *pos, uint32_t ipv6[4]) {
   *pos += 16;
 }
 
-stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
+stain int16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
   /*
     [len..str....]
   */
@@ -86,13 +86,13 @@ stain uint16_t write_str(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, ui
   }
 
   if (written_bytes <= 0) {
-    return 0;
+    return -1;
   }
 
   *len = written_bytes;
   *pos += written_bytes;
 
-  return (uint16_t)written_bytes;
+  return (int16_t)written_bytes;
 };
 
 #define MAX_CHARBUF_POINTERS 16
@@ -138,7 +138,7 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
   return total_len;
 }
 
-stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
+stain int16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_ptr, uint16_t n, enum memory mr) {
   /*
     [len..str....]
   */
@@ -155,13 +155,13 @@ stain uint16_t write_byte_arr(uint8_t *buf, uint64_t *pos, unsigned long data_pt
   }
 
   if (written_bytes <= 0) {
-    return 0;
+    return -1;
   }
 
   *len = written_bytes;
   *pos += written_bytes;
 
-  return n;
+  return (int16_t)written_bytes;
 };
 
 #define MAX_IOVEC_COUNT 32
