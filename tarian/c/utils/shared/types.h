@@ -102,10 +102,12 @@ typedef struct tarian_stats {
   u64 n_trgs_dropped_max_map_capacity;
 
   /* count of triggers with insufficient buffer size */
-  u64 n_trgs_max_buffer_size;
+  u64 n_trgs_dropped_max_buffer_size;
 
   /* count of events with bpf_probe_read_* failures */
   u64 n_trgs_read_error;
+
+  u64 n_trgs_unknown;
 } tarian_stats_t;  /* 48B */
 
 #endif
