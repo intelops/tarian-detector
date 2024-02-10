@@ -73,7 +73,7 @@ func WriteJSONToFile(data map[string]interface{}, filename string, mutex *sync.M
 	var objects []map[string]interface{}
 
 	// Read existing JSON from the file, if it exists
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}
