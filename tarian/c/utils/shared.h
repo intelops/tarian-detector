@@ -31,23 +31,31 @@ stain uint32_t get_syscall_id(struct pt_regs *regs) {
 };
 
 stain unsigned long get_syscall_param(struct pt_regs *regs, int idx) {
+  unsigned long param = 0;
+
   switch (idx)
   {
-  case 0:
-    return PT_REGS_PARM1_CORE_SYSCALL(regs);
-  case 1:
-    return PT_REGS_PARM2_CORE_SYSCALL(regs);
-  case 2:
-    return PT_REGS_PARM3_CORE_SYSCALL(regs);
-  case 3:
-    return PT_REGS_PARM4_CORE_SYSCALL(regs);
-  case 4: 
-    return PT_REGS_PARM5_CORE_SYSCALL(regs);
-  case 5:
-    return PT_REGS_PARM6_CORE_SYSCALL(regs);
-  default:
-    return TDCE_UNDEFINED_INDEX;
+    case 0:
+      param = PT_REGS_PARM1_CORE_SYSCALL(regs);
+      break;
+    case 1:
+      param = PT_REGS_PARM2_CORE_SYSCALL(regs);
+      break;
+    case 2:
+      param = PT_REGS_PARM3_CORE_SYSCALL(regs);
+      break;
+    case 3:
+      param = PT_REGS_PARM4_CORE_SYSCALL(regs);
+      break;
+    case 4: 
+      param = PT_REGS_PARM5_CORE_SYSCALL(regs);
+      break;
+    case 5:
+      param = PT_REGS_PARM6_CORE_SYSCALL(regs);
+      break;
   }
+
+  return param;
 }
 
 stain struct mount *real_mount(struct vfsmount *mnt) {
