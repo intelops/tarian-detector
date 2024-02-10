@@ -90,5 +90,5 @@ func Uint64(b []byte) (uint64, error) {
 }
 
 func ToString(arr []byte) string {
-	return strings.Trim(string(arr[:]), "\x00")
+	return strings.Trim(string(arr), "\x00")
 }
