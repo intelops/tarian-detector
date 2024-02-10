@@ -1,5 +1,5 @@
-#ifndef __UTLIS_SHARED_TYPES_H__
-#define __UTLIS_SHARED_TYPES_H__
+#ifndef UTLIS_SHARED_TYPES_H
+#define UTLIS_SHARED_TYPES_H
 
 #include "index.h"
 

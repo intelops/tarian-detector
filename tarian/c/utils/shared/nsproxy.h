@@ -1,5 +1,5 @@
-#ifndef __UTLIS_SHARED_NSPROXY_H__
-#define __UTLIS_SHARED_NSPROXY_H__
+#ifndef UTLIS_SHARED_NSPROXY_H
+#define UTLIS_SHARED_NSPROXY_H
 
 // impelements the BPF_CORE to read inum(namespace id) of given nsproxy field
 // ns-><field>->ns.inum

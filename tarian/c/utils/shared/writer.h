@@ -1,5 +1,5 @@
-#ifndef __UTILS_SHARED_WRITER_H__
-#define __UTILS_SHARED_WRITER_H__
+#ifndef UTILS_SHARED_WRITER_H
+#define UTILS_SHARED_WRITER_H
 
 enum memory { KERNEL = 0, USER = 1 };
 
