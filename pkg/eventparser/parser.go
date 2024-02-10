@@ -74,7 +74,7 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 		return nil, fmt.Errorf("missing event from var Events TarianEventMap")
 	}
 
-	args := []arg{}
+	var args []arg
 
 	for i := 0; i < int(bs.nparams); i++ {
 		if bs.position >= len(bs.data) {
