@@ -31,8 +31,8 @@ const (
 
 const (
 	ErrInvalidBpfHookType               string = "invalid BPF hook type: %v"
-	ErrMissingOptionsForBpfHookType            = "missing field %s for the BPF Hook: %v"
-	ErrInvalidOptionsTypeForBpfHookType        = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
+	ErrMissingOptionsForBpfHookType     string = "missing field %s for the BPF Hook: %v"
+	ErrInvalidOptionsTypeForBpfHookType string = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
 )
 
 var hookErr = err.New("ebpf.Hook")
