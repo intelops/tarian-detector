@@ -23,7 +23,7 @@ func (e *Err) Throwf(format string, a ...any) *Err {
 	return e
 }
 
-func (e *Err) Throw(format string, a ...any) *Err {
+func (e *Err) Throw(format string) *Err {
 	e.Message = fmt.Sprint(format)
 
 	return e
