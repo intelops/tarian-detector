@@ -27,7 +27,7 @@ var (
 	errNotPod = errors.New("object is not a *corev1.Pod")
 )
 
-// containerIndexFunc index pod by container IDs.
+// ContainerIndexFunc index pod by container IDs.
 func ContainerIndexFunc(obj interface{}) ([]string, error) {
 	var containerIDs []string
 	appendContainerID := func(fullContainerID string) error {
