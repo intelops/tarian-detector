@@ -1,5 +1,5 @@
-#ifndef UTILS_STATS_H
-#define UTILS_STATS_H
+#ifndef __UTILS_STATS_H__
+#define __UTILS_STATS_H__
 
 #include "index.h"
 

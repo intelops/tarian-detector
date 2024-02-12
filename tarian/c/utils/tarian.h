@@ -1,5 +1,5 @@
-#ifndef UTLIS_TARIAN_H
-#define UTLIS_TARIAN_H
+#ifndef __UTLIS_TARIAN_H__
+#define __UTLIS_TARIAN_H__
 
 enum allocation_type{
     FIXED,

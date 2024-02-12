@@ -1,5 +1,5 @@
-#ifndef UTLIS_INDEX_H
-#define UTLIS_INDEX_H
+#ifndef __UTLIS_INDEX_H__
+#define __UTLIS_INDEX_H__
 
 #include "shared/index.h"
 #include "shared.h"

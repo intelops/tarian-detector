@@ -1,5 +1,5 @@
-#ifndef UTLIS_SHARED_TASK_H
-#define UTLIS_SHARED_TASK_H
+#ifndef __UTLIS_SHARED_TASK_H__
+#define __UTLIS_SHARED_TASK_H__
 
 // function  definitions
 stain u32 get_task_ppid(struct task_struct *);

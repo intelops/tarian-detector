@@ -1,5 +1,5 @@
-#ifndef UTILS_SHARED_H
-#define UTILS_SHARED_H
+#ifndef __UTILS_SHARED_H__
+#define __UTILS_SHARED_H__
 
 #include "index.h"
 

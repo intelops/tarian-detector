@@ -1,5 +1,5 @@
-#ifndef UTILS_SHARED_MAPS_H
-#define UTILS_SHARED_MAPS_H
+#ifndef __UTILS_SHARED_MAPS_H__
+#define __UTILS_SHARED_MAPS_H__
 
 // generic bpf map
 #define BPF_MAP(_map_name, _map_type, _key_type, _value_type, _max_entries)    \

@@ -1,5 +1,5 @@
-#ifndef UTILS_SHARED_CODES_H
-#define UTILS_SHARED_CODES_H
+#ifndef __UTILS_SHARED_CODES_H__
+#define __UTILS_SHARED_CODES_H__
 
 #define TDC_SUCCESS 100
 #define TDC_FAILURE 101

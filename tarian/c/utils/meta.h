@@ -1,5 +1,5 @@
-#ifndef UTILS_META_H
-#define UTILS_META_H
+#ifndef __UTILS_META_H__
+#define __UTILS_META_H__
 
 #include "index.h"
 
