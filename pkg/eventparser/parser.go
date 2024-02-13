@@ -55,7 +55,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	}
 
 	record := toMap(metaData)
-	record["event_id"] = event.name
+	record["eventId"] = event.name
 
 	bs := NewByteStream(data[lenMetaData:], metaData.MetaData.Nparams)
 	ps, err := bs.parseParams(event)
