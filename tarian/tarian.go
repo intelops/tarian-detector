@@ -30,7 +30,7 @@ func GetModule() (*ebpf.Module, error) {
 		return nil, err
 	}
 
-	if ckv >= utils.KernelVersion(5, 8, 0) {
+	if ckv >= utils.KernelVersion(5, 8, 0) && false {
 		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.Events))
 	} else {
 		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
