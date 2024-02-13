@@ -12,7 +12,7 @@ stain int tdf_discard_event(tarian_event_t *);
 stain int tdf_save(tarian_event_t *, int, void *);
 
 stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 size) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
     u64 sz = 0;
     u8 *store = NULL;
 
@@ -47,7 +47,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
 }
 
 stain int tdf_submit_event(tarian_event_t *te) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
     int resp = 0;
     if (te->allocation_mode == 2) {
         resp = map__reserve_submit(te->buf.data);
@@ -64,7 +64,7 @@ stain int tdf_submit_event(tarian_event_t *te) {
 }
 
 stain int tdf_discard_event(tarian_event_t *te) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
     int resp = map__discard(te->buf.data);
     if (resp != TDC_SUCCESS) return resp;
 #endif
