@@ -105,7 +105,6 @@ lint: fmt vet
 	revive -formatter stylish -config .revive.toml ./pkg/...
 	staticcheck ./...
 
-
 .PHONY: clean file
 
 # recipe to create a file with license and copyright details.
