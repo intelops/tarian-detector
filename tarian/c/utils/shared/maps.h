@@ -85,7 +85,7 @@ stain void *map__allocate_space(void *map) {
   return get__current_cpu_buf(map);
 };
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
   /*
   *
   * RINGBUF
@@ -198,7 +198,6 @@ stain void *map__allocate_space(void *map) {
     __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
     __uint(key_size, sizeof(int));
     __uint(value_size, sizeof(u32));
-    __uint(max_entries, 1024);
   } events SEC(".maps");
 
   stain int map__submit(void *ctx, void *map, void *data, u64 size) {
