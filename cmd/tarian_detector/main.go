@@ -4,6 +4,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,20 +14,21 @@ import (
 
 	"github.com/intelops/tarian-detector/pkg/detector"
 	"github.com/intelops/tarian-detector/tarian"
+	"k8s.io/client-go/rest"
 )
 
 func main() {
 	// Start kubernetes watcher
-	// watcher, err := K8Watcher()
-	// if err != nil {
-	// 	if !errors.Is(err, rest.ErrNotInCluster) {
-	// 		log.Fatal(err)
-	// 	}
+	watcher, err := K8Watcher()
+	if err != nil {
+		if !errors.Is(err, rest.ErrNotInCluster) {
+			log.Fatal(err)
+		}
 
-	// 	log.Print(NotInClusterErrMsg)
-	// } else {
-	// 	watcher.Start()
-	// }
+		log.Print(NotInClusterErrMsg)
+	} else {
+		watcher.Start()
+	}
 
 	stopper := make(chan os.Signal, 1)
 	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
@@ -71,15 +73,13 @@ func main() {
 				fmt.Println(err)
 			}
 
-			// k8sCtx, err := GetK8sContext(watcher, e["host_pid"].(uint32))
-			// if err != nil {
-			// 	// log.Print(err)
-			// 	e["kubernetes"] = err.Error()
-			// } else {
-			// 	e["kubernetes"] = k8sCtx
-			// }
+			k8sCtx, err := GetK8sContext(watcher, e["hostProcessId"].(uint32))
+			if err != nil {
+				e["kubernetes"] = err.Error()
+			} else {
+				e["kubernetes"] = k8sCtx
+			}
 
-			_ = e
 			// printEvent(e, eventsDetector.GetTotalCount())
 		}
 	}()
