@@ -36,6 +36,10 @@ func (h *Handler) ReadAsInterface() ([]func() ([]byte, error), error) {
 	return read(h.mapReaders)
 }
 
+func (h *Handler) Count() int {
+	return len(h.probeLinks)
+}
+
 func (h *Handler) Close() error {
 	if err := detachProbes(h.probeLinks); err != nil {
 		return handlerErr.Throwf("%v", err)
