@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package ebpf
 
@@ -31,8 +31,8 @@ const (
 
 const (
 	ErrInvalidBpfHookType               string = "invalid BPF hook type: %v"
-	ErrMissingOptionsForBpfHookType            = "missing field %s for the BPF Hook: %v"
-	ErrInvalidOptionsTypeForBpfHookType        = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
+	ErrMissingOptionsForBpfHookType     string = "missing field %s for the BPF Hook: %v"
+	ErrInvalidOptionsTypeForBpfHookType string = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
 )
 
 var hookErr = err.New("ebpf.Hook")
@@ -178,4 +178,21 @@ func detachProbes(lns []link.Link) error {
 
 func detachProbe(l link.Link) error {
 	return l.Close()
+}
+
+func (hit HookInfoType) String() string {
+	switch hit {
+	case Tracepoint:
+		return "Tracepoint"
+	case RawTracepoint:
+		return "RawTracepoint"
+	case Kprobe:
+		return "Kprobe"
+	case Kretprobe:
+		return "Kretprobe"
+	case Cgroup:
+		return "Cgroup"
+	default:
+		return fmt.Sprintf("unknown HookInfoType(%d)", int(hit))
+	}
 }

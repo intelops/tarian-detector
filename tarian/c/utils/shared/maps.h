@@ -39,7 +39,53 @@
 #define BPF_RINGBUF_RESERVE(__map_name__, __size__)                            \
   bpf_ringbuf_reserve(&__map_name__, __size__, 0)
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
+struct statistics{
+__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+__uint(max_entries, 1);
+__type(key, uint32_t);
+__type(value, tarian_stats_t);
+} tarian_stats SEC(".maps");
+
+stain void *get__stats_counter() {
+  uint32_t index = 0;
+  return bpf_map_lookup_elem(&tarian_stats, &index);
+}
+
+struct scratch{
+__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+__uint(max_entries, 1);
+__type(key, uint32_t);
+__type(value, scratch_space_t);
+} scratch_space SEC(".maps");
+
+stain void *get__scratch_space() {
+  uint32_t index = 0;
+  return bpf_map_lookup_elem(&scratch_space, &index);
+}
+/*
+* 
+* PER_CPU_ARRAY
+* This map is used a temporary space before pushing
+* it into perf event array
+* 
+*/
+struct {
+__uint(type, BPF_MAP_TYPE_ARRAY);
+__uint(max_entries, 16);
+__type(key, uint32_t);
+__type(value, per_cpu_buffer_t);
+} pea_per_cpu_array SEC(".maps");
+
+stain void *get__current_cpu_buf(void *map) {
+    uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
+    return bpf_map_lookup_elem(map, &cpu_id);
+}
+
+stain void *map__allocate_space(void *map) {
+  return get__current_cpu_buf(map);
+};
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
   /*
   *
   * RINGBUF
@@ -94,28 +140,53 @@
                               &erb_cpu14,
                               &erb_cpu15,
                           }};
-  
-  struct {
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, 1);
-    __uint(key_size, sizeof(u32));
-    __uint(value_size, 1);
-  } pea_per_cpu_array SEC(".maps");
-#else
-  /*
-  * 
-  * PER_CPU_ARRAY
-  * This map is used a temporary space before pushing
-  * it into perf event array
-  * 
-  */
-  struct {
-    __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-    __uint(max_entries, 1);
-    __type(key, u32);
-    __type(value, event_data_t);
-  } pea_per_cpu_array SEC(".maps");
 
+  stain struct ringbuffer *get_cpu_ringbuffer(void *map) {
+    uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
+	  return (struct ringbuffer *)bpf_map_lookup_elem(map, &cpu_id);
+  }
+
+  stain void *map__reserve_space(void *map, u64 size) {
+    struct ringbuffer *rbuf = get_cpu_ringbuffer(map);
+    if (!rbuf) return NULL;
+
+    return bpf_ringbuf_reserve(rbuf, size, 0);
+  };
+
+  stain int map__reserve_submit(void *data) {
+    if (!data) return TDCE_NULL_POINTER;
+    
+    bpf_ringbuf_submit(data, 0);
+
+    return TDC_SUCCESS;
+  };
+
+  stain int map__submit(void *map, void *data, u64 size) {
+    if (!map || !data) return TDCE_NULL_POINTER;
+    
+    if (bpf_ringbuf_output(map, data, size, 0) != 0) return TDCE_MAP_SUBMIT;
+
+    return TDC_SUCCESS;
+  }
+
+  stain int map__pringbuf_submit(void *map, void *data, u64 size) {
+    if (!data) return TDCE_NULL_POINTER;
+    
+    struct ringbuffer *rbuf = get_cpu_ringbuffer(map);
+    if (!rbuf) return TDCE_MAP_SUBMIT;
+
+    return map__submit(rbuf, data, size);
+  }
+
+  stain int map__discard(void *data) {
+    if (!data) return TDCE_NULL_POINTER;
+    
+    bpf_ringbuf_discard(data, 0);
+
+    return TDC_SUCCESS;
+  };
+
+#else
   /*
   * 
   * PERF_EVENT_ARRAY
@@ -127,8 +198,15 @@
     __uint(type, BPF_MAP_TYPE_PERF_EVENT_ARRAY);
     __uint(key_size, sizeof(int));
     __uint(value_size, sizeof(u32));
-    // __uint(max_entries, 1024);
   } events SEC(".maps");
+
+  stain int map__submit(void *ctx, void *map, void *data, u64 size) {
+    if (!map || !data) return TDCE_NULL_POINTER;
+
+    if (bpf_perf_event_output(ctx, map, BPF_F_CURRENT_CPU, data, size) != 0) return TDCE_MAP_SUBMIT;
+
+    return TDC_SUCCESS;
+  };
 #endif
 
 #endif

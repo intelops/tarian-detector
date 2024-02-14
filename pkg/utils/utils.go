@@ -1,65 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package utils
 
 import (
+	"encoding/binary"
+	"net"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 )
 
-// converts [][4096]uint8 to string.
-func Uint8ArrtoString(arr [][4096]uint8) string {
-	var res_str string
-
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		if res_str != "" {
-			res_str += " " + temp
-		} else {
-			res_str += temp
-		}
-	}
-
-	return res_str
-}
-
-// converts [][4096]uint8 to []string.
-func Uint8ArrtoStringArr(arr [][4096]uint8) []string {
-	var res_arr_str []string
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		res_arr_str = append(res_arr_str, temp)
-	}
-
-	return res_arr_str
-}
-
-// converts []uint8 to string
-func Uint8toString(arr []uint8) string {
-	return strings.Trim(string(arr[:]), "\x00")
-}
-
-// converts time in nanoseconds to readable time format
+// NanoSecToTimeFormat converts time in nanoseconds to time string
 func NanoSecToTimeFormat(t uint64) string {
 	return time.Unix(0, int64(time.Duration(t)*time.Nanosecond)).String()
 }
 
-// converts time in miliseconds to readable time format
+// MiliSecToTimeFormat converts time in miliseconds to time string
 func MiliSecToTimeFormat(t uint64) string {
 	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
 }
 
+// KernelVersion returns a combined version number(major.minor.patch) as integer
 func KernelVersion(a, b, c int) int {
 	if c > 255 {
 		c = 255
@@ -68,6 +30,7 @@ func KernelVersion(a, b, c int) int {
 	return (a << 16) + (b << 8) + c
 }
 
+// CurrentKernelVersion returns current kernel version as an integer value
 func CurrentKernelVersion() (int, error) {
 	a, err := strconv.Atoi(os.Getenv("LINUX_VERSION_MAJOR"))
 	if err != nil {
@@ -85,4 +48,22 @@ func CurrentKernelVersion() (int, error) {
 	}
 
 	return KernelVersion(a, b, c), nil
+}
+
+// Ipv4 converts a byte array to an IPv4 string
+func Ipv4(b [4]byte) string {
+	return net.IP(b[:]).String()
+}
+
+// Ipv6 converts byte array to IPv6 string
+func Ipv6(b [16]byte) string {
+	return net.IP(b[:]).String()
+}
+
+// Ntohs converts little-endian uint16 to big-endian uint16
+func Ntohs(n uint16) uint16 {
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, n)
+
+	return binary.BigEndian.Uint16(b)
 }

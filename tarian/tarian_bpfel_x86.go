@@ -12,46 +12,21 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type tarianEventDataT struct {
-	Context struct {
-		Ts   uint64
-		Task struct {
-			StartTime     uint64
-			HostPid       uint32
-			HostTgid      uint32
-			HostPpid      uint32
-			Pid           uint32
-			Tgid          uint32
-			Ppid          uint32
-			Uid           uint32
-			Gid           uint32
-			CgroupId      uint64
-			MountNsId     uint64
-			PidNsId       uint64
-			ExecId        uint64
-			ParentExecId  uint64
-			EexecId       uint64
-			EparentExecId uint64
-			Comm          [16]uint8
-			Cwd           [4096]uint8
-		}
-		EventId     uint32
-		Syscall     int32
-		ProcessorId uint16
-	}
-	Buf struct {
-		NumFields  uint8
-		FieldTypes uint64
-		Data       [10240]uint8
-	}
-	SystemInfo struct {
-		Sysname    [65]uint8
-		Nodename   [65]uint8
-		Release    [65]uint8
-		Version    [65]uint8
-		Machine    [65]uint8
-		Domainname [65]uint8
-	}
+type tarianPerCpuBufferT struct{ Data [131072]uint8 }
+
+type tarianScratchSpaceT struct {
+	Data [8192]uint8
+	Pos  uint64
+}
+
+type tarianTarianStatsT struct {
+	N_trgs                      uint64
+	N_trgsSent                  uint64
+	N_trgsDropped               uint64
+	N_trgsDroppedMaxMapCapacity uint64
+	N_trgsDroppedMaxBufferSize  uint64
+	N_trgsReadError             uint64
+	N_trgsUnknown               uint64
 }
 
 // loadTarian returns the embedded CollectionSpec for tarian.
@@ -95,62 +70,48 @@ type tarianSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianProgramSpecs struct {
-	KprobeAccept      *ebpf.ProgramSpec `ebpf:"kprobe_accept"`
-	KprobeBind        *ebpf.ProgramSpec `ebpf:"kprobe_bind"`
-	KprobeClone       *ebpf.ProgramSpec `ebpf:"kprobe_clone"`
-	KprobeClose       *ebpf.ProgramSpec `ebpf:"kprobe_close"`
-	KprobeConnect     *ebpf.ProgramSpec `ebpf:"kprobe_connect"`
-	KprobeExecve      *ebpf.ProgramSpec `ebpf:"kprobe_execve"`
-	KprobeExecveat    *ebpf.ProgramSpec `ebpf:"kprobe_execveat"`
-	KprobeListen      *ebpf.ProgramSpec `ebpf:"kprobe_listen"`
-	KprobeOpen        *ebpf.ProgramSpec `ebpf:"kprobe_open"`
-	KprobeOpenat      *ebpf.ProgramSpec `ebpf:"kprobe_openat"`
-	KprobeOpenat2     *ebpf.ProgramSpec `ebpf:"kprobe_openat2"`
-	KprobeRead        *ebpf.ProgramSpec `ebpf:"kprobe_read"`
-	KprobeReadv       *ebpf.ProgramSpec `ebpf:"kprobe_readv"`
-	KprobeSocket      *ebpf.ProgramSpec `ebpf:"kprobe_socket"`
-	KprobeWrite       *ebpf.ProgramSpec `ebpf:"kprobe_write"`
-	KprobeWritev      *ebpf.ProgramSpec `ebpf:"kprobe_writev"`
-	KretprobeAccept   *ebpf.ProgramSpec `ebpf:"kretprobe_accept"`
-	KretprobeBind     *ebpf.ProgramSpec `ebpf:"kretprobe_bind"`
-	KretprobeClone    *ebpf.ProgramSpec `ebpf:"kretprobe_clone"`
-	KretprobeClose    *ebpf.ProgramSpec `ebpf:"kretprobe_close"`
-	KretprobeConnect  *ebpf.ProgramSpec `ebpf:"kretprobe_connect"`
-	KretprobeExecve   *ebpf.ProgramSpec `ebpf:"kretprobe_execve"`
-	KretprobeExecveat *ebpf.ProgramSpec `ebpf:"kretprobe_execveat"`
-	KretprobeListen   *ebpf.ProgramSpec `ebpf:"kretprobe_listen"`
-	KretprobeOpen     *ebpf.ProgramSpec `ebpf:"kretprobe_open"`
-	KretprobeOpenat   *ebpf.ProgramSpec `ebpf:"kretprobe_openat"`
-	KretprobeOpenat2  *ebpf.ProgramSpec `ebpf:"kretprobe_openat2"`
-	KretprobeRead     *ebpf.ProgramSpec `ebpf:"kretprobe_read"`
-	KretprobeReadv    *ebpf.ProgramSpec `ebpf:"kretprobe_readv"`
-	KretprobeSocket   *ebpf.ProgramSpec `ebpf:"kretprobe_socket"`
-	KretprobeWrite    *ebpf.ProgramSpec `ebpf:"kretprobe_write"`
-	KretprobeWritev   *ebpf.ProgramSpec `ebpf:"kretprobe_writev"`
+	TdfAcceptE   *ebpf.ProgramSpec `ebpf:"tdf_accept_e"`
+	TdfAcceptR   *ebpf.ProgramSpec `ebpf:"tdf_accept_r"`
+	TdfBindE     *ebpf.ProgramSpec `ebpf:"tdf_bind_e"`
+	TdfBindR     *ebpf.ProgramSpec `ebpf:"tdf_bind_r"`
+	TdfCloneE    *ebpf.ProgramSpec `ebpf:"tdf_clone_e"`
+	TdfCloneR    *ebpf.ProgramSpec `ebpf:"tdf_clone_r"`
+	TdfCloseE    *ebpf.ProgramSpec `ebpf:"tdf_close_e"`
+	TdfCloseR    *ebpf.ProgramSpec `ebpf:"tdf_close_r"`
+	TdfConnectE  *ebpf.ProgramSpec `ebpf:"tdf_connect_e"`
+	TdfConnectR  *ebpf.ProgramSpec `ebpf:"tdf_connect_r"`
+	TdfExecveE   *ebpf.ProgramSpec `ebpf:"tdf_execve_e"`
+	TdfExecveR   *ebpf.ProgramSpec `ebpf:"tdf_execve_r"`
+	TdfExecveatE *ebpf.ProgramSpec `ebpf:"tdf_execveat_e"`
+	TdfExecveatR *ebpf.ProgramSpec `ebpf:"tdf_execveat_r"`
+	TdfListenE   *ebpf.ProgramSpec `ebpf:"tdf_listen_e"`
+	TdfListenR   *ebpf.ProgramSpec `ebpf:"tdf_listen_r"`
+	TdfOpenE     *ebpf.ProgramSpec `ebpf:"tdf_open_e"`
+	TdfOpenR     *ebpf.ProgramSpec `ebpf:"tdf_open_r"`
+	TdfOpenat2E  *ebpf.ProgramSpec `ebpf:"tdf_openat2_e"`
+	TdfOpenat2R  *ebpf.ProgramSpec `ebpf:"tdf_openat2_r"`
+	TdfOpenatE   *ebpf.ProgramSpec `ebpf:"tdf_openat_e"`
+	TdfOpenatR   *ebpf.ProgramSpec `ebpf:"tdf_openat_r"`
+	TdfReadE     *ebpf.ProgramSpec `ebpf:"tdf_read_e"`
+	TdfReadR     *ebpf.ProgramSpec `ebpf:"tdf_read_r"`
+	TdfReadvE    *ebpf.ProgramSpec `ebpf:"tdf_readv_e"`
+	TdfReadvR    *ebpf.ProgramSpec `ebpf:"tdf_readv_r"`
+	TdfSocketE   *ebpf.ProgramSpec `ebpf:"tdf_socket_e"`
+	TdfSocketR   *ebpf.ProgramSpec `ebpf:"tdf_socket_r"`
+	TdfWriteE    *ebpf.ProgramSpec `ebpf:"tdf_write_e"`
+	TdfWriteR    *ebpf.ProgramSpec `ebpf:"tdf_write_r"`
+	TdfWritevE   *ebpf.ProgramSpec `ebpf:"tdf_writev_e"`
+	TdfWritevR   *ebpf.ProgramSpec `ebpf:"tdf_writev_r"`
 }
 
 // tarianMapSpecs contains maps before they are loaded into the kernel.
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianMapSpecs struct {
-	ErbCpu0        *ebpf.MapSpec `ebpf:"erb_cpu0"`
-	ErbCpu1        *ebpf.MapSpec `ebpf:"erb_cpu1"`
-	ErbCpu10       *ebpf.MapSpec `ebpf:"erb_cpu10"`
-	ErbCpu11       *ebpf.MapSpec `ebpf:"erb_cpu11"`
-	ErbCpu12       *ebpf.MapSpec `ebpf:"erb_cpu12"`
-	ErbCpu13       *ebpf.MapSpec `ebpf:"erb_cpu13"`
-	ErbCpu14       *ebpf.MapSpec `ebpf:"erb_cpu14"`
-	ErbCpu15       *ebpf.MapSpec `ebpf:"erb_cpu15"`
-	ErbCpu2        *ebpf.MapSpec `ebpf:"erb_cpu2"`
-	ErbCpu3        *ebpf.MapSpec `ebpf:"erb_cpu3"`
-	ErbCpu4        *ebpf.MapSpec `ebpf:"erb_cpu4"`
-	ErbCpu5        *ebpf.MapSpec `ebpf:"erb_cpu5"`
-	ErbCpu6        *ebpf.MapSpec `ebpf:"erb_cpu6"`
-	ErbCpu7        *ebpf.MapSpec `ebpf:"erb_cpu7"`
-	ErbCpu8        *ebpf.MapSpec `ebpf:"erb_cpu8"`
-	ErbCpu9        *ebpf.MapSpec `ebpf:"erb_cpu9"`
 	Events         *ebpf.MapSpec `ebpf:"events"`
 	PeaPerCpuArray *ebpf.MapSpec `ebpf:"pea_per_cpu_array"`
+	ScratchSpace   *ebpf.MapSpec `ebpf:"scratch_space"`
+	TarianStats    *ebpf.MapSpec `ebpf:"tarian_stats"`
 }
 
 // tarianObjects contains all objects after they have been loaded into the kernel.
@@ -172,46 +133,18 @@ func (o *tarianObjects) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianMaps struct {
-	ErbCpu0        *ebpf.Map `ebpf:"erb_cpu0"`
-	ErbCpu1        *ebpf.Map `ebpf:"erb_cpu1"`
-	ErbCpu10       *ebpf.Map `ebpf:"erb_cpu10"`
-	ErbCpu11       *ebpf.Map `ebpf:"erb_cpu11"`
-	ErbCpu12       *ebpf.Map `ebpf:"erb_cpu12"`
-	ErbCpu13       *ebpf.Map `ebpf:"erb_cpu13"`
-	ErbCpu14       *ebpf.Map `ebpf:"erb_cpu14"`
-	ErbCpu15       *ebpf.Map `ebpf:"erb_cpu15"`
-	ErbCpu2        *ebpf.Map `ebpf:"erb_cpu2"`
-	ErbCpu3        *ebpf.Map `ebpf:"erb_cpu3"`
-	ErbCpu4        *ebpf.Map `ebpf:"erb_cpu4"`
-	ErbCpu5        *ebpf.Map `ebpf:"erb_cpu5"`
-	ErbCpu6        *ebpf.Map `ebpf:"erb_cpu6"`
-	ErbCpu7        *ebpf.Map `ebpf:"erb_cpu7"`
-	ErbCpu8        *ebpf.Map `ebpf:"erb_cpu8"`
-	ErbCpu9        *ebpf.Map `ebpf:"erb_cpu9"`
 	Events         *ebpf.Map `ebpf:"events"`
 	PeaPerCpuArray *ebpf.Map `ebpf:"pea_per_cpu_array"`
+	ScratchSpace   *ebpf.Map `ebpf:"scratch_space"`
+	TarianStats    *ebpf.Map `ebpf:"tarian_stats"`
 }
 
 func (m *tarianMaps) Close() error {
 	return _TarianClose(
-		m.ErbCpu0,
-		m.ErbCpu1,
-		m.ErbCpu10,
-		m.ErbCpu11,
-		m.ErbCpu12,
-		m.ErbCpu13,
-		m.ErbCpu14,
-		m.ErbCpu15,
-		m.ErbCpu2,
-		m.ErbCpu3,
-		m.ErbCpu4,
-		m.ErbCpu5,
-		m.ErbCpu6,
-		m.ErbCpu7,
-		m.ErbCpu8,
-		m.ErbCpu9,
 		m.Events,
 		m.PeaPerCpuArray,
+		m.ScratchSpace,
+		m.TarianStats,
 	)
 }
 
@@ -219,74 +152,74 @@ func (m *tarianMaps) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianPrograms struct {
-	KprobeAccept      *ebpf.Program `ebpf:"kprobe_accept"`
-	KprobeBind        *ebpf.Program `ebpf:"kprobe_bind"`
-	KprobeClone       *ebpf.Program `ebpf:"kprobe_clone"`
-	KprobeClose       *ebpf.Program `ebpf:"kprobe_close"`
-	KprobeConnect     *ebpf.Program `ebpf:"kprobe_connect"`
-	KprobeExecve      *ebpf.Program `ebpf:"kprobe_execve"`
-	KprobeExecveat    *ebpf.Program `ebpf:"kprobe_execveat"`
-	KprobeListen      *ebpf.Program `ebpf:"kprobe_listen"`
-	KprobeOpen        *ebpf.Program `ebpf:"kprobe_open"`
-	KprobeOpenat      *ebpf.Program `ebpf:"kprobe_openat"`
-	KprobeOpenat2     *ebpf.Program `ebpf:"kprobe_openat2"`
-	KprobeRead        *ebpf.Program `ebpf:"kprobe_read"`
-	KprobeReadv       *ebpf.Program `ebpf:"kprobe_readv"`
-	KprobeSocket      *ebpf.Program `ebpf:"kprobe_socket"`
-	KprobeWrite       *ebpf.Program `ebpf:"kprobe_write"`
-	KprobeWritev      *ebpf.Program `ebpf:"kprobe_writev"`
-	KretprobeAccept   *ebpf.Program `ebpf:"kretprobe_accept"`
-	KretprobeBind     *ebpf.Program `ebpf:"kretprobe_bind"`
-	KretprobeClone    *ebpf.Program `ebpf:"kretprobe_clone"`
-	KretprobeClose    *ebpf.Program `ebpf:"kretprobe_close"`
-	KretprobeConnect  *ebpf.Program `ebpf:"kretprobe_connect"`
-	KretprobeExecve   *ebpf.Program `ebpf:"kretprobe_execve"`
-	KretprobeExecveat *ebpf.Program `ebpf:"kretprobe_execveat"`
-	KretprobeListen   *ebpf.Program `ebpf:"kretprobe_listen"`
-	KretprobeOpen     *ebpf.Program `ebpf:"kretprobe_open"`
-	KretprobeOpenat   *ebpf.Program `ebpf:"kretprobe_openat"`
-	KretprobeOpenat2  *ebpf.Program `ebpf:"kretprobe_openat2"`
-	KretprobeRead     *ebpf.Program `ebpf:"kretprobe_read"`
-	KretprobeReadv    *ebpf.Program `ebpf:"kretprobe_readv"`
-	KretprobeSocket   *ebpf.Program `ebpf:"kretprobe_socket"`
-	KretprobeWrite    *ebpf.Program `ebpf:"kretprobe_write"`
-	KretprobeWritev   *ebpf.Program `ebpf:"kretprobe_writev"`
+	TdfAcceptE   *ebpf.Program `ebpf:"tdf_accept_e"`
+	TdfAcceptR   *ebpf.Program `ebpf:"tdf_accept_r"`
+	TdfBindE     *ebpf.Program `ebpf:"tdf_bind_e"`
+	TdfBindR     *ebpf.Program `ebpf:"tdf_bind_r"`
+	TdfCloneE    *ebpf.Program `ebpf:"tdf_clone_e"`
+	TdfCloneR    *ebpf.Program `ebpf:"tdf_clone_r"`
+	TdfCloseE    *ebpf.Program `ebpf:"tdf_close_e"`
+	TdfCloseR    *ebpf.Program `ebpf:"tdf_close_r"`
+	TdfConnectE  *ebpf.Program `ebpf:"tdf_connect_e"`
+	TdfConnectR  *ebpf.Program `ebpf:"tdf_connect_r"`
+	TdfExecveE   *ebpf.Program `ebpf:"tdf_execve_e"`
+	TdfExecveR   *ebpf.Program `ebpf:"tdf_execve_r"`
+	TdfExecveatE *ebpf.Program `ebpf:"tdf_execveat_e"`
+	TdfExecveatR *ebpf.Program `ebpf:"tdf_execveat_r"`
+	TdfListenE   *ebpf.Program `ebpf:"tdf_listen_e"`
+	TdfListenR   *ebpf.Program `ebpf:"tdf_listen_r"`
+	TdfOpenE     *ebpf.Program `ebpf:"tdf_open_e"`
+	TdfOpenR     *ebpf.Program `ebpf:"tdf_open_r"`
+	TdfOpenat2E  *ebpf.Program `ebpf:"tdf_openat2_e"`
+	TdfOpenat2R  *ebpf.Program `ebpf:"tdf_openat2_r"`
+	TdfOpenatE   *ebpf.Program `ebpf:"tdf_openat_e"`
+	TdfOpenatR   *ebpf.Program `ebpf:"tdf_openat_r"`
+	TdfReadE     *ebpf.Program `ebpf:"tdf_read_e"`
+	TdfReadR     *ebpf.Program `ebpf:"tdf_read_r"`
+	TdfReadvE    *ebpf.Program `ebpf:"tdf_readv_e"`
+	TdfReadvR    *ebpf.Program `ebpf:"tdf_readv_r"`
+	TdfSocketE   *ebpf.Program `ebpf:"tdf_socket_e"`
+	TdfSocketR   *ebpf.Program `ebpf:"tdf_socket_r"`
+	TdfWriteE    *ebpf.Program `ebpf:"tdf_write_e"`
+	TdfWriteR    *ebpf.Program `ebpf:"tdf_write_r"`
+	TdfWritevE   *ebpf.Program `ebpf:"tdf_writev_e"`
+	TdfWritevR   *ebpf.Program `ebpf:"tdf_writev_r"`
 }
 
 func (p *tarianPrograms) Close() error {
 	return _TarianClose(
-		p.KprobeAccept,
-		p.KprobeBind,
-		p.KprobeClone,
-		p.KprobeClose,
-		p.KprobeConnect,
-		p.KprobeExecve,
-		p.KprobeExecveat,
-		p.KprobeListen,
-		p.KprobeOpen,
-		p.KprobeOpenat,
-		p.KprobeOpenat2,
-		p.KprobeRead,
-		p.KprobeReadv,
-		p.KprobeSocket,
-		p.KprobeWrite,
-		p.KprobeWritev,
-		p.KretprobeAccept,
-		p.KretprobeBind,
-		p.KretprobeClone,
-		p.KretprobeClose,
-		p.KretprobeConnect,
-		p.KretprobeExecve,
-		p.KretprobeExecveat,
-		p.KretprobeListen,
-		p.KretprobeOpen,
-		p.KretprobeOpenat,
-		p.KretprobeOpenat2,
-		p.KretprobeRead,
-		p.KretprobeReadv,
-		p.KretprobeSocket,
-		p.KretprobeWrite,
-		p.KretprobeWritev,
+		p.TdfAcceptE,
+		p.TdfAcceptR,
+		p.TdfBindE,
+		p.TdfBindR,
+		p.TdfCloneE,
+		p.TdfCloneR,
+		p.TdfCloseE,
+		p.TdfCloseR,
+		p.TdfConnectE,
+		p.TdfConnectR,
+		p.TdfExecveE,
+		p.TdfExecveR,
+		p.TdfExecveatE,
+		p.TdfExecveatR,
+		p.TdfListenE,
+		p.TdfListenR,
+		p.TdfOpenE,
+		p.TdfOpenR,
+		p.TdfOpenat2E,
+		p.TdfOpenat2R,
+		p.TdfOpenatE,
+		p.TdfOpenatR,
+		p.TdfReadE,
+		p.TdfReadR,
+		p.TdfReadvE,
+		p.TdfReadvR,
+		p.TdfSocketE,
+		p.TdfSocketR,
+		p.TdfWriteE,
+		p.TdfWriteR,
+		p.TdfWritevE,
+		p.TdfWritevR,
 	)
 }
 

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package ebpf
 
 import (
+	"github.com/cilium/ebpf/rlimit"
 	"github.com/intelops/tarian-detector/pkg/err"
 )
 
@@ -38,17 +39,24 @@ func (m *Module) Map(mp *MapInfo) {
 func (m *Module) Prepare() (*Handler, error) {
 	handler := NewHandler(m.name)
 
+	err := rlimit.RemoveMemlock()
+	if err != nil {
+		return nil, err
+	}
+
 	/*
 	*
 	* attachs programs to the kernel hook points
 	*
 	 */
 	for _, prog := range m.programs {
+		hook := prog.hook
+
 		if !prog.shouldAttach {
 			continue
 		}
 
-		pL, err := prog.hook.AttachProbe(prog.name)
+		pL, err := hook.AttachProbe(prog.name)
 		if err != nil {
 			return nil, moduleErr.Throwf("%v", err)
 		}

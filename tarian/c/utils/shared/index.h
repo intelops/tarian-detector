@@ -3,9 +3,10 @@
 
 #include "constants.h"
 #include "types.h"
+#include "codes.h"
 
 #include "maps.h"
-#include "error_codes.h"
+#include "writer.h"
 
 // kernel data structure specific headers
 #include "nsproxy.h"

@@ -52,7 +52,7 @@ make build
 You've successfully built the project! Now, you can run Tarian Detector on your machine:
 
 ```bash
-make run
+sudo make run
 ```
 
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package main
 
@@ -11,7 +11,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var NotInClusterErrMsg = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+const (
+	NotInClusterErrMsg string = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+)
 
 func K8Watcher() (*k8s.PodWatcher, error) {
 	config, err := rest.InClusterConfig()

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright 2023 Authors of Tarian & the Organization created Tarian
+# Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 # executable Files Path
 EXECUTABLE=bin
@@ -31,7 +31,7 @@ CFLAGS := -O2 -g -Wall -Werror \
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/g; s/aarch64/arm64/g')
 
 # project dependencies
-DEPENDENCIES:=golang clang llvm libelf-dev libbpf-dev linux-tools-$(shell uname -r) linux-headers-$(shell uname -r)
+DEPENDENCIES:=golang clang-12 llvm-12 libelf-dev libbpf-dev linux-tools-$(shell uname -r) linux-headers-$(shell uname -r)
 
 # package manager
 PKG_MGR=apt-get 
@@ -105,7 +105,6 @@ lint: fmt vet
 	revive -formatter stylish -config .revive.toml ./pkg/...
 	staticcheck ./...
 
-
 .PHONY: clean file
 
 # recipe to create a file with license and copyright details.
@@ -118,9 +117,8 @@ endif
 		echo "ERROR: File already exists at $(FILE_PATH)"; \
 		exit 1; \
 	else \
-		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2023 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
+		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2024 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
 	fi
-
 
 # recipe to remove all object files(*.o)
 clean:

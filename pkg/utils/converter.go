@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package utils
 
@@ -9,7 +9,27 @@ import (
 	"strings"
 )
 
-func Int(b []byte) (int32, error) {
+func Int8(b []byte) (int8, error) {
+	var num int8
+	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
+	if err != nil {
+		return num, err
+	}
+
+	return num, nil
+}
+
+func Int16(b []byte) (int16, error) {
+	var num int16
+	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
+	if err != nil {
+		return num, err
+	}
+
+	return num, nil
+}
+
+func Int32(b []byte) (int32, error) {
 	var num int32
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
@@ -29,6 +49,16 @@ func Int64(b []byte) (int64, error) {
 	return num, nil
 }
 
+func Uint8(b []byte) (uint8, error) {
+	var num uint8
+	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
+	if err != nil {
+		return num, err
+	}
+
+	return num, nil
+}
+
 func Uint16(b []byte) (uint16, error) {
 	var num uint16
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
@@ -39,7 +69,7 @@ func Uint16(b []byte) (uint16, error) {
 	return num, nil
 }
 
-func Uint(b []byte) (uint32, error) {
+func Uint32(b []byte) (uint32, error) {
 	var num uint32
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
@@ -60,5 +90,5 @@ func Uint64(b []byte) (uint64, error) {
 }
 
 func ToString(arr []byte) string {
-	return strings.Trim(string(arr[:]), "\x00")
+	return strings.Trim(string(arr), "\x00")
 }

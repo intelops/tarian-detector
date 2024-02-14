@@ -1,522 +1,629 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-//go:build ignore
+// go:build ignore
 
 #include "common.h"
 
-const event_data_t *unused __attribute__((unused));
-
-SEC("kprobe/__x64_sys_clone")
-int kprobe_clone(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_CLONE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_execve")
+int BPF_KPROBE(tdf_execve_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_EXECVE_E, &te, VARIABLE, TDS_EXECVE_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* binary file path */, ULONG_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* binary file path */, ULONG_T, 1);
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM3] /* binary file path */, INT_T, 2);
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM4] /* binary file path */, INT_T, 3);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM5] /* binary file path */, ULONG_T, 4);
+  /*====================== PARAMETERS ======================*/
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 0) /* filename */, 0,USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 1) /* argv */, 0,USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* envp */, 0,USER);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_clone")
-int kretprobe_clone(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_CLONE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_execve")
+int BPF_KRETPROBE(tdf_execve_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_EXECVE_R, &te, FIXED, TDS_EXECVE_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_execve")
-int kprobe_execve(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_EXECVE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_execveat")
+int BPF_KPROBE(tdf_execveat_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_EXECVEAT_E, &te, VARIABLE, TDS_EXECVEAT_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (char *)p.sys_ctx[PARAM1] /* binary file path */, STR_T, 0);
-  // save_to_buffer(&p, (void *)p.sys_ctx[1] /* user command */, STR_ARR_T, 1);
-  // save_to_buffer(&p, (void *)p.sys_ctx[1] /* user command */, STR_ARR_T, 2);
-  // bpf_printk("test execve indx str %d", (int)p.cursor);
-  // save_to_buffer(&p, (void *)&(p.sys_ctx[6]), INT_T, 1);
-  // bpf_printk("test execve indx long %d", (int)p.cursor);
-  // save_to_buffer(&p, (void *)&(p.sys_ctx[6]), LONG_T, 2);
-  // bpf_printk("test execve %d %d", count++, (int)p.cursor);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1) /* filename */, 0, USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 2) /* argv */, 0, USER);
+  tdf_flex_save(&te, TDT_STR_ARR, get_syscall_param(regs, 3) /* envp */, 0, USER);
+
+  int flags = get_syscall_param(regs, 4);
+  tdf_save(&te, TDT_S32, &flags /* flags */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_execve")
-int kretprobe_execve(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_EXECVE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_execveat")
+int BPF_KRETPROBE(tdf_execveat_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_EXECVEAT_R, &te, FIXED, TDS_EXECVEAT_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_execveat")
-int kprobe_execveat(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_EXECVEAT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_clone")
+int BPF_KPROBE(tdf_clone_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLONE_E, &te, FIXED, TDS_CLONE_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file_descriptor */, INT_T, 0);
-  save_to_buffer(&p, (char *)p.sys_ctx[PARAM2] /* binary file path */, STR_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM5] /* flags */, INT_T, 4);
+  /*====================== PARAMETERS ======================*/
+  uint64_t flags = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_U64, &flags /* clone_flags */);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  uint64_t newsp = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_U64, &newsp /* newsp */);
+
+  int parent_tid;
+  bpf_probe_read_user_str(&parent_tid, sizeof(parent_tid), (void *)get_syscall_param(regs, 2));
+  tdf_save(&te, TDT_S32, &parent_tid /* parent_tidptr */);
+
+  int child_tid;
+  bpf_probe_read_user_str(&child_tid, sizeof(child_tid), (void *)get_syscall_param(regs, 3));
+  tdf_save(&te, TDT_S32, &child_tid /* child_tidptr */);
+
+  uint64_t tls = get_syscall_param(regs, 4);
+  tdf_save(&te, TDT_U64, &tls /* tls */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_execveat")
-int kretprobe_execveat(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_EXECVEAT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_clone")
+int BPF_KRETPROBE(tdf_clone_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLONE_R, &te, FIXED, TDS_CLONE_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
- 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_open")
-int kprobe_open(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_OPEN);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_close")
+int BPF_KPROBE(tdf_close_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLOSE_E, &te, FIXED, TDS_CLOSE_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
+  
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
+  /*====================== PARAMETERS ======================*/
 
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM1] /* filename */, STR_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* flags */, INT_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* mode */, INT_T, 2);
-
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_open")
-int kretprobe_open(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_OPEN);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_close")
+int BPF_KRETPROBE(tdf_close_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CLOSE_R, &te, FIXED, TDS_CLOSE_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_openat")
-int kprobe_openat(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_OPENAT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_read")
+int BPF_KPROBE(tdf_read_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READ_E, &te, VARIABLE, TDS_READ_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* directory file descriptor */, INT_T, 0);
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM2] /* filename */, STR_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* flags */, INT_T, 2);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM4] /* mode */, UINT_T, 3);
+  /*====================== PARAMETERS ======================*/
+  int32_t fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  uint32_t count = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_BYTE_ARR, get_syscall_param(regs, 1), count, USER);
+
+  tdf_save(&te, TDT_U32, &count /* count */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_openat")
-int kretprobe_openat(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_OPENAT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_read")
+int BPF_KRETPROBE(tdf_read_r, long ret) { 
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READ_R, &te, FIXED, TDS_READ_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_openat2")
-int kprobe_openat2(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_OPENAT2);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_write")
+int BPF_KPROBE(tdf_write_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITE_E, &te, VARIABLE, TDS_WRITE_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
+  
+  /*====================== PARAMETERS ======================*/
+  int32_t fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd /* fd */);
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* directory file descriptor */, INT_T, 0);
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM2] /* filename */, STR_T, 1);
-  // save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* how */, INT, 2); //Need to handle user defined types
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM4] /* usize */, LONG_T, 3);
+  uint32_t count = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_BYTE_ARR, get_syscall_param(regs, 1), count, USER);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  tdf_save(&te, TDT_U32, &count /* count */);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_openat2")
-int kretprobe_openat2(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_OPENAT2);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_write")
+int BPF_KRETPROBE(tdf_write_r, long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITE_R, &te, FIXED, TDS_WRITE_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_close")
-int kprobe_close(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_CLOSE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_open")
+int BPF_KPROBE(tdf_open_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPEN_E, &te, VARIABLE, TDS_OPEN_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 0), 0, USER);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int flags = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_S32, &flags);
+
+  unsigned int mode = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_U32, &mode);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_close")
-int kretprobe_close(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_CLOSE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_open")
+int BPF_KRETPROBE(tdf_open_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPEN_R, &te, FIXED, TDS_OPEN_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_U32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_read")
-int kprobe_read(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_READ);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_readv")
+int BPF_KPROBE(tdf_readv_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READV_E, &te, VARIABLE, TDS_READV_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, UINT_T, 0);
-  // save_to_buffer(&p, (void *)p.sys_ctx[PARAM2]  /* buffer */, STR_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* flags */, ULONG_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int vlen = get_syscall_param(regs, 2);
+
+  tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+
+  tdf_save(&te, TDT_S32, &vlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_read")
-int kretprobe_read(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_READ);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_readv")
+int BPF_KRETPROBE(tdf_readv_r,  long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_READV_R, &te, FIXED, TDS_READV_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
+  
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes read */, LONG_T, 0);
-
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_readv")
-int kprobe_readv(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_READV);
-  if (err != OK) {
-    dropped++;
-    return err;
+
+KPROBE("__x64_sys_writev")
+int BPF_KPROBE(tdf_writev_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITEV_E, &te, VARIABLE, TDS_WRITEV_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, ULONG_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* vlen */, ULONG_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int vlen = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_IOVEC_ARR, get_syscall_param(regs, 1), vlen, USER);
+
+  tdf_save(&te, TDT_S32, &vlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_readv")
-int kretprobe_readv(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_READV);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_writev")
+int BPF_KRETPROBE(tdf_writev_r,  long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_WRITEV_R, &te, FIXED, TDS_WRITEV_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
+  
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes read */, LONG_T, 0);
-
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_write")
-int kprobe_write(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_WRITE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_openat")
+int BPF_KPROBE(tdf_openat_e, struct pt_regs  *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT_E, &te, VARIABLE, TDS_OPENAT_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, UINT_T, 0);
-  // save_to_buffer(&p, (void *)p.sys_ctx[PARAM2]  /* buffer */, STR_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* flags */, ULONG_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int dfd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32,  &dfd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1), 0, USER);
+
+  int flags = get_syscall_param(regs , 2);
+  tdf_save(&te, TDT_S32, &flags);
+
+  unsigned int  mode = get_syscall_param(regs, 3);
+  tdf_save(&te, TDT_U32, &mode);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_write")
-int kretprobe_write(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_WRITE);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_openat")
+int BPF_KRETPROBE(tdf_openat_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT_R, &te, FIXED, TDS_OPENAT_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes wrote */, LONG_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32,  &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_writev")
-int kprobe_writev(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_WRITEV);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_openat2")
+int BPF_KPROBE(tdf_openat2_e, struct pt_regs  *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT2_E, &te, VARIABLE, TDS_OPENAT2_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, ULONG_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* vlen */, ULONG_T, 2);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  /*====================== PARAMETERS ======================*/
+  int dfd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32,  &dfd);
+
+  tdf_flex_save(&te, TDT_STR, get_syscall_param(regs, 1), 0, USER);
+
+  struct open_how how = {0};
+  bpf_probe_read_user((void *)&how, bpf_core_type_size(struct open_how), (void *)get_syscall_param(regs, 2));
+
+  tdf_save(&te, TDT_S64, &how.flags);
+  tdf_save(&te, TDT_S64, &how.mode);
+  tdf_save(&te, TDT_S64, &how.resolve);
+
+  int usize = get_syscall_param(regs, 3);
+  tdf_save(&te, TDT_S32, &usize);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_writev")
-int kretprobe_writev(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_WRITEV);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_openat2")
+int BPF_KRETPROBE(tdf_openat2_r, long ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_OPENAT2_R, &te, FIXED, TDS_OPENAT2_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN] /* number of bytes wrote */, LONG_T, 0);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S64,  &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_listen")
-int kprobe_listen(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_LISTEN);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_listen")
+int BPF_KPROBE(tdf_listen_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_LISTEN_E, &te, FIXED, TDS_LISTEN_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* backlog */, INT_T, 1);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
+  
+  int backlog = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_S32, &backlog);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
+};
+
+KRETPROBE("__x64_sys_listen")
+int BPF_KRETPROBE(tdf_listen_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_LISTEN_R, &te, FIXED, TDS_LISTEN_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
+  }
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32,  &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_listen")
-int kretprobe_listen(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_LISTEN);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_socket")
+int BPF_KPROBE(tdf_socket_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_SOCKET_E, &te, FIXED, TDS_SOCKET_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  int family = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &family);
+  
+  int type = get_syscall_param(regs, 1);
+  tdf_save(&te, TDT_S32, &type);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int protocol = get_syscall_param(regs, 2);
+  tdf_save(&te, TDT_S32, &protocol);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
+};
+
+KRETPROBE("__x64_sys_socket")
+int BPF_KRETPROBE(tdf_socket_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_SOCKET_R, &te, FIXED, TDS_SOCKET_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
+  }
+
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32,  &ret);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_socket")
-int kprobe_socket(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_SOCKET);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_accept")
+int BPF_KPROBE(tdf_accept_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_ACCEPT_E, &te, VARIABLE,  TDS_ACCEPT_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* family */, INT_T, 0);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* type */, INT_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* protocol */, INT_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int addrlen;
+  bpf_probe_read_user(&addrlen, sizeof(addrlen),  (void*)get_syscall_param(regs, 2));
+
+  tdf_flex_save(&te, TDT_SOCKADDR, get_syscall_param(regs, 1), addrlen, USER);
+
+  tdf_save(&te, TDT_S32, &addrlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_socket")
-int kretprobe_socket(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_SOCKET);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_accept")
+int BPF_KRETPROBE(tdf_accept_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_ACCEPT_R, &te, FIXED,  TDS_ACCEPT_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_accept")
-int kprobe_accept(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_ACCEPT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_bind")
+int BPF_KPROBE(tdf_bind_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_BIND_E, &te, VARIABLE,  TDS_BIND_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
-  // save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* type */, INT_T, 1);
-  save_to_buffer(&p, (void *)p.sys_ctx[PARAM3] /* upeer_addrlen */, INT_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int addrlen = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_SOCKADDR, get_syscall_param(regs, 1), addrlen, USER);
+
+  tdf_save(&te, TDT_S32, &addrlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_accept")
-int kretprobe_accept(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_ACCEPT);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_bind")
+int BPF_KRETPROBE(tdf_bind_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_BIND_R, &te, FIXED,  TDS_BIND_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }
 
-SEC("kprobe/__x64_sys_bind")
-int kprobe_bind(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_BIND);
-  if (err != OK) {
-    dropped++;
-    return err;
+KPROBE("__x64_sys_connect")
+int BPF_KPROBE(tdf_connect_e, struct pt_regs *regs) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CONNECT_E, &te, VARIABLE,  TDS_CONNECT_E);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
-  // save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* type */, INT_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* upeer_addrlen */, INT_T, 2);
+  /*====================== PARAMETERS ======================*/
+  int fd = get_syscall_param(regs, 0);
+  tdf_save(&te, TDT_S32, &fd);
 
-  events_ringbuf_submit(&p);
-  return OK;
+  int addrlen = get_syscall_param(regs, 2);
+  tdf_flex_save(&te, TDT_SOCKADDR, get_syscall_param(regs, 1), addrlen, USER);
+
+  tdf_save(&te, TDT_S32, &addrlen);
+  /*====================== PARAMETERS ======================*/
+
+  return tdf_submit_event(&te);
 }
 
-SEC("kretprobe/__x64_sys_bind")
-int kretprobe_bind(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_BIND);
-  if (err != OK) {
-    dropped++;
-    return err;
+KRETPROBE("__x64_sys_connect")
+int BPF_KRETPROBE(tdf_connect_r, int ret) {
+  tarian_event_t te;
+  int resp = new_event(ctx, TDE_SYSCALL_CONNECT_R, &te, FIXED,  TDS_CONNECT_R);
+  if (resp != TDC_SUCCESS) {
+    stats__add(resp);
+    return resp;
   }
 
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
+  /*====================== PARAMETERS ======================*/
+  tdf_save(&te, TDT_S32, &ret);
+  /*====================== PARAMETERS ======================*/
 
-  events_ringbuf_submit(&p);
-  return OK;
-}
-
-SEC("kprobe/__x64_sys_connect")
-int kprobe_connect(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_ENTER_CONNECT);
-  if (err != OK) {
-    dropped++;
-    return err;
-  }
-
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM1] /* file descriptor */, INT_T, 0);
-  // save_to_buffer(&p, (void *)&p.sys_ctx[PARAM2] /* type */, INT_T, 1);
-  save_to_buffer(&p, (void *)&p.sys_ctx[PARAM3] /* upeer_addrlen */, INT_T, 2);
-
-  events_ringbuf_submit(&p);
-  return OK;
-}
-
-SEC("kretprobe/__x64_sys_connect")
-int kretprobe_connect(struct pt_regs *ctx) {
-  program_data_t p = {};
-  int err = new_program(&p, ctx, SYS_EXIT_CONNECT);
-  if (err != OK) {
-    dropped++;
-    return err;
-  }
-
-  save_to_buffer(&p, (void *)&p.sys_ctx[RETURN], INT_T, 0);
-
-  events_ringbuf_submit(&p);
-  return OK;
+  return tdf_submit_event(&te);
 }

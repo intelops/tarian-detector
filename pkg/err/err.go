@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package err
 
@@ -23,7 +23,7 @@ func (e *Err) Throwf(format string, a ...any) *Err {
 	return e
 }
 
-func (e *Err) Throw(format string, a ...any) *Err {
+func (e *Err) Throw(format string) *Err {
 	e.Message = fmt.Sprint(format)
 
 	return e

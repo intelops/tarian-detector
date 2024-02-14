@@ -1,18 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package tarian
 
 import (
+	"errors"
+
+	cilium_ebpf "github.com/cilium/ebpf"
 	ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -type event_data_t -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
 func GetModule() (*ebpf.Module, error) {
 	bpfObjs, err := getBpfObject()
 	if err != nil {
+		var verr *cilium_ebpf.VerifierError
+		if errors.As(err, &verr) {
+			return nil, verr
+		}
+
 		return nil, err
 	}
 
@@ -22,75 +30,75 @@ func GetModule() (*ebpf.Module, error) {
 		return nil, err
 	}
 
-	if ckv >= utils.KernelVersion(5, 8, 0) {
+	if ckv >= utils.KernelVersion(5, 8, 0) && false {
 		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.Events))
 	} else {
 		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
 	}
 
-	// kprobe & kretprobe clone
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClone, ebpf.NewHookInfo().Kprobe("__x64_sys_clone")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeClone, ebpf.NewHookInfo().Kretprobe("__x64_sys_clone")))
-
 	// kprobe & kretprobe execve
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeExecve, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecve, ebpf.NewHookInfo().Kretprobe("__x64_sys_execve")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveE, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveR, ebpf.NewHookInfo().Kretprobe("__x64_sys_execve")))
 
 	// kprobe & kretprobe execveat
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecveat, ebpf.NewHookInfo().Kprobe("__x64_sys_execveat")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeExecveat, ebpf.NewHookInfo().Kretprobe("__x64_sys_execveat")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveatE, ebpf.NewHookInfo().Kprobe("__x64_sys_execveat")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveatR, ebpf.NewHookInfo().Kretprobe("__x64_sys_execveat")))
+
+	// kprobe & kretprobe clone
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfCloneE, ebpf.NewHookInfo().Kprobe("__x64_sys_clone")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfCloneR, ebpf.NewHookInfo().Kretprobe("__x64_sys_clone")))
 
 	// kprobe & kretprobe close
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeClose, ebpf.NewHookInfo().Kprobe("__x64_sys_close")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeClose, ebpf.NewHookInfo().Kretprobe("__x64_sys_close")))
-
-	// kprobe & kretprobe open
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeOpen, ebpf.NewHookInfo().Kprobe("__x64_sys_open")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeOpen, ebpf.NewHookInfo().Kretprobe("__x64_sys_open")))
-
-	// kprobe & kretprobe openat
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeOpenat, ebpf.NewHookInfo().Kprobe("__x64_sys_openat")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeOpenat, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat")))
-
-	// kprobe & kretprobe openat2
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeOpenat2, ebpf.NewHookInfo().Kprobe("__x64_sys_openat2")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeOpenat2, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat2")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfCloseE, ebpf.NewHookInfo().Kprobe("__x64_sys_close")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfCloseR, ebpf.NewHookInfo().Kretprobe("__x64_sys_close")))
 
 	// kprobe & kretprobe read
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeRead, ebpf.NewHookInfo().Kprobe("__x64_sys_read")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeRead, ebpf.NewHookInfo().Kretprobe("__x64_sys_read")))
-
-	// kprobe & kretprobe readv
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeReadv, ebpf.NewHookInfo().Kprobe("__x64_sys_readv")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeReadv, ebpf.NewHookInfo().Kretprobe("__x64_sys_readv")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadE, ebpf.NewHookInfo().Kprobe("__x64_sys_read")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadR, ebpf.NewHookInfo().Kretprobe("__x64_sys_read")))
 
 	// kprobe & kretprobe write
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeWrite, ebpf.NewHookInfo().Kprobe("__x64_sys_write")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeWrite, ebpf.NewHookInfo().Kretprobe("__x64_sys_write")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfWriteE, ebpf.NewHookInfo().Kprobe("__x64_sys_write")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfWriteR, ebpf.NewHookInfo().Kretprobe("__x64_sys_write")))
+
+	// kprobe & kretprobe open
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenE, ebpf.NewHookInfo().Kprobe("__x64_sys_open")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenR, ebpf.NewHookInfo().Kretprobe("__x64_sys_open")))
+
+	// kprobe & kretprobe readv
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadvE, ebpf.NewHookInfo().Kprobe("__x64_sys_readv")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfReadvR, ebpf.NewHookInfo().Kretprobe("__x64_sys_readv")))
 
 	// kprobe & kretprobe writev
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeWritev, ebpf.NewHookInfo().Kprobe("__x64_sys_writev")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeWritev, ebpf.NewHookInfo().Kretprobe("__x64_sys_writev")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfWritevE, ebpf.NewHookInfo().Kprobe("__x64_sys_writev")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfWritevR, ebpf.NewHookInfo().Kretprobe("__x64_sys_writev")))
+
+	// kprobe & kretprobe openat
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenatE, ebpf.NewHookInfo().Kprobe("__x64_sys_openat")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenatR, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat")))
+
+	// kprobe & kretprobe openat2
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenat2E, ebpf.NewHookInfo().Kprobe("__x64_sys_openat2")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfOpenat2R, ebpf.NewHookInfo().Kretprobe("__x64_sys_openat2")))
 
 	// kprobe & kretprobe listen
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeListen, ebpf.NewHookInfo().Kprobe("__x64_sys_listen")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeListen, ebpf.NewHookInfo().Kretprobe("__x64_sys_listen")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfListenE, ebpf.NewHookInfo().Kprobe("__x64_sys_listen")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfListenR, ebpf.NewHookInfo().Kretprobe("__x64_sys_listen")))
 
 	// kprobe & kretprobe socket
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeSocket, ebpf.NewHookInfo().Kprobe("__x64_sys_socket")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeSocket, ebpf.NewHookInfo().Kretprobe("__x64_sys_socket")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfSocketE, ebpf.NewHookInfo().Kprobe("__x64_sys_socket")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfSocketR, ebpf.NewHookInfo().Kretprobe("__x64_sys_socket")))
 
 	// kprobe & kretprobe accept
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeAccept, ebpf.NewHookInfo().Kprobe("__x64_sys_accept")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeAccept, ebpf.NewHookInfo().Kretprobe("__x64_sys_accept")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfAcceptE, ebpf.NewHookInfo().Kprobe("__x64_sys_accept")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfAcceptR, ebpf.NewHookInfo().Kretprobe("__x64_sys_accept")))
 
 	// kprobe & kretprobe bind
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeBind, ebpf.NewHookInfo().Kprobe("__x64_sys_bind")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeBind, ebpf.NewHookInfo().Kretprobe("__x64_sys_bind")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfBindE, ebpf.NewHookInfo().Kprobe("__x64_sys_bind")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfBindR, ebpf.NewHookInfo().Kretprobe("__x64_sys_bind")))
 
 	// kprobe & kretprobe connect
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KprobeConnect, ebpf.NewHookInfo().Kprobe("__x64_sys_connect")))
-	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.KretprobeConnect, ebpf.NewHookInfo().Kretprobe("__x64_sys_connect")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfConnectE, ebpf.NewHookInfo().Kprobe("__x64_sys_connect")))
+	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfConnectR, ebpf.NewHookInfo().Kretprobe("__x64_sys_connect")))
 
 	return tarianDetectorModule, nil
 }

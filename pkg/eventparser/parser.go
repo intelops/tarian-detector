@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package eventparser
 
@@ -11,225 +11,328 @@ import (
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
-const (
-	noneT = iota
-	intT
-	uintT
-	longT
-	ulongT
-	strT
-	strArrT
-)
-
-type Event struct {
-	buffer     []byte
-	cursor     int
-	fieldCount uint8
+type ByteStream struct {
+	data     []byte
+	position int
+	nparams  uint8
 }
 
-type RawArgInfo struct {
-	Index uint8  // index of field
-	Type  uint8  // Type of the field (e.g., "int", "string", "long")
-	Size  int    // size of field in bytes
-	Value []byte // Actual value of the field as a byte slice
-}
-
-func New(rawBuffer []byte, count uint8) *Event {
-	return &Event{
-		buffer:     rawBuffer,
-		cursor:     0,
-		fieldCount: count,
+func NewByteStream(inputData []byte, n uint8) *ByteStream {
+	return &ByteStream{
+		data:     inputData,
+		position: 0,
+		nparams:  n,
 	}
 }
 
-func DecodeByte(b []byte) (map[string]any, error) {
-	var event_data map[string]any = make(map[string]any)
+var Events TarianEventMap
 
-	var ec EventContext
-	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &ec)
+func ParseByteArray(data []byte) (map[string]any, error) {
+	/*
+		Assuming a specific byte pattern within the byte array:
+
+		tarianmetadata + params
+	*/
+	eventId, err := getEventId(data)
 	if err != nil {
-		return map[string]any{}, err
+		return nil, err
 	}
 
-	event_data["ts"] = ec.Context.Ts
-	event_data["start_time"] = ec.Context.Task.StartTime
-	event_data["host_pid"] = ec.Context.Task.HostPid
-	event_data["host_tgid"] = ec.Context.Task.HostTgid
-	event_data["host_ppid"] = ec.Context.Task.HostPpid
-	event_data["pid"] = ec.Context.Task.Pid
-	event_data["tgid"] = ec.Context.Task.Tgid
-	event_data["ppid"] = ec.Context.Task.Ppid
-	event_data["uid"] = ec.Context.Task.Uid
-	event_data["gid"] = ec.Context.Task.Gid
-	event_data["cgroup_id"] = ec.Context.Task.CgroupId
-	event_data["mount_ns_id"] = ec.Context.Task.MountNsId
-	event_data["pid_ns_id"] = ec.Context.Task.PidNsId
-	event_data["exec_id"] = ec.Context.Task.ExecId
-	event_data["exec_exec_id"] = ec.Context.Task.EexecId
-	event_data["parent_exec_id"] = ec.Context.Task.ParentExecId
-	event_data["exec_parent_exec_id"] = ec.Context.Task.EparentExecId
-	event_data["comm"] = utils.ToString(ec.Context.Task.Comm[:])
+	event, noEvent := Events[eventId]
+	if !noEvent {
+		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v", eventId)
+	}
 
-	cwd_idx, err := utils.Uint16(ec.Context.Task.Cwd[:2])
+	var metaData TarianMetaData
+	lenMetaData := binary.Size(metaData)
+	err = binary.Read(bytes.NewReader(data[:lenMetaData]), binary.LittleEndian, &metaData)
 	if err != nil {
-		return map[string]any{}, nil
+		return nil, err
 	}
 
-	cwd_sz, err := utils.Uint16(ec.Context.Task.Cwd[2:4])
+	if metaData.MetaData.Syscall != int32(event.syscallId) {
+		metaData.MetaData.Syscall = int32(event.syscallId)
+	}
+
+	record := toMap(metaData)
+	record["eventId"] = event.name
+
+	bs := NewByteStream(data[lenMetaData:], metaData.MetaData.Nparams)
+	ps, err := bs.parseParams(event)
 	if err != nil {
-		return map[string]any{}, nil
+		return nil, err
 	}
 
-	event_data["cwd"] = utils.ToString(ec.Context.Task.Cwd[cwd_idx : cwd_idx+cwd_sz])
+	record["context"] = ps
 
-	event_data["event_id"] = ec.Context.EventId
-	event_data["syscall"] = ec.Context.Syscall
-	event_data["processor_id"] = ec.Context.ProcessorId
-
-	event_data["sysname"] = utils.ToString(ec.SystemInfo.Sysname[:])
-	event_data["nodename"] = utils.ToString(ec.SystemInfo.Nodename[:])
-	event_data["release"] = utils.ToString(ec.SystemInfo.Release[:])
-	event_data["version"] = utils.ToString(ec.SystemInfo.Version[:])
-	event_data["machine"] = utils.ToString(ec.SystemInfo.Machine[:])
-	event_data["domain_name"] = utils.ToString(ec.SystemInfo.Domainname[:])
-
-	be := New(ec.Buf.Data[:], ec.Buf.NumFields)
-	args, err := be.GetArgs(ec.Context.Syscall)
-	if err != nil {
-		return map[string]any{}, err
-	}
-
-	for _, arg := range args {
-		event_data[arg.Name] = arg.Value
-	}
-
-	return event_data, nil
+	return record, nil
 }
 
-func (e *Event) GetArgs(id int32) ([]Arg, error) {
-	var args []Arg
-
-	rawArgs, err := e.GetRawArgs()
-	if err != nil {
-		return args, err
+func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
+	tParams := event.params
+	if len(tParams) <= 0 {
+		return nil, fmt.Errorf("missing event from var Events TarianEventMap")
 	}
 
-	for _, rawArg := range rawArgs {
-		arg, err := rawArg.GetArg(id)
-		if err != nil {
-			return []Arg{}, err
+	var args []arg
+
+	for i := 0; i < int(bs.nparams); i++ {
+		if bs.position >= len(bs.data) {
+			break
 		}
 
-		args = append(args, arg)
+		if i >= len(tParams) {
+			break
+		}
+
+		ag, err := bs.parseParam(tParams[i])
+		if err != nil {
+			return nil, err
+		}
+
+		args = append(args, ag)
 	}
 
 	return args, nil
 }
 
-func (r RawArgInfo) GetArg(id int32) (Arg, error) {
-	idx := int(r.Index)
-
-	arg_info, keyExists := syscalls[id]
-	if !keyExists || (idx < 0 || idx >= len(arg_info.Args)) {
-		sa := SysArg{
-			Name:     fmt.Sprintf("arg%d", idx),
-			Function: nil,
-		}
-
-		arg_info.Args = append(arg_info.Args, sa)
-
-		idx = len(arg_info.Args) - 1
-	}
-
-	arg := Arg{}
-
-	switch r.Type {
-	case intT:
-		val, err := utils.Int(r.Value)
-		if err != nil {
-			return arg, err
-		}
-		arg.Value = fmt.Sprintf("%d", val)
-	case uintT:
-		val, err := utils.Uint(r.Value)
-		if err != nil {
-			return arg, err
-		}
-
-		arg.Value = fmt.Sprintf("%d", val)
-	case longT:
-		val, err := utils.Int64(r.Value)
-		if err != nil {
-			return arg, err
-		}
-
-		arg.Value = fmt.Sprintf("%d", val)
-	case ulongT:
-		val, err := utils.Uint64(r.Value)
-		if err != nil {
-			return arg, err
-		}
-
-		arg.Value = fmt.Sprintf("%v", val)
-	case strT:
-		arg.Value = utils.ToString(r.Value)
-	case strArrT:
-		arg.Value = "function under development"
-	}
-
+func (bs *ByteStream) parseParam(p Param) (arg, error) {
+	var pVal any
 	var err error
-	arg, err = arg_info.Args[idx].ParseArg(arg.Value)
+
+	switch p.paramType {
+	case TDT_U8:
+		pVal, err = utils.Uint8(bs.data[bs.position : bs.position+1])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 1
+	case TDT_U16:
+		pVal, err = utils.Uint16(bs.data[bs.position : bs.position+2])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 2
+	case TDT_U32:
+		pVal, err = utils.Uint32(bs.data[bs.position : bs.position+4])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 4
+	case TDT_U64:
+		pVal, err = utils.Uint64(bs.data[bs.position : bs.position+8])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 8
+	case TDT_S8:
+		pVal, err = utils.Int8(bs.data[bs.position : bs.position+1])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 1
+	case TDT_S16:
+		pVal, err = utils.Int16(bs.data[bs.position : bs.position+2])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 2
+	case TDT_S32:
+		pVal, err = utils.Int32(bs.data[bs.position : bs.position+4])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 4
+	case TDT_S64:
+		pVal, err = utils.Int64(bs.data[bs.position : bs.position+8])
+		if err != nil {
+			return arg{}, err
+		}
+
+		bs.position += 8
+	case TDT_STR, TDT_STR_ARR:
+		slen, err := bs.readShort()
+		if err != nil {
+			return arg{}, err
+		}
+
+		pVal = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
+		bs.position += int(slen)
+	case TDT_BYTE_ARR:
+		slen, err := bs.readShort()
+		if err != nil {
+			return arg{}, err
+		}
+
+		pVal = fmt.Sprintf("%v", bs.data[bs.position:bs.position+int(slen)])
+		bs.position += int(slen)
+
+	case TDT_SOCKADDR:
+		family, err := bs.readByte()
+		if err != nil {
+			return arg{}, err
+		}
+
+		switch family {
+		case AF_INET:
+			{
+				type sockaddr_in struct {
+					Family  string
+					Sa_addr string
+					Sa_port uint16
+				}
+
+				var addr sockaddr_in
+				addr.Family = "AF_INET"
+
+				ipv4_arr := bs.data[bs.position : bs.position+4]
+				bs.position += 4
+
+				addr.Sa_addr = utils.Ipv4([4]byte(ipv4_arr))
+
+				port, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sa_port = utils.Ntohs(port)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		case AF_INET6:
+			{
+				type sockaddr_in6 struct {
+					Family  string
+					Sa_addr string
+					Sa_port uint16
+				}
+
+				var addr sockaddr_in6
+				addr.Family = "AF_INET6"
+
+				ipv6_arr := bs.data[bs.position : bs.position+16]
+				bs.position += 16
+
+				addr.Sa_addr = utils.Ipv6([16]byte(ipv6_arr))
+
+				port, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sa_port = utils.Ntohs(port)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		case AF_UNIX:
+			{
+				type sockaddr_un struct {
+					Family   string
+					Sun_path string
+				}
+
+				var addr sockaddr_un
+				addr.Family = "AF_UNIX"
+
+				slen, err := bs.readShort()
+				if err != nil {
+					return arg{}, err
+				}
+
+				addr.Sun_path = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
+				bs.position += int(slen)
+
+				pVal = fmt.Sprintf("%+v", addr)
+			}
+		}
+	}
+
+	return p.processValue(pVal)
+}
+
+func (bs *ByteStream) readByte() (uint8, error) {
+	bt, err := utils.Uint8(bs.data[bs.position : bs.position+1])
 	if err != nil {
-		return Arg{}, err
+		return 0, err
 	}
 
-	return arg, nil
+	bs.position += 1
+	return bt, nil
 }
 
-func (e *Event) GetRawArgs() ([]RawArgInfo, error) {
-	var args []RawArgInfo
-
-	for i := uint8(0); i < e.fieldCount; i++ {
-		arg, err := e.GetRawArg()
-		if err != nil {
-			return []RawArgInfo{}, err
-		}
-		args = append(args, arg)
+func (bs *ByteStream) readShort() (uint16, error) {
+	sh, err := utils.Uint16(bs.data[bs.position : bs.position+2])
+	if err != nil {
+		return 0, err
 	}
 
-	return args, nil
+	bs.position += 2
+	return sh, nil
 }
 
-func (e *Event) GetRawArg() (RawArgInfo, error) {
-	var arg RawArgInfo
-
-	arg.Index = e.buffer[e.cursor]
-	e.cursor++
-	arg.Type = e.buffer[e.cursor]
-	e.cursor++
-
-	switch arg.Type {
-	case intT, uintT:
-		arg.Size = 4
-		arg.Value = e.buffer[e.cursor : e.cursor+arg.Size]
-		e.cursor += 4
-	case longT, ulongT:
-		arg.Size = 8
-		arg.Value = e.buffer[e.cursor : e.cursor+arg.Size]
-		e.cursor += 8
-	case strT:
-		sz, err := utils.Uint16(e.buffer[e.cursor : e.cursor+2])
-		if err != nil {
-			return arg, err
-		}
-		arg.Size = int(sz)
-		e.cursor += 2
-		arg.Value = e.buffer[e.cursor : e.cursor+arg.Size]
-		e.cursor += arg.Size
-	case strArrT:
-		arg.Size = 8
-		arg.Value = []byte{}
+func (bs *ByteStream) readInt() (uint32, error) {
+	it, err := utils.Uint32(bs.data[bs.position : bs.position+4])
+	if err != nil {
+		return 0, err
 	}
 
-	return arg, nil
+	bs.position += 4
+	return it, nil
+}
+
+func getEventId(data []byte) (int, error) {
+	if len(data) < 4 {
+		return 0, fmt.Errorf("input data length is %d, expected at least %d", len(data), 4)
+	}
+
+	var id int32
+	err := binary.Read(bytes.NewReader(data[:4]), binary.LittleEndian, &id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read event ID from data: %w", err)
+	}
+
+	return int(id), nil
+}
+
+func toMap(t TarianMetaData) map[string]any {
+	m := make(map[string]any)
+
+	m["eventName"] = t.MetaData.Event
+	m["timestamp"] = t.MetaData.Ts
+	m["syscallId"] = t.MetaData.Syscall
+	m["processor"] = t.MetaData.Processor
+
+	// task
+	m["threadStartTime"] = t.MetaData.Task.StartTime
+	m["hostProcessId"] = t.MetaData.Task.HostPid
+	m["hostThreadId"] = t.MetaData.Task.HostTgid
+	m["hostParentProcessId"] = t.MetaData.Task.HostPpid
+	m["processId"] = t.MetaData.Task.Pid
+	m["threadId"] = t.MetaData.Task.Tgid
+	m["parentProcessId"] = t.MetaData.Task.Ppid
+	m["userId"] = t.MetaData.Task.Uid
+	m["groupId"] = t.MetaData.Task.Gid
+	m["cgroupId"] = t.MetaData.Task.CgroupId
+	m["mountNamespace"] = t.MetaData.Task.MountNsId
+	m["pidNamespace"] = t.MetaData.Task.PidNsId
+	m["execId"] = t.MetaData.Task.ExecId
+	m["parentExecId"] = t.MetaData.Task.ParentExecId
+	m["processName"] = utils.ToString(t.MetaData.Task.Comm[:])
+	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:])
+
+	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:])
+	m["nodename"] = utils.ToString(t.SystemInfo.Nodename[:])
+	m["release"] = utils.ToString(t.SystemInfo.Release[:])
+	m["version"] = utils.ToString(t.SystemInfo.Version[:])
+	m["machine"] = utils.ToString(t.SystemInfo.Machine[:])
+	m["domainname"] = utils.ToString(t.SystemInfo.Domainname[:])
+
+	return m
 }

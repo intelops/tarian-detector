@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package k8s
 
@@ -50,7 +50,7 @@ func FindDockerIDFromCgroup(cgroups string) string {
 	return ""
 }
 
-// procsContainerIDOffset Returns the container ID and its offset
+// ProcsContainerIDOffset Returns the container ID and its offset
 // This can fail, better use LookupContainerId to handle different container runtimes.
 func ProcsContainerIDOffset(subdir string) (string, int) {
 	// If the cgroup subdir contains ":" it means that we are dealing with
@@ -67,7 +67,7 @@ func ProcsContainerIDOffset(subdir string) (string, int) {
 	return s[len(s)-1], off + p
 }
 
-// lookupContainerID returns the container ID as a 31 character string length from the full cgroup path
+// LookupContainerID returns the container ID as a 31 character string length from the full cgroup path
 // cgroup argument is the full cgroup path
 // Returns the container ID as a string of 31 characters and its offset on the full cgroup path,
 // otherwise on errors an empty string and 0 as offset.
