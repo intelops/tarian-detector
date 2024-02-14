@@ -42,7 +42,6 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
     te->buf.pos = 0;
     te->buf.data = store;
 
-    // bpf_printk("Execve reserve %s %ld", "success", sz);
     return TDC_SUCCESS;
 }
 
