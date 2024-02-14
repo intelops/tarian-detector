@@ -54,20 +54,13 @@ func main() {
 	}
 	defer eventsDetector.Close()
 
-	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
-	// defer stats(eventsDetector, bpfLinker)
+	log.Printf("%d probes running...\n\n", eventsDetector.Count())
 
-	count := 0
-	// var mutex sync.Mutex
 	go func() {
+		<-stopper
 
-		select {
-		case <-stopper:
-			// case <-time.After(10 * time.Second):
-			eventsDetector.Close()
-			fmt.Println("records captured count in 10s: ", count)
-			os.Exit(0)
-		}
+		eventsDetector.Close()
+		os.Exit(0)
 	}()
 
 	// Loop read events
@@ -86,19 +79,8 @@ func main() {
 			// 	e["kubernetes"] = k8sCtx
 			// }
 
-			// if e["cwd"] != "/home/cravela@appstekcorp.local/Projects/DOUBLE/DELETE/DELETE/tarian-detector/" {
-			// 	continue
-			// }
-
-			// if err := utils.WriteJSONToFile(e, "exec_id.json", &mutex); err != nil {
-			// 	fmt.Println("Error writing:", err)
-			// }
-
-			count++
-			printEvent(0, count, e)
-			// if count > 1000 {
-			// 	os.Exit(1)
-			// }
+			_ = e
+			// printEvent(e, eventsDetector.GetTotalCount())
 		}
 	}()
 
@@ -108,12 +90,12 @@ func main() {
 	}
 }
 
-func printEvent(rc int, t int, data map[string]any) {
+func printEvent(data map[string]any, t int) {
 	div := "======================"
 	msg := ""
 	for ky, val := range data {
 		msg += fmt.Sprintf("%s: %v\n", ky, val)
 	}
 
-	log.Printf("%s\nStatus of ring buffer %d. Remaining %d, Total: %d\n%s%s\n", div, data["processor_id"], rc/14865, t, msg, div)
+	log.Printf("Total captured %d.\n%s\n%s%s\n", t, div, msg, div)
 }
