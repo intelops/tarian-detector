@@ -4,11 +4,11 @@
 package detector
 
 import (
-	"github.com/cilium/ebpf/ringbuf"
 	"github.com/intelops/tarian-detector/pkg/eventparser"
 )
 
 type EventDetector interface {
+	Count() int
 	Close() error
 	ReadAsInterface() ([]func() ([]byte, error), error)
 }
@@ -19,30 +19,51 @@ type detectorReadReturn struct {
 }
 
 type EventsDetector struct {
-	detectors  []EventDetector
-	eventQueue chan detectorReadReturn
-	started    bool
-	closed     bool
-
-	/*TODO: UPDATE THIS as unexported fields and provide getters and setters for this*/
-	ProbeRecordsCount map[string]int
-	TotalRecordsCount int
+	detectors         []EventDetector
+	eventQueue        chan detectorReadReturn
+	started           bool
+	closed            bool
+	totalRecordsCount int
+	totalDetectors    int
+	probeRecordsCount map[string]int
 }
 
 func NewEventsDetector() *EventsDetector {
 	return &EventsDetector{
 		detectors:  make([]EventDetector, 0),
-		eventQueue: make(chan detectorReadReturn, 8192*64),
+		eventQueue: make(chan detectorReadReturn, 8192*16),
 		started:    false,
 		closed:     false,
 
-		ProbeRecordsCount: make(map[string]int),
-		TotalRecordsCount: 0,
+		probeRecordsCount: make(map[string]int),
+		totalRecordsCount: 0,
+		totalDetectors:    0,
 	}
 }
 
-func (t *EventsDetector) Add(detectors EventDetector) {
-	t.detectors = append(t.detectors, detectors)
+func (t *EventsDetector) Add(detector EventDetector) {
+	t.detectors = append(t.detectors, detector)
+	t.incrementDetectorCountBy(detector.Count())
+}
+
+func (t *EventsDetector) incrementDetectorCountBy(n int) {
+	t.totalDetectors += n
+}
+
+func (t *EventsDetector) incrementTotalCount() {
+	t.totalRecordsCount++
+}
+
+func (t *EventsDetector) GetTotalCount() int {
+	return t.totalRecordsCount
+}
+
+func (t *EventsDetector) probeCount(probe string) {
+	t.probeRecordsCount[probe]++
+}
+
+func (t *EventsDetector) GetProbeCount() map[string]int {
+	return t.probeRecordsCount
 }
 
 func (t *EventsDetector) Start() error {
@@ -92,20 +113,24 @@ func (t *EventsDetector) Close() error {
 }
 
 func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
+	eventparser.LoadTarianEvents()
 	r := <-t.eventQueue
 	if r.err != nil {
 		return map[string]any{}, r.err
 	}
 
-	eventparser.LoadTarianEvents()
+	t.incrementTotalCount()
 	data, err := eventparser.ParseByteArray(r.eventData)
+	if err == nil {
+		probe, ok := data["eventId"]
+		if ok {
+			t.probeCount(probe.(string))
+		}
+	}
+
 	return data, err
 }
 
 func (t *EventsDetector) Count() int {
-	return len(t.detectors)
-}
-
-func mapReader(r *ringbuf.Reader) (ringbuf.Record, error) {
-	return r.Read()
+	return t.totalDetectors
 }
