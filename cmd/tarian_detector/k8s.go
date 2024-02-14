@@ -11,7 +11,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var NotInClusterErrMsg = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+const (
+	NotInClusterErrMsg string = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+)
 
 func K8Watcher() (*k8s.PodWatcher, error) {
 	config, err := rest.InClusterConfig()
