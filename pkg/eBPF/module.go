@@ -50,11 +50,13 @@ func (m *Module) Prepare() (*Handler, error) {
 	*
 	 */
 	for _, prog := range m.programs {
+		hook := prog.hook
+
 		if !prog.shouldAttach {
 			continue
 		}
 
-		pL, err := prog.hook.AttachProbe(prog.name)
+		pL, err := hook.AttachProbe(prog.name)
 		if err != nil {
 			return nil, moduleErr.Throwf("%v", err)
 		}
