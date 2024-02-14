@@ -3,16 +3,11 @@
 
 #include "index.h"
 
-long total = 0, dropped = 0;
-
 // License Declaration
 char LICENSE[] SEC("license") = "Dual MIT/GPL";
 
 #define KPROBE(__hook) SEC("kprobe/"#__hook)
 #define KRETPROBE(__hook) SEC("kprobe/"#__hook)
-
-/* Given a variable, this returns its `char` pointer. */
-#define CHAR_POINTER(x) (char *)&x
 
 #if defined(bpf_target_x86)
 #define __PT_PARM6_REG r9
@@ -69,13 +64,6 @@ stain u64 execId(u32 processId, u64 start_time){
     u64 unique_id = processId;
     unique_id = (unique_id << 32) | start_time;
 
-    // for (int i = 0; i < (command_size & (TASK_COMM_LEN - 1)); i++) {
-    //     if (command[i] == '\0') 
-    //       break;
-
-    //     unique_id = (unique_id << 8) | (u8)command[i & (TASK_COMM_LEN - 1)];
-    // }
-
     return unique_id;
 }
 
@@ -92,15 +80,16 @@ stain u64 getParentExecId(u32 processId, struct task_struct *task) {
 }
 
 stain void print_event(tarian_event_t *te) {
-  bpf_printk("Execve 1. ts %ld 2. event %d 3. syscall %d", te->tarian->meta_data.ts, te->tarian->meta_data.event, te->tarian->meta_data.syscall);
-  bpf_printk("Execve 4. processor %d 5. starttime %ld 6. comm %s", te->tarian->meta_data.processor, te->tarian->meta_data.task.start_time, te->tarian->meta_data.task.comm);
-  bpf_printk("Execve 7. hpid %d 8. htgid %d 9. hppid %d", te->tarian->meta_data.task.host_pid, te->tarian->meta_data.task.host_tgid, te->tarian->meta_data.task.host_ppid);
-  bpf_printk("Execve 10. pid %d 11. tgid %d 12. ppid %d", te->tarian->meta_data.task.pid, te->tarian->meta_data.task.tgid, te->tarian->meta_data.task.ppid);
-  bpf_printk("Execve 13. uid %d 14. gid %d 15. cgroup %ld", te->tarian->meta_data.task.uid, te->tarian->meta_data.task.gid, te->tarian->meta_data.task.cgroup_id);
-  bpf_printk("Execve 16. mount %ld 17. pid_ns %ld 18. exec %ld", te->tarian->meta_data.task.mount_ns_id, te->tarian->meta_data.task.pid_ns_id, te->tarian->meta_data.task.exec_id);
-  bpf_printk("Execve 19. parent_exec %ld 20. sysname %s 21. nodename %s ", te->tarian->meta_data.task.parent_exec_id, te->tarian->system_info.sysname, te->tarian->system_info.nodename);
-  bpf_printk("Execve 22. release %s 23. version %s", te->tarian->system_info.release, te->tarian->system_info.version);
-  bpf_printk("Execve 24. machine %s 25. domainname %s", te->tarian->system_info.machine, te->tarian->system_info.domainname);
+  bpf_printk("1. ts %ld 2. event %d 3. syscall %d", te->tarian->meta_data.ts, te->tarian->meta_data.event, te->tarian->meta_data.syscall);
+  bpf_printk("4. processor %d 5. starttime %ld 6. comm %s", te->tarian->meta_data.processor, te->tarian->meta_data.task.start_time, te->tarian->meta_data.task.comm);
+  bpf_printk("7. hpid %d 8. htgid %d 9. hppid %d", te->tarian->meta_data.task.host_pid, te->tarian->meta_data.task.host_tgid, te->tarian->meta_data.task.host_ppid);
+  bpf_printk("10. pid %d 11. tgid %d 12. ppid %d", te->tarian->meta_data.task.pid, te->tarian->meta_data.task.tgid, te->tarian->meta_data.task.ppid);
+  bpf_printk("13. uid %d 14. gid %d 15. cgroup %ld", te->tarian->meta_data.task.uid, te->tarian->meta_data.task.gid, te->tarian->meta_data.task.cgroup_id);
+  bpf_printk("16. mount %ld 17. pid_ns %ld 18. exec %ld", te->tarian->meta_data.task.mount_ns_id, te->tarian->meta_data.task.pid_ns_id, te->tarian->meta_data.task.exec_id);
+  bpf_printk("19. parent_exec %ld 20. sysname %s 21. nodename %s ", te->tarian->meta_data.task.parent_exec_id, te->tarian->system_info.sysname, te->tarian->system_info.nodename);
+  bpf_printk("22. release %s 23. version %s", te->tarian->system_info.release, te->tarian->system_info.version);
+  bpf_printk("24. machine %s 25. domainname %s 26. nparams %d", te->tarian->system_info.machine, te->tarian->system_info.domainname, te->tarian->meta_data.nparams);
+  bpf_printk("27. cwd %s", te->tarian->meta_data.task.cwd);
 };
 
 #define SCRATCH_SAFE_ACCESS(x) (x) & (MAX_STRING_SIZE - 1)
