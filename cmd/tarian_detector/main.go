@@ -18,6 +18,9 @@ import (
 )
 
 func main() {
+	stopper := make(chan os.Signal, 1)
+	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
+
 	// Start kubernetes watcher
 	watcher, err := K8Watcher()
 	if err != nil {
@@ -29,9 +32,6 @@ func main() {
 	} else {
 		watcher.Start()
 	}
-
-	stopper := make(chan os.Signal, 1)
-	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
 
 	tarianEbpfModule, err := tarian.GetModule()
 	if err != nil {
@@ -91,7 +91,7 @@ func main() {
 }
 
 func printEvent(data map[string]any, t int) {
-	div := "======================"
+	div := "=================================="
 	msg := ""
 	for ky, val := range data {
 		msg += fmt.Sprintf("%s: %v\n", ky, val)
