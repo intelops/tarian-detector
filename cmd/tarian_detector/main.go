@@ -55,6 +55,7 @@ func main() {
 		<-stopper
 
 		eventsDetector.Close()
+		log.Printf("Total records captured : %d\n", eventsDetector.GetTotalCount())
 		os.Exit(0)
 	}()
 
