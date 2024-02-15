@@ -6,7 +6,11 @@ package eventparser
 import (
 	"fmt"
 	"strings"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
+
+var tansformerErr = err.New("eventparser.transformer")
 
 const (
 	AT_FDCWD              = -100
@@ -23,36 +27,44 @@ const (
 	AT_EACCESS            = 0x200
 )
 
+var execveatDirdMap = map[int32]string{
+	AT_FDCWD:      "AT_FDCWD",
+	AT_EMPTY_PATH: "AT_EMPTY_PATH",
+}
+
 func parseExecveatDird(dird any) (string, error) {
 	d, ok := dird.(int32)
 	if !ok {
-		return fmt.Sprintf("%v", dird), fmt.Errorf("parseExecveatDird: parse value error")
+		return fmt.Sprintf("%v", dird), tansformerErr.Throwf("parseExecveatDird: parse value error expected %T received %T", d, dird)
 	}
 
-	if d == AT_FDCWD {
-		return "AT_FDCWD", nil
-	}
-
-	if d == AT_EMPTY_PATH {
-		return "AT_EMPTY_PATH", nil
+	if s, ok := execveatDirdMap[d]; ok {
+		return s, nil
 	}
 
 	return fmt.Sprintf("%v", d), nil
 }
 
+// Use a slice to store the flags that need to be checked
+var execveatFlagSlice = []struct {
+	flag int32
+	name string
+}{
+	{AT_EMPTY_PATH, "AT_EMPTY_PATH"},
+	{AT_SYMLINK_NOFOLLOW, "AT_SYMLINK_NOFOLLOW"},
+}
+
 func parseExecveatFlags(flag any) (string, error) {
 	f, ok := flag.(int32)
 	if !ok {
-		return fmt.Sprintf("%v", flag), fmt.Errorf("parseExecveatFlags: parse value error")
+		return fmt.Sprintf("%v", flag), tansformerErr.Throwf("parseExecveatFlags: parse value error expected %T received %T", f, flag)
 	}
 
 	var fs []string
-	if f&AT_EMPTY_PATH == AT_EMPTY_PATH {
-		fs = append(fs, "AT_EMPTY_PATH")
-	}
-
-	if f&AT_SYMLINK_NOFOLLOW == AT_SYMLINK_NOFOLLOW {
-		fs = append(fs, "AT_SYMLINK_NOFOLLOW")
+	for _, v := range execveatFlagSlice {
+		if f&v.flag != v.flag {
+			fs = append(fs, v.name)
+		}
 	}
 
 	if len(fs) == 0 {
