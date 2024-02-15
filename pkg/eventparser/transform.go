@@ -27,7 +27,7 @@ const (
 	AT_EACCESS            = 0x200
 )
 
-var execveatDirdMap = map[int32]string{
+var execveatDird = map[int32]string{
 	AT_FDCWD:      "AT_FDCWD",
 	AT_EMPTY_PATH: "AT_EMPTY_PATH",
 }
@@ -38,7 +38,7 @@ func parseExecveatDird(dird any) (string, error) {
 		return fmt.Sprintf("%v", dird), tansformerErr.Throwf("parseExecveatDird: parse value error expected %T received %T", d, dird)
 	}
 
-	if s, ok := execveatDirdMap[d]; ok {
+	if s, ok := execveatDird[d]; ok {
 		return s, nil
 	}
 
@@ -46,7 +46,7 @@ func parseExecveatDird(dird any) (string, error) {
 }
 
 // Use a slice to store the flags that need to be checked
-var execveatFlagSlice = []struct {
+var execveatFlag = []struct {
 	flag int32
 	name string
 }{
@@ -61,8 +61,8 @@ func parseExecveatFlags(flag any) (string, error) {
 	}
 
 	var fs []string
-	for _, v := range execveatFlagSlice {
-		if f&v.flag != v.flag {
+	for _, v := range execveatFlag {
+		if f&v.flag == v.flag {
 			fs = append(fs, v.name)
 		}
 	}
