@@ -4,12 +4,10 @@
 package k8s
 
 import (
-	"errors"
-	"fmt"
-	"log"
 	"strings"
 	"time"
 
+	"github.com/intelops/tarian-detector/pkg/err"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
@@ -18,13 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+var k8sErr = err.New("k8s.k8s")
+
 const (
 	containerIdx   = "container-ids"
 	containerIDLen = 15
-)
-
-var (
-	errNotPod = errors.New("object is not a *corev1.Pod")
 )
 
 // ContainerIndexFunc index pod by container IDs.
@@ -40,7 +36,7 @@ func ContainerIndexFunc(obj interface{}) ([]string, error) {
 
 		containerID, err := CleanContainerIDFromPod(fullContainerID)
 		if err != nil {
-			return err
+			return k8sErr.Throwf("%v", err)
 		}
 
 		containerIDs = append(containerIDs, containerID)
@@ -53,30 +49,30 @@ func ContainerIndexFunc(obj interface{}) ([]string, error) {
 		for _, container := range t.Status.InitContainerStatuses {
 			err := appendContainerID(container.ContainerID)
 			if err != nil {
-				return nil, err
+				return nil, k8sErr.Throwf("%v", err)
 			}
 		}
 		for _, container := range t.Status.ContainerStatuses {
 			err := appendContainerID(container.ContainerID)
 			if err != nil {
-				return nil, err
+				return nil, k8sErr.Throwf("%v", err)
 			}
 		}
 		for _, container := range t.Status.EphemeralContainerStatuses {
 			err := appendContainerID(container.ContainerID)
 			if err != nil {
-				return nil, err
+				return nil, k8sErr.Throwf("%v", err)
 			}
 		}
 		return containerIDs, nil
 	}
-	return nil, fmt.Errorf("%w - found %T", errNotPod, obj)
+	return nil, k8sErr.Throwf("object is not a *corev1.Pod - found %T", obj)
 }
 
 func CleanContainerIDFromPod(podContainerID string) (string, error) {
 	parts := strings.Split(podContainerID, "//")
 	if len(parts) != 2 {
-		return "", fmt.Errorf("unexpected containerID format, expecting 'docker://<name>', got %q", podContainerID)
+		return "", k8sErr.Throwf("unexpected containerID format, expecting 'docker://<name>', got %q", podContainerID)
 	}
 
 	containerID := parts[1]
@@ -96,7 +92,7 @@ type PodWatcher struct {
 	informerFactory informers.SharedInformerFactory
 }
 
-func NewPodWatcher(k8sClient *kubernetes.Clientset) *PodWatcher {
+func NewPodWatcher(k8sClient *kubernetes.Clientset) (*PodWatcher, error) {
 	k8sInformerFactory := informers.NewSharedInformerFactory(k8sClient, 60*time.Second) // informers.WithTweakListOptions(func(options *metav1.ListOptions) {
 
 	podInformer := k8sInformerFactory.Core().V1().Pods().Informer()
@@ -104,20 +100,18 @@ func NewPodWatcher(k8sClient *kubernetes.Clientset) *PodWatcher {
 		containerIdx: ContainerIndexFunc,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return nil, k8sErr.Throwf("%v", err)
 	}
 
-	return &PodWatcher{podInformer: podInformer, informerFactory: k8sInformerFactory}
+	return &PodWatcher{podInformer: podInformer, informerFactory: k8sInformerFactory}, nil
 }
 
 func (watcher *PodWatcher) Start() {
 	watcher.informerFactory.Start(wait.NeverStop)
 	watcher.informerFactory.WaitForCacheSync(wait.NeverStop)
-
-	// fmt.Println("PodWatcher: initial pods sync", "num", len(watcher.podInformer.GetStore().ListKeys()))
 }
 
-func (watcher *PodWatcher) FindPod(containerID string) *corev1.Pod {
+func (watcher *PodWatcher) FindPod(containerID string) (*corev1.Pod, error) {
 	indexedContainerID := containerID
 	if len(containerID) > containerIDLen {
 		indexedContainerID = containerID[:containerIDLen]
@@ -125,41 +119,41 @@ func (watcher *PodWatcher) FindPod(containerID string) *corev1.Pod {
 
 	pods, err := watcher.podInformer.GetIndexer().ByIndex(containerIdx, indexedContainerID)
 	if err != nil {
-		return nil
+		return nil, k8sErr.Throwf("%v", err)
 	}
 
 	return FindContainer(containerID, pods)
 }
 
-func FindContainer(containerID string, pods []interface{}) *corev1.Pod {
+func FindContainer(containerID string, pods []interface{}) (*corev1.Pod, error) {
 	if containerID == "" {
-		return nil
+		return nil, k8sErr.Throw("missing container id")
 	}
 
 	for _, obj := range pods {
 		pod, ok := obj.(*corev1.Pod)
 		if !ok {
-			return nil
+			return nil, k8sErr.Throwf("obj is not of type *corev1.Pod: %T", obj)
 		}
 
 		for _, container := range pod.Status.ContainerStatuses {
 			if ContainerIDContains(container.ContainerID, containerID) {
-				return pod
+				return pod, nil
 			}
 		}
 		for _, container := range pod.Status.InitContainerStatuses {
 			if ContainerIDContains(container.ContainerID, containerID) {
-				return pod
+				return pod, nil
 			}
 		}
 		for _, container := range pod.Status.EphemeralContainerStatuses {
 			if ContainerIDContains(container.ContainerID, containerID) {
-				return pod
+				return pod, nil
 			}
 		}
 	}
 
-	return nil
+	return nil, k8sErr.Throw("no such container in any known Pod")
 }
 
 func ContainerIDContains(containerID string, prefix string) bool {
