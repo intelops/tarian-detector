@@ -19,19 +19,17 @@ type arg struct {
 }
 
 type Param struct {
-	name        string
-	description string
-	paramType   TarianParamType
-	linuxType   string
-	function    func(any) (string, error)
+	name      string
+	paramType TarianParamType
+	linuxType string
+	function  func(any) (string, error)
 }
 
 type TarianEvent struct {
-	name        string
-	syscallId   int
-	description string
-	eventSize   uint32
-	params      []Param
+	name      string
+	syscallId int
+	eventSize uint32
+	params    []Param
 }
 
 type TarianEventMap map[int]TarianEvent

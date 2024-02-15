@@ -280,16 +280,6 @@ func (bs *ByteStream) readShort() (uint16, error) {
 	return sh, nil
 }
 
-func (bs *ByteStream) readInt() (uint32, error) {
-	it, err := utils.Uint32(bs.data[bs.position : bs.position+4])
-	if err != nil {
-		return 0, parserErr.Throwf("%v", err)
-	}
-
-	bs.position += 4
-	return it, nil
-}
-
 func getEventId(data []byte) (int, error) {
 	if len(data) < 4 {
 		return 0, parserErr.Throwf("input data length is %d, expected at least %d", len(data), 4)
