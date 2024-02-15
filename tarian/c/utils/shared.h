@@ -6,8 +6,8 @@
 // License Declaration
 char LICENSE[] SEC("license") = "Dual MIT/GPL";
 
-#define KPROBE(__hook) SEC("kprobe/"#__hook)
-#define KRETPROBE(__hook) SEC("kprobe/"#__hook)
+#define KPROBE(__hook) SEC("kprobe/" #__hook)
+#define KRETPROBE(__hook) SEC("kprobe/" #__hook)
 
 #if defined(bpf_target_x86)
 #define __PT_PARM6_REG r9
@@ -19,7 +19,8 @@ char LICENSE[] SEC("license") = "Dual MIT/GPL";
 
 #define PT_REGS_PARM6_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), __PT_PARM6_REG)
 #define PT_REGS_PARM6_CORE_SYSCALL(x) PT_REGS_PARM6_CORE(x)
-#define PT_REGS_SYSCALL_CORE(x) BPF_CORE_READ(__PT_REGS_CAST(x), __PT_SYSCALL_ID)
+#define PT_REGS_SYSCALL_CORE(x)                                                \
+  BPF_CORE_READ(__PT_REGS_CAST(x), __PT_SYSCALL_ID)
 
 stain uint32_t get_syscall_id(struct pt_regs *regs) {
   return (uint32_t)PT_REGS_SYSCALL_CORE(regs);
@@ -49,27 +50,28 @@ stain struct mount *real_mount(struct vfsmount *mnt) {
 }
 
 stain int flush(u8 *buf, u16 n) {
-  if (!buf) 
+  if (!buf)
     return TDCE_NULL_POINTER;
 
   u8 zero = 0;
 
-  for (int i = 0; i < n; i++){
-    if(bpf_probe_read(&buf[i], sizeof(u8), &zero) != 0) return TDC_FAILURE;    
+  for (int i = 0; i < n; i++) {
+    if (bpf_probe_read(&buf[i], sizeof(u8), &zero) != 0)
+      return TDC_FAILURE;
   }
   return TDC_SUCCESS;
 }
 
-stain u64 execId(u32 processId, u64 start_time){
-    u64 unique_id = processId;
-    unique_id = (unique_id << 32) | start_time;
+stain u64 execId(u32 processId, u64 start_time) {
+  u64 unique_id = processId;
+  unique_id = (unique_id << 32) | start_time;
 
-    return unique_id;
+  return unique_id;
 }
 
 stain u64 getExecId(u32 processId, struct task_struct *task) {
   u64 start_time = get_task_start_time(task);
-  return execId(processId, start_time); 
+  return execId(processId, start_time);
 }
 
 stain u64 getParentExecId(u32 processId, struct task_struct *task) {
@@ -98,8 +100,8 @@ stain uint8_t *get__cwd_d_path(uint32_t *slen, scratch_space_t *s, struct task_s
   struct dentry *dentry = path.dentry;
   struct vfsmount *vfsmnt = path.mnt;
 
-  struct mount *mnt_p =  real_mount(vfsmnt);
-  
+  struct mount *mnt_p = real_mount(vfsmnt);
+
   struct mount *mnt_parent_p = NULL;
   bpf_probe_read_kernel(&mnt_parent_p, sizeof(struct mount *), &mnt_p->mnt_parent);
 
@@ -119,27 +121,30 @@ stain uint8_t *get__cwd_d_path(uint32_t *slen, scratch_space_t *s, struct task_s
 #pragma unroll
   for (int i = 0; i < MAX_NUM_COMPONENTS; i++) {
     bpf_probe_read_kernel(&d_parent, sizeof(struct dentry *), &dentry->d_parent);
-    if (dentry == d_parent && dentry != mnt_root_p) break;
+    if (dentry == d_parent && dentry != mnt_root_p)
+      break;
 
     if (dentry == mnt_root_p) {
-      if(mnt_p != mnt_parent_p) {
+      if (mnt_p != mnt_parent_p) {
         bpf_probe_read_kernel(&dentry, sizeof(struct dentry *), &mnt_p->mnt_mountpoint);
         bpf_probe_read_kernel(&mnt_p, sizeof(struct mount *), &mnt_p->mnt_parent);
         bpf_probe_read_kernel(&mnt_parent_p, sizeof(struct mount *), &mnt_p->mnt_parent);
         vfsmnt = &mnt_p->mnt;
         bpf_probe_read_kernel(&mnt_root_p, sizeof(struct dentry *), &vfsmnt->mnt_root);
         continue;
-      } else break;
+      } else
+        break;
     }
 
     bpf_probe_read_kernel(&d_name, sizeof(struct qstr), &dentry->d_name);
 
-    len += (d_name.len+1) & (MAX_STRING_SIZE - 1);
-    
+    len += (d_name.len + 1) & (MAX_STRING_SIZE - 1);
+
     s->pos = max_buf_len - (d_name.len + 1);
     effective_name_len = bpf_probe_read_kernel_str(&s->data[SCRATCH_SAFE_ACCESS(s->pos)], MAX_STRING_SIZE, (void *)d_name.name);
-    if (effective_name_len <= 1) break;
-    
+    if (effective_name_len <= 1)
+      break;
+
     max_buf_len -= 1;
     bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]), 1, &slash);
     max_buf_len -= (effective_name_len - 1);
