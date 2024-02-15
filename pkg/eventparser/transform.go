@@ -206,7 +206,7 @@ func parseSignal(sig uint16) (string, error) {
 func parseOpenMode(mode any) (string, error) {
 	m, ok := mode.(uint32)
 	if !ok {
-		return fmt.Sprintf("%v", mode), fmt.Errorf("parseOpenMode: parse value error")
+		return fmt.Sprintf("%v", mode), tansformerErr.Throwf("parseOpenMode: parse value error expected %T received %T", m, mode)
 	}
 
 	return fmt.Sprintf("%04o", m), nil
@@ -236,10 +236,31 @@ const (
 	O_TMPFILE   = 020000000
 )
 
+var openFlags = map[int32]string{
+	O_ACCMODE:   "O_ACCMODE",
+	O_CREAT:     "O_CREAT",
+	O_EXCL:      "O_EXCL",
+	O_NOCTTY:    "O_NOCTTY",
+	O_TRUNC:     "O_TRUNC",
+	O_APPEND:    "O_APPEND",
+	O_NONBLOCK:  "O_NONBLOCK",
+	O_SYNC:      "O_SYNC",
+	O_ASYNC:     "O_ASYNC",
+	O_LARGEFILE: "O_LARGEFILE",
+	O_DIRECTORY: "O_DIRECTORY",
+	O_NOFOLLOW:  "O_NOFOLLOW",
+	O_CLOEXEC:   "O_CLOEXEC",
+	O_DIRECT:    "O_DIRECT",
+	O_NOATIME:   "O_NOATIME",
+	O_PATH:      "O_PATH",
+	O_DSYNC:     "O_DSYNC",
+	O_TMPFILE:   "O_TMPFILE",
+}
+
 func parseOpenFlags(flags any) (string, error) {
 	f, ok := flags.(int32)
 	if !ok {
-		return fmt.Sprintf("%v", f), fmt.Errorf("parseOpenFlags: parse value error")
+		return fmt.Sprintf("%v", f), parserErr.Throwf("parseOpenFlags: parse value error expected %T received %T", f, flags)
 	}
 
 	var fs []string
@@ -252,72 +273,10 @@ func parseOpenFlags(flags any) (string, error) {
 		fs = append(fs, "O_RDONLY")
 	}
 
-	if f&O_CREAT == O_CREAT {
-		fs = append(fs, "O_CREAT")
-	}
-
-	if f&O_EXCL == O_EXCL {
-		fs = append(fs, "O_EXCL")
-	}
-
-	if f&O_NOCTTY == O_NOCTTY {
-		fs = append(fs, "O_NOCTTY")
-	}
-
-	if f&O_TRUNC == O_TRUNC {
-		fs = append(fs, "O_TRUNC")
-	}
-
-	if f&O_APPEND == O_APPEND {
-		fs = append(fs, "O_APPEND")
-	}
-
-	if f&O_NONBLOCK == O_NONBLOCK {
-		fs = append(fs, "O_NONBLOCK")
-	}
-
-	if f&O_SYNC == O_SYNC {
-		fs = append(fs, "O_SYNC")
-	}
-
-	if f&O_ASYNC == O_ASYNC {
-		fs = append(fs, "O_ASYNC")
-	}
-
-	if f&O_LARGEFILE == O_LARGEFILE {
-		fs = append(fs, "O_LARGEFILE")
-	}
-
-	if f&O_DIRECTORY == O_DIRECTORY {
-		fs = append(fs, "O_DIRECTORY")
-	}
-
-	if f&O_NOFOLLOW == O_NOFOLLOW {
-		fs = append(fs, "O_NOFOLLOW")
-	}
-
-	if f&O_CLOEXEC == O_CLOEXEC {
-		fs = append(fs, "O_CLOEXEC")
-	}
-
-	if f&O_DIRECT == O_DIRECT {
-		fs = append(fs, "O_DIRECT")
-	}
-
-	if f&O_NOATIME == O_NOATIME {
-		fs = append(fs, "O_NOATIME")
-	}
-
-	if f&O_PATH == O_PATH {
-		fs = append(fs, "O_PATH")
-	}
-
-	if f&O_DSYNC == O_DSYNC {
-		fs = append(fs, "O_DSYNC")
-	}
-
-	if f&O_TMPFILE == O_TMPFILE {
-		fs = append(fs, "O_TMPFILE")
+	for flag, name := range openFlags {
+		if f&flag == flag {
+			fs = append(fs, name)
+		}
 	}
 
 	return strings.Join(fs, "|"), nil
