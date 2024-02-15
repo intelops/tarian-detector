@@ -19,7 +19,7 @@ const (
 func K8Watcher() (*k8s.PodWatcher, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, k8sErr.Throwf("%v", err)
+		return nil, k8sErr.Throwf("%v. %s", err, NotInClusterErrMsg)
 	}
 
 	clientSet := kubernetes.NewForConfigOrDie(config)
