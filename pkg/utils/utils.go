@@ -9,7 +9,11 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
+
+var utilsErr = err.New("utils.utils")
 
 // NanoSecToTimeFormat converts time in nanoseconds to time string
 func NanoSecToTimeFormat(t uint64) string {
@@ -32,19 +36,28 @@ func KernelVersion(a, b, c int) int {
 
 // CurrentKernelVersion returns current kernel version as an integer value
 func CurrentKernelVersion() (int, error) {
-	a, err := strconv.Atoi(os.Getenv("LINUX_VERSION_MAJOR"))
-	if err != nil {
-		return 0, err
+	const (
+		envNotFound string = "unable to check the kernel version, LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH must be defined"
+	)
+
+	major, minor, patch := os.Getenv("LINUX_VERSION_MAJOR"), os.Getenv("LINUX_VERSION_MINOR"), os.Getenv("LINUX_VERSION_PATCH")
+	if len(major) == 0 || len(minor) == 0 || len(patch) == 0 {
+		return 0, utilsErr.Throw(envNotFound)
 	}
 
-	b, err := strconv.Atoi(os.Getenv("LINUX_VERSION_MINOR"))
+	a, err := strconv.Atoi(major)
 	if err != nil {
-		return 0, err
+		return 0, utilsErr.Throwf("%v", err)
 	}
 
-	c, err := strconv.Atoi(os.Getenv("LINUX_VERSION_PATCH"))
+	b, err := strconv.Atoi(minor)
 	if err != nil {
-		return 0, err
+		return 0, utilsErr.Throwf("%v", err)
+	}
+
+	c, err := strconv.Atoi(patch)
+	if err != nil {
+		return 0, utilsErr.Throwf("%v", err)
 	}
 
 	return KernelVersion(a, b, c), nil
