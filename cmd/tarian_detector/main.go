@@ -4,7 +4,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/intelops/tarian-detector/pkg/detector"
 	"github.com/intelops/tarian-detector/tarian"
-	"k8s.io/client-go/rest"
 )
 
 func main() {
@@ -24,11 +22,7 @@ func main() {
 	// Start kubernetes watcher
 	watcher, err := K8Watcher()
 	if err != nil {
-		if !errors.Is(err, rest.ErrNotInCluster) {
-			log.Fatal(err)
-		}
-
-		log.Print(NotInClusterErrMsg)
+		log.Print(err)
 	} else {
 		watcher.Start()
 	}
@@ -70,7 +64,7 @@ func main() {
 		for {
 			e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
-				fmt.Println(err)
+				log.Print(err)
 			}
 
 			k8sCtx, err := GetK8sContext(watcher, e["hostProcessId"].(uint32))
