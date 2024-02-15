@@ -8,7 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
+
+var containerErr = err.New("k8s.container")
 
 const (
 	// ContainerIDLength is the standard length of the Container ID
@@ -28,7 +32,7 @@ func ProcsContainerID(pid uint32) (string, error) {
 	cgroups, err := os.ReadFile(filepath.Join(HostProcDir, pidstr, "cgroup"))
 
 	if err != nil {
-		return "", err
+		return "", containerErr.Throwf("%v", err)
 	}
 
 	containerID := FindDockerIDFromCgroup(string(cgroups))
