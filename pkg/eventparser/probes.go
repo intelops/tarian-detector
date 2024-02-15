@@ -5,7 +5,11 @@ package eventparser
 
 import (
 	"fmt"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
+
+var probesErr = err.New("eventparser.probes")
 
 type arg struct {
 	Name       string
@@ -258,7 +262,7 @@ func (p *Param) processValue(val interface{}) (arg, error) {
 	if p.function != nil {
 		parsedValue, err := p.function(val)
 		if err != nil {
-			return arg, err
+			return arg, probesErr.Throwf("%v", err)
 		}
 		arg.Value = parsedValue
 	} else {
