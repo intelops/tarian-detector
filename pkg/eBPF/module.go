@@ -18,7 +18,7 @@ type Module struct {
 	ebpfMap  *MapInfo
 }
 
-var moduleErr = err.New("ebpf.Module")
+var moduleErr = err.New("ebpf.module")
 
 func NewModule(n string) *Module {
 	return &Module{
@@ -41,7 +41,7 @@ func (m *Module) Prepare() (*Handler, error) {
 
 	err := rlimit.RemoveMemlock()
 	if err != nil {
-		return nil, err
+		return nil, moduleErr.Throwf("%v", err)
 	}
 
 	/*
