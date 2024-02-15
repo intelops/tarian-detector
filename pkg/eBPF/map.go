@@ -38,7 +38,7 @@ const (
 )
 
 var (
-	mapErr = err.New("ebpf.Map")
+	mapErr = err.New("ebpf.map")
 )
 
 func NewRingBuf(m *ebpf.Map) *MapInfo {
@@ -180,14 +180,14 @@ func read(readers []any) ([]func() ([]byte, error), error) {
 	for _, reader := range readers {
 		switch r := reader.(type) {
 		case *ringbuf.Reader:
-			f, err := read_ringbuf(r)
+			f, err := readRingbuf(r)
 			if err != nil {
 				return nil, err
 			}
 
 			funcs = append(funcs, f)
 		case *perf.Reader:
-			f, err := read_perf(r)
+			f, err := readPerf(r)
 			if err != nil {
 				return nil, err
 			}
@@ -201,7 +201,7 @@ func read(readers []any) ([]func() ([]byte, error), error) {
 	return funcs, nil
 }
 
-func read_ringbuf(r *ringbuf.Reader) (func() ([]byte, error), error) {
+func readRingbuf(r *ringbuf.Reader) (func() ([]byte, error), error) {
 	if r == nil {
 		return nil, mapErr.Throw(ErrNilMapReader)
 	}
@@ -216,7 +216,7 @@ func read_ringbuf(r *ringbuf.Reader) (func() ([]byte, error), error) {
 	}, nil
 }
 
-func read_perf(pr *perf.Reader) (func() ([]byte, error), error) {
+func readPerf(pr *perf.Reader) (func() ([]byte, error), error) {
 	if pr == nil {
 		return nil, mapErr.Throw(ErrNilMapReader)
 	}
