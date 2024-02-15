@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -74,7 +73,7 @@ func main() {
 				e["kubernetes"] = k8sCtx
 			}
 
-			// printEvent(e, eventsDetector.GetTotalCount())
+			// utils.PrintEvent(e, eventsDetector.GetTotalCount())
 		}
 	}()
 
@@ -82,14 +81,4 @@ func main() {
 	for {
 		time.Sleep(1 * time.Minute)
 	}
-}
-
-func printEvent(data map[string]any, t int) {
-	div := "=================================="
-	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
-	}
-
-	log.Printf("Total captured %d.\n%s\n%s%s\n", t, div, msg, div)
 }
