@@ -35,7 +35,7 @@ const (
 	ErrInvalidOptionsTypeForBpfHookType string = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
 )
 
-var hookErr = err.New("ebpf.Hook")
+var hookErr = err.New("ebpf.hook")
 
 func NewHookInfo() *HookInfo {
 	return &HookInfo{
