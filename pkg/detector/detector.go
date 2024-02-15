@@ -124,14 +124,16 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 
 	t.incrementTotalCount()
 	data, err := eventparser.ParseByteArray(r.eventData)
-	if err == nil {
-		probe, ok := data["eventId"]
-		if ok {
-			t.probeCount(probe.(string))
-		}
+	if err != nil {
+		return data, detectorErr.Throwf("%v", err)
 	}
 
-	return data, detectorErr.Throwf("%v", err)
+	probe, ok := data["eventId"]
+	if ok {
+		t.probeCount(probe.(string))
+	}
+
+	return data, nil
 }
 
 func (t *EventsDetector) Count() int {
