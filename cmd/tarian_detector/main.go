@@ -67,6 +67,10 @@ func main() {
 				log.Print(err)
 			}
 
+			if len(e) == 0 {
+				continue
+			}
+
 			k8sCtx, err := GetK8sContext(watcher, e["hostProcessId"].(uint32))
 			if err != nil {
 				e["kubernetes"] = err.Error()
