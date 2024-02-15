@@ -133,7 +133,7 @@ var cloneFlags = map[uint64]string{
 func parseCloneFlags(flag any) (string, error) {
 	f, ok := flag.(uint64)
 	if !ok {
-		return fmt.Sprintf("%v", flag), parserErr.Throwf("parseCloneFlags: parse value error expected %T received %T", f, flag)
+		return fmt.Sprintf("%v", flag), tansformerErr.Throwf("parseCloneFlags: parse value error expected %T received %T", f, flag)
 	}
 
 	var fs []string
@@ -260,7 +260,7 @@ var openFlags = map[int32]string{
 func parseOpenFlags(flags any) (string, error) {
 	f, ok := flags.(int32)
 	if !ok {
-		return fmt.Sprintf("%v", f), parserErr.Throwf("parseOpenFlags: parse value error expected %T received %T", f, flags)
+		return fmt.Sprintf("%v", f), tansformerErr.Throwf("parseOpenFlags: parse value error expected %T received %T", f, flags)
 	}
 
 	var fs []string
@@ -285,7 +285,7 @@ func parseOpenFlags(flags any) (string, error) {
 func parseOpenat2Flags(flags any) (string, error) {
 	f, ok := flags.(int64)
 	if !ok {
-		return fmt.Sprintf("%v", f), fmt.Errorf("parseOpenat2Flags: parse value error")
+		return fmt.Sprintf("%v", f), tansformerErr.Throwf("parseOpenat2Flags: parse value error expected %T received %T", f, flags)
 	}
 
 	return parseOpenFlags(int32(f))
@@ -294,7 +294,7 @@ func parseOpenat2Flags(flags any) (string, error) {
 func parseOpenat2Mode(mode any) (string, error) {
 	m, ok := mode.(int64)
 	if !ok {
-		return fmt.Sprintf("%v", m), fmt.Errorf("parseOpenat2Mode: parse value error")
+		return fmt.Sprintf("%v", m), tansformerErr.Throwf("parseOpenat2Mode: parse value error expected %T received %T", m, mode)
 	}
 
 	return parseOpenMode(uint32(m))
@@ -309,36 +309,26 @@ const (
 	RESOLVE_CACHED        = 0x20
 )
 
+var openat2ResolveFlags = map[int64]string{
+	RESOLVE_NO_XDEV:       "RESOLVE_NO_XDEV",
+	RESOLVE_NO_MAGICLINKS: "RESOLVE_NO_MAGICLINKS",
+	RESOLVE_NO_SYMLINKS:   "RESOLVE_NO_SYMLINKS",
+	RESOLVE_BENEATH:       "RESOLVE_BENEATH",
+	RESOLVE_IN_ROOT:       "RESOLVE_IN_ROOT",
+	RESOLVE_CACHED:        "RESOLVE_CACHED",
+}
+
 func parseOpenat2Resolve(resovle any) (string, error) {
 	r, ok := resovle.(int64)
 	if !ok {
-		return fmt.Sprintf("%v", r), fmt.Errorf("parseOpenat2Resolve: parse value error")
+		return fmt.Sprintf("%v", r), tansformerErr.Throwf("parseOpenat2Resolve: parse value error expected %T received %T", r, resovle)
 	}
 
 	var rs []string
-
-	if r&RESOLVE_NO_XDEV == RESOLVE_NO_XDEV {
-		rs = append(rs, "RESOLVE_NO_XDEV")
-	}
-
-	if r&RESOLVE_NO_MAGICLINKS == RESOLVE_NO_MAGICLINKS {
-		rs = append(rs, "RESOLVE_NO_MAGICLINKS")
-	}
-
-	if r&RESOLVE_NO_SYMLINKS == RESOLVE_NO_SYMLINKS {
-		rs = append(rs, "RESOLVE_NO_SYMLINKS")
-	}
-
-	if r&RESOLVE_BENEATH == RESOLVE_BENEATH {
-		rs = append(rs, "RESOLVE_BENEATH")
-	}
-
-	if r&RESOLVE_IN_ROOT == RESOLVE_IN_ROOT {
-		rs = append(rs, "RESOLVE_IN_ROOT")
-	}
-
-	if r&RESOLVE_CACHED == RESOLVE_CACHED {
-		rs = append(rs, "RESOLVE_CACHED")
+	for resolve, name := range openat2ResolveFlags {
+		if r&resolve == resolve {
+			rs = append(rs, name)
+		}
 	}
 
 	if len(rs) == 0 {
