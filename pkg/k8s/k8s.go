@@ -44,29 +44,33 @@ func ContainerIndexFunc(obj interface{}) ([]string, error) {
 		return nil
 	}
 
-	switch t := obj.(type) {
-	case *corev1.Pod:
-		for _, container := range t.Status.InitContainerStatuses {
-			err := appendContainerID(container.ContainerID)
-			if err != nil {
-				return nil, k8sErr.Throwf("%v", err)
-			}
-		}
-		for _, container := range t.Status.ContainerStatuses {
-			err := appendContainerID(container.ContainerID)
-			if err != nil {
-				return nil, k8sErr.Throwf("%v", err)
-			}
-		}
-		for _, container := range t.Status.EphemeralContainerStatuses {
-			err := appendContainerID(container.ContainerID)
-			if err != nil {
-				return nil, k8sErr.Throwf("%v", err)
-			}
-		}
-		return containerIDs, nil
+	t, ok := obj.(*corev1.Pod)
+	if !ok {
+		return nil, k8sErr.Throwf("object is not a *corev1.Pod - found %T", obj)
 	}
-	return nil, k8sErr.Throwf("object is not a *corev1.Pod - found %T", obj)
+
+	for _, container := range t.Status.InitContainerStatuses {
+		err := appendContainerID(container.ContainerID)
+		if err != nil {
+			return nil, k8sErr.Throwf("%v", err)
+		}
+	}
+
+	for _, container := range t.Status.ContainerStatuses {
+		err := appendContainerID(container.ContainerID)
+		if err != nil {
+			return nil, k8sErr.Throwf("%v", err)
+		}
+	}
+
+	for _, container := range t.Status.EphemeralContainerStatuses {
+		err := appendContainerID(container.ContainerID)
+		if err != nil {
+			return nil, k8sErr.Throwf("%v", err)
+		}
+	}
+
+	return containerIDs, nil
 }
 
 func CleanContainerIDFromPod(podContainerID string) (string, error) {
