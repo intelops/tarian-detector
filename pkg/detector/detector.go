@@ -4,8 +4,11 @@
 package detector
 
 import (
+	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/eventparser"
 )
+
+var detectorErr = err.New("detector.detector")
 
 type EventDetector interface {
 	Count() int
@@ -71,7 +74,7 @@ func (t *EventsDetector) Start() error {
 		d := detector
 		mapReaders, err := d.ReadAsInterface()
 		if err != nil {
-			return err
+			return detectorErr.Throwf("%v", err)
 		}
 
 		for _, reader := range mapReaders {
@@ -105,7 +108,7 @@ func (t *EventsDetector) Close() error {
 	for _, detector := range t.detectors {
 		err := detector.Close()
 		if err != nil {
-			return err
+			return detectorErr.Throwf("%v", err)
 		}
 	}
 
@@ -116,7 +119,7 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	eventparser.LoadTarianEvents()
 	r := <-t.eventQueue
 	if r.err != nil {
-		return map[string]any{}, r.err
+		return map[string]any{}, detectorErr.Throwf("%v", r.err)
 	}
 
 	t.incrementTotalCount()
@@ -128,7 +131,7 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 		}
 	}
 
-	return data, err
+	return data, detectorErr.Throwf("%v", err)
 }
 
 func (t *EventsDetector) Count() int {
