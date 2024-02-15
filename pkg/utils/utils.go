@@ -5,6 +5,8 @@ package utils
 
 import (
 	"encoding/binary"
+	"fmt"
+	"log"
 	"net"
 	"os"
 	"strconv"
@@ -79,4 +81,14 @@ func Ntohs(n uint16) uint16 {
 	binary.LittleEndian.PutUint16(b, n)
 
 	return binary.BigEndian.Uint16(b)
+}
+
+func PrintEvent(data map[string]any, t int) {
+	div := "=================================="
+	msg := ""
+	for ky, val := range data {
+		msg += fmt.Sprintf("%s: %v\n", ky, val)
+	}
+
+	log.Printf("Total captured %d.\n%s\n%s%s\n", t, div, msg, div)
 }
