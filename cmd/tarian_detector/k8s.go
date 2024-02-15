@@ -23,9 +23,8 @@ func K8Watcher() (*k8s.PodWatcher, error) {
 	}
 
 	clientSet := kubernetes.NewForConfigOrDie(config)
-	watcher := k8s.NewPodWatcher(clientSet)
 
-	return watcher, nil
+	return k8s.NewPodWatcher(clientSet)
 }
 
 type K8sContext struct {
@@ -61,9 +60,9 @@ func GetK8sContext(watcher *k8s.PodWatcher, processId uint32) (K8sContext, error
 		return k8sCtx, k8sErr.Throw("missing container id")
 	}
 
-	pod := watcher.FindPod(containerId)
-	if pod == nil {
-		return k8sCtx, k8sErr.Throwf("unable to find the pod associated with the container ID: %s", containerId)
+	pod, err := watcher.FindPod(containerId)
+	if err != nil {
+		return k8sCtx, k8sErr.Throwf("%v: unable to find the pod associated with the container ID: %s", err, containerId)
 	}
 
 	// pod information
