@@ -7,13 +7,17 @@ import (
 	"bytes"
 	"encoding/binary"
 	"strings"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
+
+var converterErr = err.New("utils.converter")
 
 func Int8(b []byte) (int8, error) {
 	var num int8
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -23,7 +27,7 @@ func Int16(b []byte) (int16, error) {
 	var num int16
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -33,7 +37,7 @@ func Int32(b []byte) (int32, error) {
 	var num int32
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -43,7 +47,7 @@ func Int64(b []byte) (int64, error) {
 	var num int64
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -53,7 +57,7 @@ func Uint8(b []byte) (uint8, error) {
 	var num uint8
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -63,7 +67,7 @@ func Uint16(b []byte) (uint16, error) {
 	var num uint16
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -73,7 +77,7 @@ func Uint32(b []byte) (uint32, error) {
 	var num uint32
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
@@ -83,7 +87,7 @@ func Uint64(b []byte) (uint64, error) {
 	var num uint64
 	err := binary.Read(bytes.NewReader(b), binary.LittleEndian, &num)
 	if err != nil {
-		return num, err
+		return num, converterErr.Throwf("%v", err)
 	}
 
 	return num, nil
