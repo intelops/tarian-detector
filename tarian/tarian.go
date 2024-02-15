@@ -8,8 +8,11 @@ import (
 
 	cilium_ebpf "github.com/cilium/ebpf"
 	ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
+	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
+
+var tarianErr = err.New("tarian.tarian")
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
@@ -18,16 +21,16 @@ func GetModule() (*ebpf.Module, error) {
 	if err != nil {
 		var verr *cilium_ebpf.VerifierError
 		if errors.As(err, &verr) {
-			return nil, verr
+			return nil, tarianErr.Throwf("%+v", verr)
 		}
 
-		return nil, err
+		return nil, tarianErr.Throwf("%v", err)
 	}
 
 	tarianDetectorModule := ebpf.NewModule("tarian_detector")
 	ckv, err := utils.CurrentKernelVersion()
 	if err != nil {
-		return nil, err
+		return nil, tarianErr.Throwf("%v", err)
 	}
 
 	if ckv >= utils.KernelVersion(5, 8, 0) && false {
