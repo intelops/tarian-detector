@@ -8,8 +8,11 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
+
+var parserErr = err.New("eventparser.parser")
 
 type ByteStream struct {
 	data     []byte
@@ -35,19 +38,19 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	*/
 	eventId, err := getEventId(data)
 	if err != nil {
-		return nil, err
+		return nil, parserErr.Throwf("%v", err)
 	}
 
 	event, noEvent := Events[eventId]
 	if !noEvent {
-		return nil, fmt.Errorf("missing event from var Events TarianEventMap for key: %v", eventId)
+		return nil, parserErr.Throwf("missing event from var Events TarianEventMap for key: %v", eventId)
 	}
 
 	var metaData TarianMetaData
 	lenMetaData := binary.Size(metaData)
 	err = binary.Read(bytes.NewReader(data[:lenMetaData]), binary.LittleEndian, &metaData)
 	if err != nil {
-		return nil, err
+		return nil, parserErr.Throwf("%v", err)
 	}
 
 	if metaData.MetaData.Syscall != int32(event.syscallId) {
@@ -60,7 +63,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	bs := NewByteStream(data[lenMetaData:], metaData.MetaData.Nparams)
 	ps, err := bs.parseParams(event)
 	if err != nil {
-		return nil, err
+		return nil, parserErr.Throwf("%v", err)
 	}
 
 	record["context"] = ps
@@ -71,7 +74,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	tParams := event.params
 	if len(tParams) <= 0 {
-		return nil, fmt.Errorf("missing event from var Events TarianEventMap")
+		return nil, parserErr.Throwf("missing event from var Events TarianEventMap")
 	}
 
 	var args []arg
@@ -87,7 +90,7 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 
 		ag, err := bs.parseParam(tParams[i])
 		if err != nil {
-			return nil, err
+			return nil, parserErr.Throwf("%v", err)
 		}
 
 		args = append(args, ag)
@@ -104,63 +107,63 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	case TDT_U8:
 		pVal, err = utils.Uint8(bs.data[bs.position : bs.position+1])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 1
 	case TDT_U16:
 		pVal, err = utils.Uint16(bs.data[bs.position : bs.position+2])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 2
 	case TDT_U32:
 		pVal, err = utils.Uint32(bs.data[bs.position : bs.position+4])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 4
 	case TDT_U64:
 		pVal, err = utils.Uint64(bs.data[bs.position : bs.position+8])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 8
 	case TDT_S8:
 		pVal, err = utils.Int8(bs.data[bs.position : bs.position+1])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 1
 	case TDT_S16:
 		pVal, err = utils.Int16(bs.data[bs.position : bs.position+2])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 2
 	case TDT_S32:
 		pVal, err = utils.Int32(bs.data[bs.position : bs.position+4])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 4
 	case TDT_S64:
 		pVal, err = utils.Int64(bs.data[bs.position : bs.position+8])
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		bs.position += 8
 	case TDT_STR, TDT_STR_ARR:
 		slen, err := bs.readShort()
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		pVal = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
@@ -168,7 +171,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	case TDT_BYTE_ARR:
 		slen, err := bs.readShort()
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		pVal = fmt.Sprintf("%v", bs.data[bs.position:bs.position+int(slen)])
@@ -177,7 +180,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	case TDT_SOCKADDR:
 		family, err := bs.readByte()
 		if err != nil {
-			return arg{}, err
+			return arg{}, parserErr.Throwf("%v", err)
 		}
 
 		switch family {
@@ -199,7 +202,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 
 				port, err := bs.readShort()
 				if err != nil {
-					return arg{}, err
+					return arg{}, parserErr.Throwf("%v", err)
 				}
 
 				addr.Sa_port = utils.Ntohs(port)
@@ -224,7 +227,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 
 				port, err := bs.readShort()
 				if err != nil {
-					return arg{}, err
+					return arg{}, parserErr.Throwf("%v", err)
 				}
 
 				addr.Sa_port = utils.Ntohs(port)
@@ -243,7 +246,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 
 				slen, err := bs.readShort()
 				if err != nil {
-					return arg{}, err
+					return arg{}, parserErr.Throwf("%v", err)
 				}
 
 				addr.Sun_path = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
@@ -260,7 +263,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 func (bs *ByteStream) readByte() (uint8, error) {
 	bt, err := utils.Uint8(bs.data[bs.position : bs.position+1])
 	if err != nil {
-		return 0, err
+		return 0, parserErr.Throwf("%v", err)
 	}
 
 	bs.position += 1
@@ -270,7 +273,7 @@ func (bs *ByteStream) readByte() (uint8, error) {
 func (bs *ByteStream) readShort() (uint16, error) {
 	sh, err := utils.Uint16(bs.data[bs.position : bs.position+2])
 	if err != nil {
-		return 0, err
+		return 0, parserErr.Throwf("%v", err)
 	}
 
 	bs.position += 2
@@ -280,7 +283,7 @@ func (bs *ByteStream) readShort() (uint16, error) {
 func (bs *ByteStream) readInt() (uint32, error) {
 	it, err := utils.Uint32(bs.data[bs.position : bs.position+4])
 	if err != nil {
-		return 0, err
+		return 0, parserErr.Throwf("%v", err)
 	}
 
 	bs.position += 4
@@ -289,13 +292,13 @@ func (bs *ByteStream) readInt() (uint32, error) {
 
 func getEventId(data []byte) (int, error) {
 	if len(data) < 4 {
-		return 0, fmt.Errorf("input data length is %d, expected at least %d", len(data), 4)
+		return 0, parserErr.Throwf("input data length is %d, expected at least %d", len(data), 4)
 	}
 
 	var id int32
 	err := binary.Read(bytes.NewReader(data[:4]), binary.LittleEndian, &id)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read event ID from data: %w", err)
+		return 0, parserErr.Throwf("failed to read event ID from data: %v", err)
 	}
 
 	return int(id), nil
