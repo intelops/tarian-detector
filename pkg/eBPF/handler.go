@@ -14,7 +14,7 @@ type Handler struct {
 	probeLinks []link.Link
 }
 
-var handlerErr = err.New("ebpf.Handler")
+var handlerErr = err.New("ebpf.handler")
 
 func NewHandler(n string) *Handler {
 	return &Handler{
