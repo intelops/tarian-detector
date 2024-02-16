@@ -1,40 +1,38 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	"github.com/intelops/tarian-detector/pkg/linker"
-	"k8s.io/client-go/rest"
+	"github.com/intelops/tarian-detector/tarian"
 )
 
 func main() {
+	stopper := make(chan os.Signal, 1)
+	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
+
 	// Start kubernetes watcher
 	watcher, err := K8Watcher()
 	if err != nil {
-		if !errors.Is(err, rest.ErrNotInCluster) {
-			log.Fatal(err)
-		}
-
-		log.Print(NotInClusterErrMsg)
+		log.Print(err)
 	} else {
 		watcher.Start()
 	}
 
-	// Loads the ebpf programs
-	bpfLinker, err := LoadPrograms(BpfModules)
+	tarianEbpfModule, err := tarian.GetModule()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Converts bpf handlers to detectors
-	eventDetectors, err := GetDetectors(bpfLinker.ProbeHandlers)
+	tarianDetector, err := tarianEbpfModule.Prepare()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -43,7 +41,7 @@ func main() {
 	eventsDetector := detector.NewEventsDetector()
 
 	// Add ebpf programs to detectors
-	eventsDetector.Add(eventDetectors)
+	eventsDetector.Add(tarianDetector)
 
 	// Start and defer Close
 	err = eventsDetector.Start()
@@ -52,26 +50,41 @@ func main() {
 	}
 	defer eventsDetector.Close()
 
-	log.Printf("%d detectors running...\n\n", eventsDetector.Count())
-	defer stats(eventsDetector, bpfLinker)
+	log.Printf("%d probes running...\n\n", eventsDetector.Count())
+
+	go func() {
+		<-stopper
+
+		eventsDetector.Close()
+		log.Printf("Total records captured : %d\n", eventsDetector.GetTotalCount())
+		count := 1
+		for ky, vl := range eventsDetector.GetProbeCount() {
+			fmt.Printf("%d. %s: %d\n", count, ky, vl)
+			count++
+		}
+		os.Exit(0)
+	}()
 
 	// Loop read events
 	go func() {
 		for {
 			e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
-				fmt.Println(err)
+				log.Print(err)
 			}
 
-			k8sCtx, err := GetK8sContext(watcher, e["process_id"].(uint32))
+			if len(e) == 0 {
+				continue
+			}
+
+			k8sCtx, err := GetK8sContext(watcher, e["hostProcessId"].(uint32))
 			if err != nil {
-				log.Print(err)
 				e["kubernetes"] = err.Error()
 			} else {
 				e["kubernetes"] = k8sCtx
 			}
 
-			printEvent(e)
+			// utils.PrintEvent(e, eventsDetector.GetTotalCount())
 		}
 	}()
 
@@ -79,39 +92,4 @@ func main() {
 	for {
 		time.Sleep(1 * time.Minute)
 	}
-}
-
-func printEvent(data map[string]any) {
-	div := "======================"
-	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
-	}
-
-	log.Printf("%s\n%s%s\n", div, msg, div)
-}
-
-func stats(d *detector.EventsDetector, l *linker.Linker) {
-	// fmt.Print("\033[H\033[2J")
-	fmt.Printf("\n\n%d detectors running...\n", d.Count())
-	fmt.Printf("Total Record captured %d\n", d.TotalRecordsCount)
-
-	fmt.Printf("Event wise count...\n\n")
-	countTriggered := 0
-	for k, v := range l.ProbeIds {
-		if !v {
-			// skips the disabled probes
-			continue
-		}
-
-		_, keyExists := d.ProbeRecordsCount[k]
-		if keyExists {
-			countTriggered++
-			fmt.Printf("%s: %d\n", k, d.ProbeRecordsCount[k])
-		} else {
-			fmt.Printf("%s: 0\n", k)
-		}
-	}
-
-	fmt.Printf("\n%d events triggered in total.\n", countTriggered)
 }
