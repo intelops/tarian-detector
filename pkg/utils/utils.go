@@ -1,59 +1,94 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package utils
 
 import (
-	"strings"
+	"encoding/binary"
+	"fmt"
+	"log"
+	"net"
+	"os"
+	"strconv"
 	"time"
+
+	"github.com/intelops/tarian-detector/pkg/err"
 )
 
-// converts [][4096]uint8 to string.
-func Uint8ArrtoString(arr [][4096]uint8) string {
-	var res_str string
+var utilsErr = err.New("utils.utils")
 
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		if res_str != "" {
-			res_str += " " + temp
-		} else {
-			res_str += temp
-		}
-	}
-
-	return res_str
-}
-
-// converts [][4096]uint8 to []string.
-func Uint8ArrtoStringArr(arr [][4096]uint8) []string {
-	var res_arr_str []string
-	for _, el := range arr {
-		temp := Uint8toString(el[:])
-		if len(temp) == 0 {
-			continue
-		}
-
-		res_arr_str = append(res_arr_str, temp)
-	}
-
-	return res_arr_str
-}
-
-// converts []uint8 to string
-func Uint8toString(arr []uint8) string {
-	return strings.Trim(string(arr[:]), "\x00")
-}
-
-// converts time in nanoseconds to readable time format
+// NanoSecToTimeFormat converts time in nanoseconds to time string
 func NanoSecToTimeFormat(t uint64) string {
 	return time.Unix(0, int64(time.Duration(t)*time.Nanosecond)).String()
 }
 
-// converts time in miliseconds to readable time format
+// MiliSecToTimeFormat converts time in miliseconds to time string
 func MiliSecToTimeFormat(t uint64) string {
 	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
+}
+
+// KernelVersion returns a combined version number(major.minor.patch) as integer
+func KernelVersion(a, b, c int) int {
+	if c > 255 {
+		c = 255
+	}
+
+	return (a << 16) + (b << 8) + c
+}
+
+// CurrentKernelVersion returns current kernel version as an integer value
+func CurrentKernelVersion() (int, error) {
+	const (
+		envNotFound string = "unable to check the kernel version, LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH must be defined"
+	)
+
+	major, minor, patch := os.Getenv("LINUX_VERSION_MAJOR"), os.Getenv("LINUX_VERSION_MINOR"), os.Getenv("LINUX_VERSION_PATCH")
+	if len(major) == 0 || len(minor) == 0 || len(patch) == 0 {
+		return 0, utilsErr.Throw(envNotFound)
+	}
+
+	a, err := strconv.Atoi(major)
+	if err != nil {
+		return 0, utilsErr.Throwf("%v", err)
+	}
+
+	b, err := strconv.Atoi(minor)
+	if err != nil {
+		return 0, utilsErr.Throwf("%v", err)
+	}
+
+	c, err := strconv.Atoi(patch)
+	if err != nil {
+		return 0, utilsErr.Throwf("%v", err)
+	}
+
+	return KernelVersion(a, b, c), nil
+}
+
+// Ipv4 converts a byte array to an IPv4 string
+func Ipv4(b [4]byte) string {
+	return net.IP(b[:]).String()
+}
+
+// Ipv6 converts byte array to IPv6 string
+func Ipv6(b [16]byte) string {
+	return net.IP(b[:]).String()
+}
+
+// Ntohs converts little-endian uint16 to big-endian uint16
+func Ntohs(n uint16) uint16 {
+	b := make([]byte, 2)
+	binary.LittleEndian.PutUint16(b, n)
+
+	return binary.BigEndian.Uint16(b)
+}
+
+func PrintEvent(data map[string]any, t int) {
+	div := "=================================="
+	msg := ""
+	for ky, val := range data {
+		msg += fmt.Sprintf("%s: %v\n", ky, val)
+	}
+
+	log.Printf("Total captured %d.\n%s\n%s%s\n", t, div, msg, div)
 }
