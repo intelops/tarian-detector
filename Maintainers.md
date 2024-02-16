@@ -8,7 +8,6 @@ Please keep the list sorted alphabetically by handle.
 
 | Github ID                                    | Name                   | Role                              |
 |----------------------------------------------|------------------------|------------------------------------|
-| [@Anamika](https://github.com/AnamikaSanjay)     | Anamika Sanjay         | Maintainer      |
 | [@Andy](https://github.com/andylibrian) | Andy Librian       | Main Contributor/Maintainer   |
 | [@Charan](https://github.com/c-ravela) | Charan Ravela       | Maintainer   |
 | [@Chandu](https://github.com/devopstoday11)     | Chandu Paladugu         | Owner      |

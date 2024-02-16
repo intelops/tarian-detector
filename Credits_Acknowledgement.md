@@ -6,6 +6,8 @@ We're particularly grateful for the insights and innovations provided by several
 
 ## 🌟 Acknowledgements
 
+- **_[Falco](https://github.com/falcosecurity/falco):_** Falco is a cloud-native security tool that monitors anomalous activity in nodes and containers using eBPF. Falco helps us detect malicious behavior, configuration changes, and compliance violations in real time1. Falco’s flexible rules engine and integration with various systems have enabled us to leverage eBPF for threat detection and mitigation.
+
 - **_[KubeArmor](https://github.com/kubearmor/KubeArmor):_** An initiative that offers runtime protection for Kubernetes and other cloud workloads. Your effort to improve the security of cloud-based systems has greatly inspired our work.
 
 - **_[Tetragon (from Cilium)](https://github.com/cilium/cilium):_** The innovative Tetragon component provides powerful real-time, eBPF-based security observability and runtime enforcement. The component's capabilities have been invaluable to our understanding of eBPF-based security.
