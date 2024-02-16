@@ -1,28 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2023 Authors of Tarian & the Organization created Tarian
+// Copyright 2024 Authors of Tarian & the Organization created Tarian
 
 package main
 
 import (
-	"fmt"
-
+	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/k8s"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
-var NotInClusterErrMsg = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+var k8sErr = err.New("main.k8s")
+
+const (
+	NotInClusterErrMsg string = "Kubernetes environment not detected. The Kubernetes context has been disabled."
+)
 
 func K8Watcher() (*k8s.PodWatcher, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
+		return nil, k8sErr.Throwf("%v. %s", err, NotInClusterErrMsg)
 	}
 
 	clientSet := kubernetes.NewForConfigOrDie(config)
-	watcher := k8s.NewPodWatcher(clientSet)
 
-	return watcher, nil
+	return k8s.NewPodWatcher(clientSet)
 }
 
 type K8sContext struct {
@@ -46,21 +48,21 @@ func GetK8sContext(watcher *k8s.PodWatcher, processId uint32) (K8sContext, error
 	k8sCtx := K8sContext{}
 
 	if watcher == nil {
-		return k8sCtx, fmt.Errorf("%s", "kubernetes watcher is not enabled. This might not be the kubernetes environment.")
+		return k8sCtx, k8sErr.Throw("kubernetes watcher is not enabled. This might not be the kubernetes environment.")
 	}
 
 	containerId, err := k8s.ProcsContainerID(processId)
 	if err != nil {
-		return k8sCtx, err
+		return k8sCtx, k8sErr.Throwf("%v", err)
 	}
 
 	if len(containerId) == 0 {
-		return k8sCtx, fmt.Errorf("%s", "container id is missing.")
+		return k8sCtx, k8sErr.Throw("missing container id")
 	}
 
-	pod := watcher.FindPod(containerId)
-	if pod == nil {
-		return k8sCtx, fmt.Errorf("unable to find the pod associated with the container ID: %s", containerId)
+	pod, err := watcher.FindPod(containerId)
+	if err != nil {
+		return k8sCtx, k8sErr.Throwf("%v: unable to find the pod associated with the container ID: %s", err, containerId)
 	}
 
 	// pod information
