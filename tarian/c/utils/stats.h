@@ -28,17 +28,23 @@ stain void stats__add(int error_code) {
     tarian_stats_t *ts = (tarian_stats_t *)get__stats_counter();
     if (!ts) return;
 
-    if (error_code == TDC_SUCCESS) {
+    switch (error_code)
+    {
+    case TDC_SUCCESS:
         ts->n_trgs_sent++;
-    } else if (error_code == TDCE_RESERVE_SPACE || error_code == TDCE_MAP_SUBMIT) {
+        break;
+    case TDCE_RESERVE_SPACE:
+    case TDCE_MAP_SUBMIT:
         ts->n_trgs_dropped_max_map_capacity++;
         ts->n_trgs_dropped++;
-    } else if (error_code == TDCE_WRITE_CWD) {
+        break;
+    case TDCE_WRITE_CWD:
         ts->n_trgs_dropped_max_buffer_size++;
         ts->n_trgs_dropped++;
-    } else {
+    default:
         ts->n_trgs_unknown++;
         ts->n_trgs_dropped++;
+        break;
     }
 }
 #endif
