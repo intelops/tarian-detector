@@ -269,7 +269,6 @@ func getEventId(data []byte) (int, error) {
 func toMap(t TarianMetaData) map[string]any {
 	m := make(map[string]any)
 
-	m["eventName"] = t.MetaData.Event
 	m["timestamp"] = t.MetaData.Ts
 	m["syscallId"] = t.MetaData.Syscall
 	m["processor"] = t.MetaData.Processor
