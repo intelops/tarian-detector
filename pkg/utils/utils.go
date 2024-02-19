@@ -4,10 +4,8 @@
 package utils
 
 import (
-	"encoding/binary"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"time"
@@ -65,29 +63,20 @@ func CurrentKernelVersion() (int, error) {
 	return KernelVersion(a, b, c), nil
 }
 
-// Ipv4 converts a byte array to an IPv4 string
-func Ipv4(b [4]byte) string {
-	return net.IP(b[:]).String()
-}
-
-// Ipv6 converts byte array to IPv6 string
-func Ipv6(b [16]byte) string {
-	return net.IP(b[:]).String()
-}
-
-// Ntohs converts little-endian uint16 to big-endian uint16
-func Ntohs(n uint16) uint16 {
-	b := make([]byte, 2)
-	binary.LittleEndian.PutUint16(b, n)
-
-	return binary.BigEndian.Uint16(b)
-}
-
 func PrintEvent(data map[string]any, t int) {
+	keys := []string{
+		"eventId", "timestamp", "syscallId", "processor",
+		"threadStartTime", "hostProcessId", "hostThreadId",
+		"hostParentProcessId", "processId", "threadId", "parentProcessId",
+		"userId", "groupId", "cgroupId", "mountNamespace", "pidNamespace",
+		"execId", "parentExecId", "processName", "directory",
+		"sysname", "nodename", "release", "version", "machine", "domainname",
+		"context",
+	}
 	div := "=================================="
 	msg := ""
-	for ky, val := range data {
-		msg += fmt.Sprintf("%s: %v\n", ky, val)
+	for _, ky := range keys {
+		msg += fmt.Sprintf("%s: %+v\n", ky, data[ky])
 	}
 
 	log.Printf("Total captured %d.\n%s\n%s%s\n", t, div, msg, div)
