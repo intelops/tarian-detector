@@ -43,7 +43,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 
 	event, noEvent := Events[eventId]
 	if !noEvent {
-		return nil, parserErr.Throwf("missing event from var Events TarianEventMap for key: %v", eventId)
+		return nil, parserErr.Throwf("missing event from 'var Events TarianEventMap' for key: %v", eventId)
 	}
 
 	var metaData TarianMetaData
@@ -74,10 +74,10 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	tParams := event.params
 	if len(tParams) <= 0 {
-		return nil, parserErr.Throwf("missing event from var Events TarianEventMap")
+		return nil, parserErr.Throwf("missing event from 'var Events TarianEventMap'")
 	}
 
-	var args []arg
+	args := make([]arg, 0, bs.nparams)
 
 	for i := 0; i < int(bs.nparams); i++ {
 		if bs.position >= len(bs.data) {
@@ -105,124 +105,27 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 
 	switch p.paramType {
 	case TDT_U8:
-		pVal, err = utils.Uint8(bs.data[bs.position : bs.position+1])
-		bs.position += 1
+		pVal, err = bs.parseUint8()
 	case TDT_U16:
-		pVal, err = utils.Uint16(bs.data[bs.position : bs.position+2])
-		bs.position += 2
+		pVal, err = bs.parseUint16()
 	case TDT_U32:
-		pVal, err = utils.Uint32(bs.data[bs.position : bs.position+4])
-		bs.position += 4
+		pVal, err = bs.parseUint32()
 	case TDT_U64:
-		pVal, err = utils.Uint64(bs.data[bs.position : bs.position+8])
-		bs.position += 8
+		pVal, err = bs.parseUint64()
 	case TDT_S8:
-		pVal, err = utils.Int8(bs.data[bs.position : bs.position+1])
-		bs.position += 1
+		pVal, err = bs.parseInt8()
 	case TDT_S16:
-		pVal, err = utils.Int16(bs.data[bs.position : bs.position+2])
-		bs.position += 2
+		pVal, err = bs.parseInt16()
 	case TDT_S32:
-		pVal, err = utils.Int32(bs.data[bs.position : bs.position+4])
-		bs.position += 4
+		pVal, err = bs.parseInt32()
 	case TDT_S64:
-		pVal, err = utils.Int64(bs.data[bs.position : bs.position+8])
-		bs.position += 8
+		pVal, err = bs.parseInt64()
 	case TDT_STR, TDT_STR_ARR:
-		slen, err := bs.readShort()
-		if err != nil {
-			return arg{}, parserErr.Throwf("%v", err)
-		}
-
-		pVal = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
-		bs.position += int(slen)
+		pVal, err = bs.parseString()
 	case TDT_BYTE_ARR:
-		slen, err := bs.readShort()
-		if err != nil {
-			return arg{}, parserErr.Throwf("%v", err)
-		}
-
-		pVal = fmt.Sprintf("%v", bs.data[bs.position:bs.position+int(slen)])
-		bs.position += int(slen)
-
+		pVal, err = bs.parseRawArray()
 	case TDT_SOCKADDR:
-		family, err := bs.readByte()
-		if err != nil {
-			return arg{}, parserErr.Throwf("%v", err)
-		}
-
-		switch family {
-		case AF_INET:
-			{
-				type sockaddr_in struct {
-					Family  string
-					Sa_addr string
-					Sa_port uint16
-				}
-
-				var addr sockaddr_in
-				addr.Family = "AF_INET"
-
-				ipv4_arr := bs.data[bs.position : bs.position+4]
-				bs.position += 4
-
-				addr.Sa_addr = utils.Ipv4([4]byte(ipv4_arr))
-
-				port, err := bs.readShort()
-				if err != nil {
-					return arg{}, parserErr.Throwf("%v", err)
-				}
-
-				addr.Sa_port = utils.Ntohs(port)
-
-				pVal = fmt.Sprintf("%+v", addr)
-			}
-		case AF_INET6:
-			{
-				type sockaddr_in6 struct {
-					Family  string
-					Sa_addr string
-					Sa_port uint16
-				}
-
-				var addr sockaddr_in6
-				addr.Family = "AF_INET6"
-
-				ipv6_arr := bs.data[bs.position : bs.position+16]
-				bs.position += 16
-
-				addr.Sa_addr = utils.Ipv6([16]byte(ipv6_arr))
-
-				port, err := bs.readShort()
-				if err != nil {
-					return arg{}, parserErr.Throwf("%v", err)
-				}
-
-				addr.Sa_port = utils.Ntohs(port)
-
-				pVal = fmt.Sprintf("%+v", addr)
-			}
-		case AF_UNIX:
-			{
-				type sockaddr_un struct {
-					Family   string
-					Sun_path string
-				}
-
-				var addr sockaddr_un
-				addr.Family = "AF_UNIX"
-
-				slen, err := bs.readShort()
-				if err != nil {
-					return arg{}, parserErr.Throwf("%v", err)
-				}
-
-				addr.Sun_path = utils.ToString(bs.data[bs.position : bs.position+int(slen)])
-				bs.position += int(slen)
-
-				pVal = fmt.Sprintf("%+v", addr)
-			}
-		}
+		pVal, err = bs.parseSocketAddress()
 	}
 
 	if err != nil {
@@ -232,35 +135,183 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	return p.processValue(pVal)
 }
 
-func (bs *ByteStream) readByte() (uint8, error) {
-	bt, err := utils.Uint8(bs.data[bs.position : bs.position+1])
-	if err != nil {
-		return 0, parserErr.Throwf("%v", err)
-	}
-
+func (bs *ByteStream) parseUint8() (uint8, error) {
+	val, err := utils.Uint8(bs.data, bs.position)
 	bs.position += 1
-	return bt, nil
+
+	return val, err
 }
 
-func (bs *ByteStream) readShort() (uint16, error) {
-	sh, err := utils.Uint16(bs.data[bs.position : bs.position+2])
+func (bs *ByteStream) parseUint16() (uint16, error) {
+	val, err := utils.Uint16(bs.data, bs.position)
+	bs.position += 2
+
+	return val, err
+}
+
+func (bs *ByteStream) parseUint32() (uint32, error) {
+	val, err := utils.Uint32(bs.data, bs.position)
+	bs.position += 4
+
+	return val, err
+}
+
+func (bs *ByteStream) parseUint64() (uint64, error) {
+	val, err := utils.Uint64(bs.data, bs.position)
+	bs.position += 8
+
+	return val, err
+}
+
+func (bs *ByteStream) parseInt8() (int8, error) {
+	val, err := utils.Int8(bs.data, bs.position)
+	bs.position += 1
+
+	return val, err
+}
+
+func (bs *ByteStream) parseInt16() (int16, error) {
+	val, err := utils.Int16(bs.data, bs.position)
+	bs.position += 2
+
+	return val, err
+}
+
+func (bs *ByteStream) parseInt32() (int32, error) {
+	val, err := utils.Int32(bs.data, bs.position)
+	bs.position += 4
+
+	return val, err
+}
+
+func (bs *ByteStream) parseInt64() (int64, error) {
+	val, err := utils.Int64(bs.data, bs.position)
+	bs.position += 8
+
+	return val, err
+}
+
+func (bs *ByteStream) parseIpv4() string {
+	val := utils.Ipv4(bs.data, bs.position)
+	bs.position += 4
+
+	return val
+}
+
+func (bs *ByteStream) parseIpv6() string {
+	val := utils.Ipv6(bs.data, bs.position)
+	bs.position += 16
+
+	return val
+}
+
+func (bs *ByteStream) parseString() (string, error) {
+	slen, err := bs.parseUint16()
 	if err != nil {
-		return 0, parserErr.Throwf("%v", err)
+		return "", parserErr.Throwf("%v", err)
 	}
 
-	bs.position += 2
-	return sh, nil
+	val := utils.ToString(bs.data, bs.position, int(slen))
+	bs.position += int(slen)
+
+	return val, nil
+}
+
+func (bs *ByteStream) parseRawArray() ([]byte, error) {
+	slen, err := bs.parseUint16()
+	if err != nil {
+		return []byte{}, parserErr.Throwf("%v", err)
+	}
+
+	val := bs.data[bs.position : bs.position+int(slen)]
+	bs.position += int(slen)
+
+	return val, nil
+}
+
+func (bs *ByteStream) parseSocketAddress() (any, error) {
+	family, err := bs.parseUint8()
+	if err != nil {
+		return nil, parserErr.Throwf("%v", err)
+	}
+
+	switch family {
+	case AF_INET:
+		{
+			type sockaddr_in struct {
+				Family  string
+				Sa_addr string
+				Sa_port uint16
+			}
+
+			var addr sockaddr_in
+			addr.Family = "AF_INET"
+
+			addr.Sa_addr = bs.parseIpv4()
+
+			port, err := bs.parseUint16()
+			if err != nil {
+				return nil, parserErr.Throwf("%v", err)
+			}
+
+			addr.Sa_port = utils.Ntohs(port)
+
+			return fmt.Sprintf("%+v", addr), nil
+		}
+	case AF_INET6:
+		{
+			type sockaddr_in6 struct {
+				Family  string
+				Sa_addr string
+				Sa_port uint16
+			}
+
+			var addr sockaddr_in6
+			addr.Family = "AF_INET6"
+
+			addr.Sa_addr = bs.parseIpv6()
+
+			port, err := bs.parseUint16()
+			if err != nil {
+				return nil, parserErr.Throwf("%v", err)
+			}
+
+			addr.Sa_port = utils.Ntohs(port)
+
+			return fmt.Sprintf("%+v", addr), nil
+		}
+	case AF_UNIX:
+		{
+			type sockaddr_un struct {
+				Family   string
+				Sun_path string
+			}
+
+			var addr sockaddr_un
+			addr.Family = "AF_UNIX"
+
+			val, err := bs.parseString()
+			if err != nil {
+				return nil, parserErr.Throwf("%v", err)
+			}
+
+			addr.Sun_path = val
+
+			return fmt.Sprintf("%+v", addr), nil
+		}
+	default:
+		return nil, nil
+	}
 }
 
 func getEventId(data []byte) (int, error) {
 	if len(data) < 4 {
-		return 0, parserErr.Throwf("input data length is %d, expected at least %d", len(data), 4)
+		return 0, parserErr.Throwf("input data length is %d, expected to be at least %d", len(data), 4)
 	}
 
-	var id int32
-	err := binary.Read(bytes.NewReader(data[:4]), binary.LittleEndian, &id)
+	id, err := utils.Int32(data, 0)
 	if err != nil {
-		return 0, parserErr.Throwf("failed to read event ID from data: %v", err)
+		return 0, parserErr.Throwf("failed to read eventId from data: %v", err)
 	}
 
 	return int(id), nil
@@ -288,15 +339,15 @@ func toMap(t TarianMetaData) map[string]any {
 	m["pidNamespace"] = t.MetaData.Task.PidNsId
 	m["execId"] = t.MetaData.Task.ExecId
 	m["parentExecId"] = t.MetaData.Task.ParentExecId
-	m["processName"] = utils.ToString(t.MetaData.Task.Comm[:])
-	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:])
+	m["processName"] = utils.ToString(t.MetaData.Task.Comm[:], 0, len(t.MetaData.Task.Comm))
+	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:], 0, len(t.MetaData.Task.Cwd))
 
-	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:])
-	m["nodename"] = utils.ToString(t.SystemInfo.Nodename[:])
-	m["release"] = utils.ToString(t.SystemInfo.Release[:])
-	m["version"] = utils.ToString(t.SystemInfo.Version[:])
-	m["machine"] = utils.ToString(t.SystemInfo.Machine[:])
-	m["domainname"] = utils.ToString(t.SystemInfo.Domainname[:])
+	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:], 0, len(t.SystemInfo.Sysname))
+	m["nodename"] = utils.ToString(t.SystemInfo.Nodename[:], 0, len(t.SystemInfo.Nodename))
+	m["release"] = utils.ToString(t.SystemInfo.Release[:], 0, len(t.SystemInfo.Release))
+	m["version"] = utils.ToString(t.SystemInfo.Version[:], 0, len(t.SystemInfo.Version))
+	m["machine"] = utils.ToString(t.SystemInfo.Machine[:], 0, len(t.SystemInfo.Machine))
+	m["domainname"] = utils.ToString(t.SystemInfo.Domainname[:], 0, len(t.SystemInfo.Domainname))
 
 	return m
 }
