@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
+// Package utils provides utility functions for the application.
 package utils
 
 import (
@@ -8,30 +9,21 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/intelops/tarian-detector/pkg/err"
 )
 
 var utilsErr = err.New("utils.utils")
 
-// NanoSecToTimeFormat converts time in nanoseconds to time string
-func NanoSecToTimeFormat(t uint64) string {
-	return time.Unix(0, int64(time.Duration(t)*time.Nanosecond)).String()
-}
-
-// MiliSecToTimeFormat converts time in miliseconds to time string
-func MiliSecToTimeFormat(t uint64) string {
-	return time.Unix(int64(time.Duration(t)*time.Millisecond), 0).String()
-}
-
 // KernelVersion returns a combined version number(major.minor.patch) as integer
-func KernelVersion(a, b, c int) int {
-	if c > 255 {
-		c = 255
+func KernelVersion(major, minor, patch int) int {
+	// Ensure patch number does not exceed 255
+	if patch > 255 {
+		patch = 255
 	}
 
-	return (a << 16) + (b << 8) + c
+	// Combine major, minor, and patch into a single integer
+	return (major << 16) + (minor << 8) + patch
 }
 
 // CurrentKernelVersion returns current kernel version as an integer value
@@ -40,7 +32,9 @@ func CurrentKernelVersion() (int, error) {
 		envNotFound string = "unable to check the kernel version, LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH must be defined"
 	)
 
+	// Get environment variables
 	major, minor, patch := os.Getenv("LINUX_VERSION_MAJOR"), os.Getenv("LINUX_VERSION_MINOR"), os.Getenv("LINUX_VERSION_PATCH")
+	// Check if environment variables are not set
 	if len(major) == 0 || len(minor) == 0 || len(patch) == 0 {
 		return 0, utilsErr.Throw(envNotFound)
 	}
@@ -63,6 +57,8 @@ func CurrentKernelVersion() (int, error) {
 	return KernelVersion(a, b, c), nil
 }
 
+// PrintEvent prints the given data map along with a total captured count
+// and a divider.
 func PrintEvent(data map[string]any, t int) {
 	keys := []string{
 		"eventId", "timestamp", "syscallId", "processor",
