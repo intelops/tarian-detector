@@ -41,6 +41,7 @@ stain void stats__add(int error_code) {
     case TDCE_WRITE_CWD:
         ts->n_trgs_dropped_max_buffer_size++;
         ts->n_trgs_dropped++;
+        break;
     default:
         ts->n_trgs_unknown++;
         ts->n_trgs_dropped++;
