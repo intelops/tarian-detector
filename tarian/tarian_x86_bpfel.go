@@ -234,5 +234,5 @@ func _TarianClose(closers ...io.Closer) error {
 
 // Do not access this directly.
 //
-//go:embed tarian_bpfel_x86.o
+//go:embed tarian_x86_bpfel.o
 var _TarianBytes []byte
