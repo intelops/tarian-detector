@@ -10,27 +10,31 @@ import (
 
 var detectorErr = err.New("detector.detector")
 
+// EventDetector is an interface for event detection.
 type EventDetector interface {
-	Count() int
-	Close() error
-	ReadAsInterface() ([]func() ([]byte, error), error)
+	Count() int                                         // Count returns the number of detectors active.
+	Close() error                                       // Close closes the event detector and returns any error encountered.
+	ReadAsInterface() ([]func() ([]byte, error), error) // ReadAsInterface returns a slice of functions that each return a byte slice and an error.
 }
 
+// detectorReadReturn is a struct that represents the return value of a detector read operation.
 type detectorReadReturn struct {
-	eventData []byte
-	err       error
+	eventData []byte // eventData contains the event data.
+	err       error  // err contains any error that occurred during the operation.
 }
 
+// EventsDetector represents a detector for monitoring events.
 type EventsDetector struct {
-	detectors         []EventDetector
-	eventQueue        chan detectorReadReturn
-	started           bool
-	closed            bool
-	totalRecordsCount int
-	totalDetectors    int
-	probeRecordsCount map[string]int
+	detectors         []EventDetector         // detectors is a slice of event detectors.
+	eventQueue        chan detectorReadReturn // eventQueue is a channel that contains the return value of a detector read operation.
+	started           bool                    // started is a flag indicating whether the event detector is started.
+	closed            bool                    // closed is a flag indicating whether the event detector is closed.
+	totalRecordsCount int                     // totalRecordsCount is the total count of records.
+	totalDetectors    int                     // totalDetectors is the total number of detectors.
+	probeRecordsCount map[string]int          // probeRecordsCount is a map of probe names to their respective counts
 }
 
+// NewEventsDetector creates a new EventsDetector instance
 func NewEventsDetector() *EventsDetector {
 	return &EventsDetector{
 		detectors:  make([]EventDetector, 0),
@@ -44,31 +48,38 @@ func NewEventsDetector() *EventsDetector {
 	}
 }
 
+// Add adds an event detector to the detector.
 func (t *EventsDetector) Add(detector EventDetector) {
 	t.detectors = append(t.detectors, detector)
 	t.incrementDetectorCountBy(detector.Count())
 }
 
+// incrementDetectorCountBy increments the total number of detectors by n.
 func (t *EventsDetector) incrementDetectorCountBy(n int) {
 	t.totalDetectors += n
 }
 
+// incrementTotalCount increments the total number of records.
 func (t *EventsDetector) incrementTotalCount() {
 	t.totalRecordsCount++
 }
 
+// GetTotalCount returns the total number of records.
 func (t *EventsDetector) GetTotalCount() int {
 	return t.totalRecordsCount
 }
 
+// probeCount increments the count of a probe.
 func (t *EventsDetector) probeCount(probe string) {
 	t.probeRecordsCount[probe]++
 }
 
+// GetProbeCount returns the count of probes.
 func (t *EventsDetector) GetProbeCount() map[string]int {
 	return t.probeRecordsCount
 }
 
+// Start starts the event detector.
 func (t *EventsDetector) Start() error {
 	for _, detector := range t.detectors {
 		d := detector
@@ -102,6 +113,7 @@ func (t *EventsDetector) Start() error {
 	return nil
 }
 
+// Close closes the event detector.
 func (t *EventsDetector) Close() error {
 	t.closed = true
 
@@ -115,6 +127,8 @@ func (t *EventsDetector) Close() error {
 	return nil
 }
 
+// ReadAsInterface reads a byte array from the event queue, parses it, and increments the total count.
+// It also checks for the presence of an event ID and increments the probe count if found.
 func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	eventparser.LoadTarianEvents()
 	r := <-t.eventQueue
@@ -136,6 +150,7 @@ func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	return data, nil
 }
 
+// Count returns the number of detectors active.
 func (t *EventsDetector) Count() int {
 	return t.totalDetectors
 }
