@@ -252,6 +252,22 @@ func closeMapReaders(readers []any) error {
 	return nil
 }
 
+func (mi *MapInfo) GetMapType() MapInfoType {
+	return mi.mapType
+}
+
+func (mi *MapInfo) GetInnerMapType() MapInfoType {
+	return mi.innerMapType
+}
+
+func (mi *MapInfo) GetBpfMap() *ebpf.Map {
+	return mi.bpfMap
+}
+
+func (mi *MapInfo) GetBufferSize() int {
+	return mi.bufferSize
+}
+
 func (mit MapInfoType) String() string {
 	switch mit {
 	case RingBuffer:

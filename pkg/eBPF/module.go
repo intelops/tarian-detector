@@ -80,3 +80,15 @@ func (m *Module) Prepare() (*Handler, error) {
 
 	return handler, nil
 }
+
+func (m *Module) GetName() string {
+	return m.name
+}
+
+func (m *Module) GetPrograms() []*ProgramInfo {
+	return m.programs
+}
+
+func (m *Module) GetMap() *MapInfo {
+	return m.ebpfMap
+}
