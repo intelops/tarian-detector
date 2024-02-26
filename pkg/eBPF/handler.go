@@ -47,3 +47,15 @@ func (h *Handler) Close() error {
 
 	return closeMapReaders(h.mapReaders)
 }
+
+func (h *Handler) GetName() string {
+	return h.name
+}
+
+func (h *Handler) GetMapReaders() []any {
+	return h.mapReaders
+}
+
+func (h *Handler) GetProbeLinks() []link.Link {
+	return h.probeLinks
+}

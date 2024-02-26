@@ -166,6 +166,22 @@ func detachProbe(l link.Link) error {
 	return l.Close()
 }
 
+func (hi *HookInfo) GetHookType() HookInfoType {
+	return hi.hookType
+}
+
+func (hi *HookInfo) GetHookName() string {
+	return hi.name
+}
+
+func (hi *HookInfo) GetHookGroup() string {
+	return hi.group
+}
+
+func (hi *HookInfo) GetOptions() interface{} {
+	return hi.opts
+}
+
 func (hit HookInfoType) String() string {
 	switch hit {
 	case Tracepoint:
