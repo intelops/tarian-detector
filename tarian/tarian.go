@@ -16,6 +16,8 @@ var tarianErr = err.New("tarian.tarian")
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
+// GetModule loads the ebpf specs like maps, programs and structures from a file.\
+// It returns a *ebpf.Module and  an error, if any.
 func GetModule() (*ebpf.Module, error) {
 	bpfObjs, err := getBpfObject()
 	if err != nil {
@@ -30,7 +32,7 @@ func GetModule() (*ebpf.Module, error) {
 	tarianDetectorModule := ebpf.NewModule("tarian_detector")
 	ckv, err := utils.CurrentKernelVersion()
 	if err != nil {
-		return nil, tarianErr.Throwf("%v", err)
+		return nil, tarianErr.Throwf("failed to get current kernel version: %v", err)
 	}
 
 	if ckv >= utils.KernelVersion(5, 8, 0) && false {
