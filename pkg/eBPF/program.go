@@ -30,3 +30,15 @@ func (pi *ProgramInfo) Disable() *ProgramInfo {
 
 	return pi
 }
+
+func (pi *ProgramInfo) GetHook() *HookInfo {
+	return pi.hook
+}
+
+func (pi *ProgramInfo) GetName() *ebpf.Program {
+	return pi.name
+}
+
+func (pi *ProgramInfo) GetShouldAttach() bool {
+	return pi.shouldAttach
+}
