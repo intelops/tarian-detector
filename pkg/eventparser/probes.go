@@ -11,33 +11,39 @@ import (
 
 var probesErr = err.New("eventparser.probes")
 
+// arg represents an argument with its name, value, and types for Tarian and Linux.
 type arg struct {
-	Name       string
-	Value      string
-	TarianType uint32
-	LinuxType  string
+	Name       string // Name is the name of the argument
+	Value      string // Value is the value of the argument
+	TarianType uint32 // TarianType is the Tarian type of the argument
+	LinuxType  string // LinuxType is the Linux type of the argumen
 }
 
+// Param represents a parameter with its name, type, Linux type, and processing function
 type Param struct {
-	name      string
-	paramType TarianParamType
-	linuxType string
-	function  func(any) (string, error)
+	name      string                    // name of the parameter
+	paramType TarianParamType           // type of the parameter
+	linuxType string                    // Linux type of the parameter
+	function  func(any) (string, error) // function to process the parameter
 }
 
+// TarianEvent represents an event with a name, syscall ID, event size, and parameters.
 type TarianEvent struct {
-	name      string
-	syscallId int
-	eventSize uint32
-	params    []Param
+	name      string  // name of the event
+	syscallId int     // syscall ID
+	eventSize uint32  // size of the event
+	params    []Param // parameters of the event
 }
 
-type TarianEventMap map[int]TarianEvent
+// TarianEventMap is a map type that maps TarianEventsE to TarianEvent
+type TarianEventMap map[TarianEventsE]TarianEvent
 
-func (te TarianEventMap) AddTarianEvent(idx int, event TarianEvent) {
+// AddTarianEvent adds a TarianEvent to the TarianEventMap at the specified index.
+func (te TarianEventMap) AddTarianEvent(idx TarianEventsE, event TarianEvent) {
 	te[idx] = event
 }
 
+// NewTarianEvent creates a new TarianEvent with the given id, name, size, and params.
 func NewTarianEvent(id int, name string, size uint32, params ...Param) TarianEvent {
 	return TarianEvent{
 		name:      name,
@@ -47,10 +53,12 @@ func NewTarianEvent(id int, name string, size uint32, params ...Param) TarianEve
 	}
 }
 
+// LoadTarianEvents loads the Tarian events into 'Events' variable by generating them using GenerateTarianEvents function
 func LoadTarianEvents() {
 	Events = GenerateTarianEvents()
 }
 
+// GenerateTarianEvents creates and returns a TarianEventMap
 func GenerateTarianEvents() TarianEventMap {
 	events := make(TarianEventMap)
 
@@ -254,9 +262,11 @@ func GenerateTarianEvents() TarianEventMap {
 	return events
 }
 
+// processValue processes the value and returns the argument and an error, if any.
 func (p *Param) processValue(val interface{}) (arg, error) {
 	arg := arg{}
 
+	// If a function is provided, call it with the value and handle the parsed value and error
 	if p.function != nil {
 		parsedValue, err := p.function(val)
 		if err != nil {

@@ -14,12 +14,17 @@ import (
 
 var parserErr = err.New("eventparser.parser")
 
+// TarianEventMap represents a map of Tarian events
+var Events TarianEventMap
+
+// ByteStream represents a stream of bytes.
 type ByteStream struct {
-	data     []byte
-	position int
-	nparams  uint8
+	data     []byte // data is the array of bytes in the stream
+	position int    // position is the current position in the stream
+	nparams  uint8  // nparams is the number of parameters
 }
 
+// NewByteStream creates a new ByteStream with the given input data and n parameters.
 func NewByteStream(inputData []byte, n uint8) *ByteStream {
 	return &ByteStream{
 		data:     inputData,
@@ -28,27 +33,27 @@ func NewByteStream(inputData []byte, n uint8) *ByteStream {
 	}
 }
 
-var Events TarianEventMap
-
+// ParseByteArray takes a byte array as input and returns a map[string]any and an error.
+// It first retrieves the eventId from the input data, then checks if the event exists in the Events map.
+// It then reads the TarianMetaData from the data, updates the Syscall if needed, and parses the parameters.
+// Finally, it returns the parsed record and any error encountered during parsing.
 func ParseByteArray(data []byte) (map[string]any, error) {
-	/*
-		Assuming a specific byte pattern within the byte array:
+	// Assuming a specific byte pattern within the byte array:
+	// tarianmetadata + params
 
-		tarianmetadata + params
-	*/
 	eventId, err := getEventId(data)
 	if err != nil {
 		return nil, parserErr.Throwf("%v", err)
 	}
 
-	event, noEvent := Events[eventId]
+	event, noEvent := Events[TarianEventsE(eventId)]
 	if !noEvent {
 		return nil, parserErr.Throwf("missing event from 'var Events TarianEventMap' for key: %v", eventId)
 	}
 
 	var metaData TarianMetaData
 	lenMetaData := binary.Size(metaData)
-	err = binary.Read(bytes.NewReader(data[:lenMetaData]), binary.LittleEndian, &metaData)
+	err = binary.Read(bytes.NewReader(data), binary.LittleEndian, &metaData)
 	if err != nil {
 		return nil, parserErr.Throwf("%v", err)
 	}
@@ -71,6 +76,7 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 	return record, nil
 }
 
+// parseParams parses the parameters of a TarianEvent from the ByteStream
 func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	tParams := event.params
 	if len(tParams) <= 0 {
@@ -80,10 +86,12 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	args := make([]arg, 0, bs.nparams)
 
 	for i := 0; i < int(bs.nparams); i++ {
+		// parseParams parses the parameters of a TarianEvent from the ByteStream
 		if bs.position >= len(bs.data) {
 			break
 		}
 
+		// Check if the index is out of range for tParams
 		if i >= len(tParams) {
 			break
 		}
@@ -99,10 +107,12 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 	return args, nil
 }
 
+// parseParam parses the given parameter based on its type and returns the parsed value.
 func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	var pVal any
 	var err error
 
+	// Switch based on the parameter type
 	switch p.paramType {
 	case TDT_U8:
 		pVal, err = bs.parseUint8()
@@ -135,6 +145,8 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	return p.processValue(pVal)
 }
 
+// parseUint8 reads an 8-bit unsigned integer from the ByteStream and returns it.
+// It also increments the position by 1.
 func (bs *ByteStream) parseUint8() (uint8, error) {
 	val, err := utils.Uint8(bs.data, bs.position)
 	bs.position += 1
@@ -142,6 +154,8 @@ func (bs *ByteStream) parseUint8() (uint8, error) {
 	return val, err
 }
 
+// parseUint16 reads a 16-bit unsigned integer from the ByteStream and returns it.
+// It also increments the position by 2.
 func (bs *ByteStream) parseUint16() (uint16, error) {
 	val, err := utils.Uint16(bs.data, bs.position)
 	bs.position += 2
@@ -149,6 +163,8 @@ func (bs *ByteStream) parseUint16() (uint16, error) {
 	return val, err
 }
 
+// parseUint32 reads a 32-bit unsigned integer from the ByteStream and returns it.
+// It also increments the position by 4.
 func (bs *ByteStream) parseUint32() (uint32, error) {
 	val, err := utils.Uint32(bs.data, bs.position)
 	bs.position += 4
@@ -156,6 +172,8 @@ func (bs *ByteStream) parseUint32() (uint32, error) {
 	return val, err
 }
 
+// parseUint64 reads a 64-bit unsigned integer from the ByteStream and returns it.
+// It also increments the position by 8.
 func (bs *ByteStream) parseUint64() (uint64, error) {
 	val, err := utils.Uint64(bs.data, bs.position)
 	bs.position += 8
@@ -163,6 +181,8 @@ func (bs *ByteStream) parseUint64() (uint64, error) {
 	return val, err
 }
 
+// parseInt8 reads an 8-bit signed integer from the ByteStream and returns it.
+// It also increments the position by 1.
 func (bs *ByteStream) parseInt8() (int8, error) {
 	val, err := utils.Int8(bs.data, bs.position)
 	bs.position += 1
@@ -170,6 +190,8 @@ func (bs *ByteStream) parseInt8() (int8, error) {
 	return val, err
 }
 
+// parseInt16 reads a 16-bit signed integer from the ByteStream and returns it.
+// It also increments the position by 2.
 func (bs *ByteStream) parseInt16() (int16, error) {
 	val, err := utils.Int16(bs.data, bs.position)
 	bs.position += 2
@@ -177,6 +199,8 @@ func (bs *ByteStream) parseInt16() (int16, error) {
 	return val, err
 }
 
+// parseInt32 reads a 32-bit signed integer from the ByteStream and returns it.
+// It also increments the position by 4.
 func (bs *ByteStream) parseInt32() (int32, error) {
 	val, err := utils.Int32(bs.data, bs.position)
 	bs.position += 4
@@ -184,6 +208,8 @@ func (bs *ByteStream) parseInt32() (int32, error) {
 	return val, err
 }
 
+// parseInt64 reads a 64-bit signed integer from the ByteStream and returns it.
+// It also increments the position by 8.
 func (bs *ByteStream) parseInt64() (int64, error) {
 	val, err := utils.Int64(bs.data, bs.position)
 	bs.position += 8
@@ -191,6 +217,8 @@ func (bs *ByteStream) parseInt64() (int64, error) {
 	return val, err
 }
 
+// parseIpv4 reads a 32-bit IPv4 address from the ByteStream and returns it.
+// It also increments the position by 4.
 func (bs *ByteStream) parseIpv4() string {
 	val := utils.Ipv4(bs.data, bs.position)
 	bs.position += 4
@@ -198,6 +226,8 @@ func (bs *ByteStream) parseIpv4() string {
 	return val
 }
 
+// parseIpv6 reads a 128-bit IPv6 address from the ByteStream and returns it.
+// It also increments the position by 16.
 func (bs *ByteStream) parseIpv6() string {
 	val := utils.Ipv6(bs.data, bs.position)
 	bs.position += 16
@@ -205,6 +235,8 @@ func (bs *ByteStream) parseIpv6() string {
 	return val
 }
 
+// parseString reads a string from the ByteStream and returns it.
+// It also increments the position by the length of the string.
 func (bs *ByteStream) parseString() (string, error) {
 	slen, err := bs.parseUint16()
 	if err != nil {
@@ -217,6 +249,8 @@ func (bs *ByteStream) parseString() (string, error) {
 	return val, nil
 }
 
+// parseRawArray reads a raw array from the ByteStream and returns it.
+// It also increments the position by the length of the array.
 func (bs *ByteStream) parseRawArray() ([]byte, error) {
 	slen, err := bs.parseUint16()
 	if err != nil {
@@ -229,6 +263,8 @@ func (bs *ByteStream) parseRawArray() ([]byte, error) {
 	return val, nil
 }
 
+// parseSocketAddress reads a socket address from the ByteStream and returns it.
+// It also increments the position by the length of the socket address.
 func (bs *ByteStream) parseSocketAddress() (any, error) {
 	family, err := bs.parseUint8()
 	if err != nil {
@@ -304,11 +340,8 @@ func (bs *ByteStream) parseSocketAddress() (any, error) {
 	}
 }
 
+// getEventId reads the eventId from the data and returns it as an int.
 func getEventId(data []byte) (int, error) {
-	if len(data) < 4 {
-		return 0, parserErr.Throwf("input data length is %d, expected to be at least %d", len(data), 4)
-	}
-
 	id, err := utils.Int32(data, 0)
 	if err != nil {
 		return 0, parserErr.Throwf("failed to read eventId from data: %v", err)
@@ -317,6 +350,7 @@ func getEventId(data []byte) (int, error) {
 	return int(id), nil
 }
 
+// toMap converts the TarianMetaData struct to a map[string]any.
 func toMap(t TarianMetaData) map[string]any {
 	m := make(map[string]any)
 
@@ -324,7 +358,7 @@ func toMap(t TarianMetaData) map[string]any {
 	m["syscallId"] = t.MetaData.Syscall
 	m["processor"] = t.MetaData.Processor
 
-	// task
+	// task fields
 	m["threadStartTime"] = t.MetaData.Task.StartTime
 	m["hostProcessId"] = t.MetaData.Task.HostPid
 	m["hostThreadId"] = t.MetaData.Task.HostTgid
@@ -342,6 +376,7 @@ func toMap(t TarianMetaData) map[string]any {
 	m["processName"] = utils.ToString(t.MetaData.Task.Comm[:], 0, len(t.MetaData.Task.Comm))
 	m["directory"] = utils.ToString(t.MetaData.Task.Cwd[:], 0, len(t.MetaData.Task.Cwd))
 
+	// SystemInfo fields
 	m["sysname"] = utils.ToString(t.SystemInfo.Sysname[:], 0, len(t.SystemInfo.Sysname))
 	m["nodename"] = utils.ToString(t.SystemInfo.Nodename[:], 0, len(t.SystemInfo.Nodename))
 	m["release"] = utils.ToString(t.SystemInfo.Release[:], 0, len(t.SystemInfo.Release))
