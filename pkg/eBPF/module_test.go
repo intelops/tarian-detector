@@ -18,7 +18,7 @@ func dummy_perf_map(t *testing.T) *ebpf.Map {
 		Type: ebpf.PerfEventArray,
 	})
 	if err != nil {
-		t.Fatal("HERE--->", err)
+		t.Fatal(err)
 	}
 
 	t.Cleanup(func() { events.Close() })
