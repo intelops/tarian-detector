@@ -24,9 +24,10 @@ func dummy_kprobe_prog(t *testing.T) *ebpf.Program {
 		},
 	})
 	if err != nil {
-		t.Errorf("dummy_kprobe_prog: %v", err)
+		t.Fatalf("dummy_kprobe_prog: %v", err)
 	}
 
+	t.Cleanup(func() { prog.Close() })
 	return prog
 }
 
