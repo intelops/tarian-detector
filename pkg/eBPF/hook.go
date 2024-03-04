@@ -11,16 +11,20 @@ import (
 	"github.com/intelops/tarian-detector/pkg/err"
 )
 
+var hookErr = err.New("ebpf.hook")
+
+// HookInfoType is an integer type used to represent different types of eBPF hooks.
 type HookInfoType int
 
+// HookInfo struct contains information about an eBPF hook.
 type HookInfo struct {
-	hookType HookInfoType
-	group    string // HookInfoType: Tracepoint needs this Field
-	name     string
-	opts     any // expected values with relavant hook type: cilium/ebpf/link.*TracepointOptions | .RawTracepointOptions | .*KprobeOptions | .CgroupOptions
+	hookType HookInfoType // Type of the eBPF hook
+	group    string       // Group name, required for Tracepoint type hooks
+	name     string       // Name of the hook
+	opts     any          // Options for the hook, varies based on the hook type
 }
 
-// Supported ebpf hooks
+// Constants representing different types of eBPF hooks.
 const (
 	Tracepoint HookInfoType = iota
 	RawTracepoint
@@ -35,8 +39,7 @@ const (
 	ErrInvalidOptionsTypeForBpfHookType string = "unexpected 'Opts' field type detected in the BPF Hook. Expected type: %T, Received type: %T"
 )
 
-var hookErr = err.New("ebpf.hook")
-
+// NewHookInfo creates a new HookInfo instance with default values.
 func NewHookInfo() *HookInfo {
 	return &HookInfo{
 		name:     "",
@@ -46,6 +49,7 @@ func NewHookInfo() *HookInfo {
 	}
 }
 
+// Tracepoint sets the HookInfo instance to represent a Tracepoint type hook.
 func (hi *HookInfo) Tracepoint(g string, n string, op ...*link.TracepointOptions) *HookInfo {
 	if len(op) > 0 {
 		hi.opts = op[0]
@@ -60,6 +64,7 @@ func (hi *HookInfo) Tracepoint(g string, n string, op ...*link.TracepointOptions
 	return hi
 }
 
+// RawTracepoint sets the HookInfo instance to represent a RawTracepoint type hook.
 func (hi *HookInfo) RawTracepoint(op link.RawTracepointOptions) *HookInfo {
 	hi.hookType = RawTracepoint
 	hi.opts = op
@@ -67,6 +72,7 @@ func (hi *HookInfo) RawTracepoint(op link.RawTracepointOptions) *HookInfo {
 	return hi
 }
 
+// Kprobe sets the HookInfo instance to represent a Kprobe type hook.
 func (hi *HookInfo) Kprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	if len(op) > 0 {
 		hi.opts = op[0]
@@ -80,6 +86,7 @@ func (hi *HookInfo) Kprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	return hi
 }
 
+// Kretprobe sets the HookInfo instance to represent a Kretprobe type hook.
 func (hi *HookInfo) Kretprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	if len(op) > 0 {
 		hi.opts = op[0]
@@ -93,6 +100,7 @@ func (hi *HookInfo) Kretprobe(n string, op ...*link.KprobeOptions) *HookInfo {
 	return hi
 }
 
+// Cgroup sets the HookInfo instance to represent a Cgroup type hook.
 func (hi *HookInfo) Cgroup(op link.CgroupOptions) *HookInfo {
 	hi.hookType = Cgroup
 	hi.opts = op
@@ -100,6 +108,7 @@ func (hi *HookInfo) Cgroup(op link.CgroupOptions) *HookInfo {
 	return hi
 }
 
+// AttachProbe attaches the eBPF program to the hook represented by the HookInfo instance.
 func (hi *HookInfo) AttachProbe(programName *ebpf.Program) (link.Link, error) {
 	switch hi.hookType {
 	case Tracepoint:
@@ -151,6 +160,7 @@ func (hi *HookInfo) AttachProbe(programName *ebpf.Program) (link.Link, error) {
 	}
 }
 
+// detachProbes detaches all the probes represented by the links in the provided slice.
 func detachProbes(lns []link.Link) error {
 	for _, l := range lns {
 		err := detachProbe(l)
@@ -162,26 +172,32 @@ func detachProbes(lns []link.Link) error {
 	return nil
 }
 
+// detachProbe detaches the probe represented by the provided link.
 func detachProbe(l link.Link) error {
 	return l.Close()
 }
 
+// GetHookType returns the type of the hook represented by the HookInfo instance.
 func (hi *HookInfo) GetHookType() HookInfoType {
 	return hi.hookType
 }
 
+// GetHookName returns the name of the hook represented by the HookInfo instance.
 func (hi *HookInfo) GetHookName() string {
 	return hi.name
 }
 
+// GetHookGroup returns the group of the hook represented by the HookInfo instance.
 func (hi *HookInfo) GetHookGroup() string {
 	return hi.group
 }
 
+// GetOptions returns the opts of the hook represented by the HookInfo instance.
 func (hi *HookInfo) GetOptions() interface{} {
 	return hi.opts
 }
 
+// String method for the HookInfoType type. It returns a string representation of the HookInfoType.
 func (hit HookInfoType) String() string {
 	switch hit {
 	case Tracepoint:
