@@ -189,7 +189,6 @@ func (mi *MapInfo) perfReader() (*perf.Reader, error) {
 		return nil, mapErr.Throw(ErrNilMapReader)
 	}
 
-	fmt.Printf("%v\n", mi.bufferSize)
 	p, err := perf.NewReader(mi.bpfMap, mi.bufferSize)
 	if err != nil {
 		return nil, mapErr.Throwf("%v", err)
