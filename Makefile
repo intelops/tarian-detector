@@ -40,6 +40,7 @@ PKG_MGR=apt-get
 help:
 	@echo "make build - builds the project"
 	@echo "make run - start the application"
+	@echo "make dev_run - builds and starts the application"
 	@echo "make install - installs the project dependencies"
 	@echo "make uinstall - uinstalls the project dependencies"
 	@echo "make bpf_helpers - generates the header files"
