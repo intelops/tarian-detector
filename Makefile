@@ -118,7 +118,8 @@ endif
 		echo "ERROR: File already exists at $(FILE_PATH)"; \
 		exit 1; \
 	else \
-		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright 2024 Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
+		echo "Creating file: $(FILE_PATH)" && echo "// SPDX-License-Identifier: Apache-2.0 \n// Copyright $(shell date +'%Y') Authors of Tarian & the Organization created Tarian" > $(FILE_PATH); \
+		echo "File created successfully at path: $(shell realpath $(FILE_PATH))"; \
 	fi
 
 # recipe to remove all object files(*.o)
