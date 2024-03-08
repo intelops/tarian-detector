@@ -9,7 +9,7 @@ import (
 
 var moduleErr = err.New("ebpf.module")
 
-// EbpfModule represents an eBPF module.
+// EbpfModule represents an eBPF module. It includes the name of the module, a slice of eBPF program information, and information about the eBPF map.
 type EbpfModule interface {
 	// GetModule is a method that returns a pointer to a Module and an error.
 	GetModule() (*Module, error)

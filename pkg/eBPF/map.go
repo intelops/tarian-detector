@@ -18,7 +18,7 @@ var mapErr = err.New("ebpf.map")
 // MapInfoType is an integer type used to represent different types of eBPF maps.
 type MapInfoType int
 
-// MapInfo holds information about an eBPF map.
+// MapInfo holds information about an eBPF map. It includes the type of the eBPF map, a pointer to the actual eBPF map, the size of the buffer for the eBPF map, and the type of the inner eBPF map (if the map is an array of maps).
 type MapInfo struct {
 	mapType      MapInfoType
 	bpfMap       *ebpf.Map
