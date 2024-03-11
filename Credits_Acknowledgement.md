@@ -1,10 +1,10 @@
-# 🎖️ Tarian Detector Credits & Acknowledgements
+# Tarian Detector Credits & Acknowledgements
 
-We would like to extend our heartfelt thanks 🙏 to the whole open-source eBPF community. Your passion and commitment to open-source software development have been pivotal in the development and growth of Tarian Detector.
+We extend our deepest gratitude to the entire open-source eBPF community. Your unwavering dedication and commitment to open-source software development have been instrumental in the evolution and success of Tarian Detector.
 
-We're particularly grateful for the insights and innovations provided by several key projects, which have had a significant influence on Tarian Detector.
+We owe a special debt of gratitude to several key projects. Their insights and innovations have significantly shaped Tarian Detector.
 
-## 🌟 Acknowledgements
+## Acknowledgements
 
 - **_[Falco](https://github.com/falcosecurity/falco):_** Falco is a cloud-native security tool that monitors anomalous activity in nodes and containers using eBPF. Falco helps us detect malicious behavior, configuration changes, and compliance violations in real time1. Falco’s flexible rules engine and integration with various systems have enabled us to leverage eBPF for threat detection and mitigation.
 
@@ -14,7 +14,6 @@ We're particularly grateful for the insights and innovations provided by several
 
 - **_[Tracee](https://github.com/aquasecurity/tracee):_** Tracee uses eBPF technology to tap into the system and provides access to hundreds of events that help understand system behavior. The principles and techniques incorporated in Tracee have been instrumental in shaping the functionalities of Tarian Detector.
 
-We want to express our sincere gratitude for the influence and inspiration these projects have provided. They represent the best of what the open-source community can achieve when we collaborate and share our knowledge.
+We express our heartfelt appreciation for the influence and inspiration these projects have bestowed upon us. They epitomize the remarkable achievements the open-source community can accomplish through collaboration and knowledge sharing.
 
-In conclusion, we're immensely grateful for the vibrant open-source community that surrounds and supports us. We look forward to continuing to learn from and contribute to this amazing community. 🚀
-
+In closing, we are profoundly grateful for the dynamic open-source community that envelops and uplifts us. We eagerly anticipate continuing our journey of learning from and contributing to this extraordinary community.

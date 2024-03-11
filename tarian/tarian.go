@@ -16,8 +16,8 @@ var tarianErr = err.New("tarian.tarian")
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
-// GetModule loads the ebpf specs like maps, programs and structures from a file.\
-// It returns a *ebpf.Module and  an error, if any.
+// GetModule loads the eBPF specifications, such as maps, programs, and structures, from a file.
+// It returns a pointer to an ebpf.Module and an error, if any occurred during the loading process.
 func GetModule() (*ebpf.Module, error) {
 	bpfObjs, err := getBpfObject()
 	if err != nil {

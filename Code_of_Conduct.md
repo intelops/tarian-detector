@@ -1,17 +1,17 @@
-# 🌈 Tarian Detector Community Code of Conduct
+# Tarian Detector Community Code of Conduct
 
 As contributors, maintainers, and participants in the Tarian Detector community, and in the interest of fostering an open and welcoming community, we pledge to respect all people who participate or contribute through reporting issues, posting feature requests, updating documentation, submitting pull requests or patches, attending conferences or events, or engaging in other community or project activities.
 
 We are committed to making participation in our community a harassment-free experience for everyone, regardless of age, body size, caste, disability, ethnicity, level of experience, family status, gender, gender identity and expression, marital status, military or veteran status, nationality, personal appearance, race, religion, sexual orientation, socio-economic status, tribe, or any other dimension of diversity.
 
-## 🔭 Scope
+## Scope
 
 This Code of Conduct applies:
 
 - Within project and community spaces,
 - In other spaces when an individual Tarian Detector community participant's words or actions are directed at or are about a Tarian Detector project, the Tarian Detector community, or another Tarian Detector community participant.
 
-## 🌟 Our Standards
+## Our Standards
 
 The Tarian Detector Community is open, inclusive and respectful. Every member of our community has the right to have their identity respected.
 
@@ -43,18 +43,18 @@ The following behaviors are also prohibited:
 
 Project maintainers have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct. By adopting this Code of Conduct, project maintainers commit themselves to fairly and consistently applying these principles to every aspect of managing this project. Project maintainers who do not follow or enforce the Code of Conduct may be temporarily or permanently removed from the project team.
 
-## 🚨 Reporting
+## Reporting
 
 For incidents that occur in the Tarian Detector community, please contact the project team at [INSERT YOUR EMAIL ADDRESS]. You can expect a response within three business days.
 
-## 🛡️ Enforcement
+## Enforcement
 
 Upon review and investigation of a reported incident, the team will determine what action is appropriate based on this Code of Conduct and its related documentation.
 
 Community leaders will follow these Community Impact Guidelines in determining
 the consequences for any action they deem in violation of this Code of Conduct:
 
-###  Correction
+### Correction
 
 **Community Impact**: Use of inappropriate language or other behavior deemed
 unprofessional or unwelcome in the community.
@@ -95,10 +95,10 @@ individual, or aggression toward or disparagement of classes of individuals.
 **Consequence**: A permanent ban from any sort of public interaction within
 the community.
 
-## 📌 Amendments
+## Amendments
 
 Any substantive changes to this Code of Conduct must be approved by the core project team.
 
 ## Acknowledgements
 
-This Code of Conduct is adapted from the [Contributor Covenant](http://contributor-covenant.org), version 2.0, available at [http://contributor-covenant.org/version/2/0/code_of_conduct/](http://contributor-covenant.org/version/2/0/code_of_conduct/).
+This Code of Conduct is adapted from the [Contributor Covenant](http://contributor-covenant.org), version 2.0, available at [link](http://contributor-covenant.org/version/2/0/code_of_conduct/).

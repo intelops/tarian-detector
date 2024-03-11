@@ -22,11 +22,16 @@ const (
 	// in case it was truncated
 	BpfContainerIDLength = 31
 
+	// DockerIDLength is the length of a Docker container ID.
 	DockerIDLength = 128
 
+	// HostProcDir is the directory where host process information is stored.
 	HostProcDir = "/host/proc"
 )
 
+// ProcsContainerID returns the container ID for a given process ID (pid).
+// It reads the cgroup file for the process and extracts the container ID from it.
+// If an error occurs during this process, it is returned.
 func ProcsContainerID(pid uint32) (string, error) {
 	pidstr := fmt.Sprint(pid)
 	cgroups, err := os.ReadFile(filepath.Join(HostProcDir, pidstr, "cgroup"))
@@ -39,6 +44,9 @@ func ProcsContainerID(pid uint32) (string, error) {
 	return containerID, nil
 }
 
+// FindDockerIDFromCgroup extracts the Docker container ID from a cgroup string.
+// It does this by splitting the cgroup string into paths, and checking each path
+// for the presence of a Docker container ID. If a valid ID is found, it is returned.
 func FindDockerIDFromCgroup(cgroups string) string {
 	cgrpPaths := strings.Split(cgroups, "\n")
 	for _, s := range cgrpPaths {
