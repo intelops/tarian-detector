@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-// Package utils provides utility functions for the converting byte slice to various integer and string types,
-// as well as converting network byte order to host byte order.
 package utils
 
 import (
@@ -130,7 +128,7 @@ func Ipv6(b []byte, pos int) string {
 	return net.IP(b[pos : pos+16]).String()
 }
 
-// Ntohs converts a little-endian uint16 value to a big-endian uint16 value
+// Ntohs converts a little-endian uint16 value to a big-endian uint16 value and returns the result.
 func Ntohs(n uint16) uint16 {
 	b := make([]byte, 2)
 	binary.LittleEndian.PutUint16(b, n)

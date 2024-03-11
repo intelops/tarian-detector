@@ -73,6 +73,7 @@ func ContainerIndexFunc(obj interface{}) ([]string, error) {
 	return containerIDs, nil
 }
 
+// CleanContainerIDFromPod cleans the full container ID from a pod to get the actual container ID.
 func CleanContainerIDFromPod(podContainerID string) (string, error) {
 	parts := strings.Split(podContainerID, "//")
 	if len(parts) != 2 {
@@ -87,15 +88,18 @@ func CleanContainerIDFromPod(podContainerID string) (string, error) {
 	return containerID, nil
 }
 
+// K8sPodWatcher is an interface that defines the FindPod method.
 type K8sPodWatcher interface {
 	FindPod(containerID string) *corev1.Pod
 }
 
+// PodWatcher is a struct that implements the K8sPodWatcher interface.
 type PodWatcher struct {
 	podInformer     cache.SharedIndexInformer
 	informerFactory informers.SharedInformerFactory
 }
 
+// NewPodWatcher creates a new PodWatcher.
 func NewPodWatcher(k8sClient *kubernetes.Clientset) (*PodWatcher, error) {
 	k8sInformerFactory := informers.NewSharedInformerFactory(k8sClient, 60*time.Second) // informers.WithTweakListOptions(func(options *metav1.ListOptions) {
 
@@ -110,11 +114,13 @@ func NewPodWatcher(k8sClient *kubernetes.Clientset) (*PodWatcher, error) {
 	return &PodWatcher{podInformer: podInformer, informerFactory: k8sInformerFactory}, nil
 }
 
+// Start starts the PodWatcher.
 func (watcher *PodWatcher) Start() {
 	watcher.informerFactory.Start(wait.NeverStop)
 	watcher.informerFactory.WaitForCacheSync(wait.NeverStop)
 }
 
+// FindPod finds a pod by its container ID.
 func (watcher *PodWatcher) FindPod(containerID string) (*corev1.Pod, error) {
 	indexedContainerID := containerID
 	if len(containerID) > containerIDLen {
@@ -129,6 +135,9 @@ func (watcher *PodWatcher) FindPod(containerID string) (*corev1.Pod, error) {
 	return FindContainer(containerID, pods)
 }
 
+// FindContainer searches through a list of pods for a container with the specified ID.
+// It checks each container in each pod and returns the first pod that contains the specified container.
+// If no such container is found in any known pod, it returns an error.
 func FindContainer(containerID string, pods []interface{}) (*corev1.Pod, error) {
 	if containerID == "" {
 		return nil, k8sErr.Throw("missing container id")
@@ -160,6 +169,9 @@ func FindContainer(containerID string, pods []interface{}) (*corev1.Pod, error) 
 	return nil, k8sErr.Throw("no such container in any known Pod")
 }
 
+// ContainerIDContains checks if a container ID contains a specified prefix.
+// It splits the container ID by '//' and checks if the second part of the split string starts with the prefix.
+// It returns true if the prefix is found, and false otherwise.
 func ContainerIDContains(containerID string, prefix string) bool {
 	parts := strings.Split(containerID, "//")
 	if len(parts) == 2 && strings.HasPrefix(parts[1], prefix) {

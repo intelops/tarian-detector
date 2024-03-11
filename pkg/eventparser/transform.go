@@ -444,7 +444,9 @@ const (
 	SOCK_NONBLOCK = 00004000 // Enable non-blocking mode for the socket.
 )
 
-// parseSocketType takes a socket type value (n) and returns its corresponding name.
+// parseSocketType takes a socket type value and returns its corresponding name.
+// If the type value does not match any known socket type, it returns the value as a string.
+// It also checks for the SOCK_CLOEXEC and SOCK_NONBLOCK flags and includes them in the output if present.
 func parseSocketType(typ any) (string, error) {
 	t, ok := typ.(int32)
 	if !ok {
@@ -469,7 +471,7 @@ func parseSocketType(typ any) (string, error) {
 	return strings.Join(ts, "|"), nil
 }
 
-// socketProtocols represents various IP protocols used in networking.
+// socketProtocols is a map that associates IP protocol numbers with their corresponding names.
 var socketProtocols = map[int32]string{
 	0:   "IPPROTO_IP",      // Internet Protocol (IP).
 	1:   "IPPROTO_ICMP",    // Internet Control Message Protocol (ICMP).
@@ -498,7 +500,8 @@ var socketProtocols = map[int32]string{
 	255: "IPPROTO_RAW",     // Raw IP packets.
 }
 
-// parseSocketProtocol takes a socket protocol value (n) and returns its corresponding name.
+// parseSocketProtocol takes a socket protocol value and returns its corresponding name.
+// If the protocol value does not match any known protocol, it returns the value as a string.
 func parseSocketProtocol(protocol any) (string, error) {
 	p, ok := protocol.(int32)
 	if !ok {
