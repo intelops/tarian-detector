@@ -16,7 +16,7 @@ var hookErr = err.New("ebpf.hook")
 // HookInfoType is an integer type used to represent different types of eBPF hooks.
 type HookInfoType int
 
-// HookInfo struct contains information about an eBPF hook.
+// HookInfo represents information about an eBPF hook. It includes the type of the eBPF hook, the group name (required for Tracepoint type hooks), the name of the hook, and options for the hook (which vary based on the hook type).
 type HookInfo struct {
 	hookType HookInfoType // Type of the eBPF hook
 	group    string       // Group name, required for Tracepoint type hooks

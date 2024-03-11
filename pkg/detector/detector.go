@@ -79,7 +79,9 @@ func (t *EventsDetector) GetProbeCount() map[string]int {
 	return t.probeRecordsCount
 }
 
-// Start starts the event detector.
+// Start initiates the event detection process. It iterates over the map of each detector,
+// starts a goroutine for each map. These goroutines continuously read events from the maps
+// and send them to the event queue. If the detector is closed, the goroutines stop reading events.
 func (t *EventsDetector) Start() error {
 	for _, detector := range t.detectors {
 		d := detector

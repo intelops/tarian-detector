@@ -10,7 +10,7 @@ import (
 
 var handlerErr = err.New("ebpf.handler")
 
-// Handler represents an eBPF handler.
+// Handler represents an eBPF handler. It includes the name of the handler, a list of map readers, and a list of probe links.
 type Handler struct {
 	name       string      // Name of the handler
 	mapReaders []any       // List of map readers

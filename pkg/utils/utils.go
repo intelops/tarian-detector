@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-// Package utils provides utility functions for the application.
 package utils
 
 import (
@@ -15,7 +14,9 @@ import (
 
 var utilsErr = err.New("utils.utils")
 
-// KernelVersion returns a combined version number(major.minor.patch) as integer
+// KernelVersion combines the major, minor, and patch version numbers into a single integer.
+// It ensures that the patch number does not exceed 255. If it does, the patch number is set to 255.
+// The function returns the combined version number.
 func KernelVersion(major, minor, patch int) int {
 	// Ensure patch number does not exceed 255
 	if patch > 255 {
@@ -26,7 +27,8 @@ func KernelVersion(major, minor, patch int) int {
 	return (major << 16) + (minor << 8) + patch
 }
 
-// CurrentKernelVersion returns current kernel version as an integer value
+// CurrentKernelVersion retrieves the current kernel version from environment variables.
+// It returns an error if the required environment variables are not set or if they cannot be converted to integers.
 func CurrentKernelVersion() (int, error) {
 	const (
 		envNotFound string = "unable to check the kernel version, LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH must be defined"
@@ -57,8 +59,8 @@ func CurrentKernelVersion() (int, error) {
 	return KernelVersion(a, b, c), nil
 }
 
-// PrintEvent prints the given data map along with a total captured count
-// and a divider.
+// PrintEvent prints the given data map along with a total captured count and a divider.
+// It uses a predefined set of keys to extract values from the data map.
 func PrintEvent(data map[string]any, t int) {
 	keys := []string{
 		"eventId", "timestamp", "syscallId", "processor",
