@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
+	"github.com/intelops/tarian-detector/pkg/utils"
 	"github.com/intelops/tarian-detector/tarian"
 )
 
@@ -23,12 +23,12 @@ func main() {
 	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
 
 	// Initialize and start the Kubernetes watcher
-	watcher, err := K8Watcher()
-	if err != nil {
-		log.Print(err)
-	} else {
-		watcher.Start()
-	}
+	// watcher, err := K8Watcher()
+	// if err != nil {
+	// 	log.Print(err)
+	// } else {
+	// 	watcher.Start()
+	// }
 
 	// Initialize Tarian eBPF module
 	tarianEbpfModule, err := tarian.GetModule()
@@ -70,34 +70,15 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// Continuously read events
-	go func() {
-		for {
-			e, err := eventsDetector.ReadAsInterface()
-			if err != nil {
-				log.Print(err)
-			}
-
-			if len(e) == 0 {
-				continue
-			}
-
-			// Retrieve Kubernetes context based on host process ID
-			k8sCtx, err := GetK8sContext(watcher, e["hostProcessId"].(uint32))
-			if err != nil {
-				// Log the error as the Kubernetes context if an error is
-				e["kubernetes"] = err.Error()
-			} else {
-				// Set the Kubernetes context if no error is encountered
-				e["kubernetes"] = k8sCtx
-			}
-
-			// utils.PrintEvent(e, eventsDetector.GetTotalCount())
-		}
-	}()
-
-	// Only for avoiding deadlock detection
+	resultChan := make(chan detector.Result, 8192)
+	eventsDetector.ReadAsInterface(resultChan)
 	for {
-		time.Sleep(1 * time.Minute)
+		res := <-resultChan
+		if res.Err != nil {
+			log.Print(err)
+			continue
+		}
+
+		utils.PrintEvent(res.Data, eventsDetector.GetTotalCount())
 	}
 }
