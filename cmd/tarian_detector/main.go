@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
-	"github.com/intelops/tarian-detector/pkg/utils"
 	"github.com/intelops/tarian-detector/tarian"
 )
 
@@ -21,6 +21,8 @@ func main() {
 	// Create a channel to listen for interrupt signals (Ctrl+C or SIGTERM)
 	stopper := make(chan os.Signal, 1)
 	signal.Notify(stopper, os.Interrupt, syscall.SIGTERM)
+
+	start_time := time.Now()
 
 	// Initialize and start the Kubernetes watcher
 	// watcher, err := K8Watcher()
@@ -57,6 +59,7 @@ func main() {
 
 	log.Printf("%d probes running...\n\n", eventsDetector.Count())
 
+	count := 0
 	go func() {
 		<-stopper // Wait for an interrupt signal
 
@@ -70,15 +73,39 @@ func main() {
 		os.Exit(0)
 	}()
 
-	resultChan := make(chan detector.Result, 8192)
-	eventsDetector.ReadAsInterface(resultChan)
+	/************* stats start *************/
+	go func() {
+		tarian.Statistics(&count, start_time)
+	}()
+	/************* stats end *************/
+
+	/********************* neglible data loss start ************************/
+
+	// resultChan := make(chan detector.Result, 8192)
+	// eventsDetector.ReadAsInterface(resultChan)
+	// for {
+	// 	res := <-resultChan
+	// 	if res.Err != nil {
+	// 		log.Print(err)
+	// 		continue
+	// 	}
+
+	// 	count++
+	// 	// utils.PrintEvent(res.Data, eventsDetector.GetTotalCount())
+	// }
+
+	/********************* neglible data loss end ************************/
+
+	/********************* data loss ************************/
+
 	for {
-		res := <-resultChan
-		if res.Err != nil {
-			log.Print(err)
-			continue
+		_, err := eventsDetector.ReadAsInterface()
+		if err != nil {
+			fmt.Println(err)
 		}
 
-		utils.PrintEvent(res.Data, eventsDetector.GetTotalCount())
+		count++
 	}
+
+	/********************* data loss ************************/
 }

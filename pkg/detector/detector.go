@@ -4,8 +4,6 @@
 package detector
 
 import (
-	"sync"
-
 	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/eventparser"
 )
@@ -133,80 +131,84 @@ func (t *EventsDetector) Close() error {
 
 // ReadAsInterface reads a byte array from the event queue, parses it, and increments the total count.
 // It also checks for the presence of an event ID and increments the probe count if found.
-// func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
-// 	eventparser.LoadTarianEvents()
-// 	r := <-t.eventQueue
-// 	if r.err != nil {
-// 		return map[string]any{}, detectorErr.Throwf("%v", r.err)
-// 	}
 
-// 	t.incrementTotalCount()
-// 	data, err := eventparser.ParseByteArray(r.eventData)
-// 	if err != nil {
-// 		return data, detectorErr.Throwf("%v", err)
-// 	}
-
-// 	probe, ok := data["eventId"]
-// 	if ok {
-// 		t.probeCount(probe.(string))
-// 	}
-
-// 	return data, nil
-// }
-
-/****************************************Start POC***********************************************/
-
-type Result struct {
-	Data map[string]interface{}
-	Err  error
-}
-
-func (t *EventsDetector) ReadAsInterface(resultChan chan<- Result) {
+/********************* data loss start ************************/
+func (t *EventsDetector) ReadAsInterface() (map[string]any, error) {
 	eventparser.LoadTarianEvents()
-	var mu sync.Mutex
-
-	// Define the number of goroutines to use for consumption
-	numConsumers := 2 //runtime.NumCPU()
-
-	// Create a wait group to ensure all goroutines finish before closing the result channel
-	var wg sync.WaitGroup
-	wg.Add(numConsumers)
-
-	// Start goroutines for consumption
-	for i := 0; i < numConsumers; i++ {
-		go func() {
-			defer wg.Done()
-			for r := range t.eventQueue {
-				if r.err != nil {
-					resultChan <- Result{Data: map[string]interface{}{}, Err: r.err}
-					continue
-				}
-
-				mu.Lock()
-				t.incrementTotalCount()
-				mu.Unlock()
-
-				data, err := eventparser.ParseByteArray(r.eventData)
-				probe, ok := data["eventId"]
-				if ok {
-					mu.Lock()
-					t.probeCount(probe.(string))
-					mu.Unlock()
-				}
-
-				resultChan <- Result{Data: data, Err: err}
-			}
-		}()
+	r := <-t.eventQueue
+	if r.err != nil {
+		return map[string]any{}, detectorErr.Throwf("%v", r.err)
 	}
 
-	// Wait for all goroutines to finish before closing the result channel
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+	t.incrementTotalCount()
+	data, err := eventparser.ParseByteArray(r.eventData)
+	if err != nil {
+		return data, detectorErr.Throwf("%v", err)
+	}
+
+	probe, ok := data["eventId"]
+	if ok {
+		t.probeCount(probe.(string))
+	}
+
+	return data, nil
 }
 
-/****************************************END POC***********************************************/
+/********************* data loss end ************************/
+
+/**************************************** neglible data loss start ***********************************************/
+
+// type Result struct {
+// 	Data map[string]interface{}
+// 	Err  error
+// }
+
+// func (t *EventsDetector) ReadAsInterface(resultChan chan<- Result) {
+// 	eventparser.LoadTarianEvents()
+// 	var mu sync.Mutex
+
+// 	// Define the number of goroutines to use for consumption
+// 	numConsumers := runtime.NumCPU()
+
+// 	// Create a wait group to ensure all goroutines finish before closing the result channel
+// 	var wg sync.WaitGroup
+// 	wg.Add(numConsumers)
+
+// 	// Start goroutines for consumption
+// 	for i := 0; i < numConsumers; i++ {
+// 		go func() {
+// 			defer wg.Done()
+// 			for r := range t.eventQueue {
+// 				if r.err != nil {
+// 					resultChan <- Result{Data: map[string]interface{}{}, Err: r.err}
+// 					continue
+// 				}
+
+// 				mu.Lock()
+// 				t.incrementTotalCount()
+// 				mu.Unlock()
+
+// 				data, err := eventparser.ParseByteArray(r.eventData)
+// 				probe, ok := data["eventId"]
+// 				if ok {
+// 					mu.Lock()
+// 					t.probeCount(probe.(string))
+// 					mu.Unlock()
+// 				}
+
+// 				resultChan <- Result{Data: data, Err: err}
+// 			}
+// 		}()
+// 	}
+
+// 	// Wait for all goroutines to finish before closing the result channel
+// 	go func() {
+// 		wg.Wait()
+// 		close(resultChan)
+// 	}()
+// }
+
+/**************************************** neglible data loss end ***********************************************/
 
 // Count returns the number of detectors active.
 func (t *EventsDetector) Count() int {

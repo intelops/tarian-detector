@@ -4,15 +4,23 @@
 package tarian
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"os"
+	"text/tabwriter"
+	"time"
 
 	cilium_ebpf "github.com/cilium/ebpf"
+	"github.com/inancgumus/screen"
 	ebpf "github.com/intelops/tarian-detector/pkg/eBPF"
 	"github.com/intelops/tarian-detector/pkg/err"
 	"github.com/intelops/tarian-detector/pkg/utils"
 )
 
 var tarianErr = err.New("tarian.tarian")
+var statsMap *cilium_ebpf.Map
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc clang -cflags $BPF_CFLAGS -target $CURR_ARCH tarian c/tarian.bpf.c -- -I../headers -I./c
 
@@ -40,6 +48,8 @@ func GetModule() (*ebpf.Module, error) {
 	} else {
 		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
 	}
+
+	statsMap = bpfObjs.TarianStats
 
 	// kprobe & kretprobe execve
 	tarianDetectorModule.AddProgram(ebpf.NewProgram(bpfObjs.TdfExecveE, ebpf.NewHookInfo().Kprobe("__x64_sys_execve")))
@@ -117,4 +127,97 @@ func getBpfObject() (*tarianObjects, error) {
 	}
 
 	return &bpfObj, nil
+}
+
+func Statistics(c *int, st time.Time) error {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	var data []byte
+	var err error
+	var key uint32 = 0
+	err = processStats(data, c, st)
+	if err != nil {
+		fmt.Printf("Statics Error: %v\n", err)
+	}
+
+	for range ticker.C {
+		data, err = statsMap.LookupBytes(&key)
+		if err != nil {
+			fmt.Printf("ERROR: %v\n", err)
+		}
+
+		err = processStats(data, c, st)
+		if err != nil {
+			fmt.Printf("ERROR: %v\n", err)
+		}
+	}
+
+	return nil
+}
+
+func processStats(data []byte, c *int, st time.Time) error {
+	var perCpuStats [16]tarianTarianStatsT
+
+	if len(data) != 0 {
+		err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &perCpuStats)
+		if err != nil {
+			return err
+		}
+	}
+
+	displayTable(perCpuStats[:], c, st)
+
+	return nil
+}
+
+func displayTable(objects []tarianTarianStatsT, c *int, st time.Time) {
+	total := sumFields(objects)
+	objects = append(objects, total)
+
+	screen.Clear()
+
+	screen.MoveTopLeft()
+
+	// Create a new tabwriter with a minimum cell width of 10, a tab width of 8, a padding of 1, and no flags
+	w := tabwriter.NewWriter(os.Stdout, 2, 8, 1, '\t', tabwriter.AlignRight)
+	// Print the header row
+	fmt.Fprintln(w, "cpu\tN_trgs\tN_trgsSent\tN_trgsDropped\tN_trgsDroppedMaxMapCapacity\tN_trgsDroppedMaxBufferSize\tN_trgsReadError\tN_trgsUnknown")
+	// Print a separator row
+	fmt.Fprintln(w, "--------------------------------------------------------------------------------------------------------------------------------------")
+	// Loop over the objects and print each row
+	for i, obj := range objects {
+		rowHeading := fmt.Sprintf("%v", i)
+		if i == len(objects)-1 {
+			rowHeading = "total"
+		}
+
+		pN_trgs := (float64(obj.N_trgs) / float64(total.N_trgs)) * 100
+		pN_trgsSent := (float64(obj.N_trgsSent) / float64(obj.N_trgs)) * 100
+		pN_trgsDropped := (float64(obj.N_trgsDropped) / float64(obj.N_trgs)) * 100
+		pN_trgsDMMC := (float64(obj.N_trgsDroppedMaxMapCapacity) / float64(obj.N_trgs)) * 100
+		pN_trgsDMBS := (float64(obj.N_trgsDroppedMaxBufferSize) / float64(obj.N_trgs)) * 100
+		pN_trgsReadE := (float64(obj.N_trgsReadError) / float64(obj.N_trgs)) * 100
+		pN_trgsUnknown := (float64(obj.N_trgsUnknown) / float64(obj.N_trgs)) * 100
+		fmt.Fprintf(w, "%v\t%d(%.2f%%)\t%d(%.2f%%)\t%d(%.2f%%)\t%d(%.2f%%)\t%d(%.2f%%)\t%d(%.2f%%)\t%d(%.2f%%)\t\n", rowHeading, obj.N_trgs, pN_trgs, obj.N_trgsSent, pN_trgsSent, obj.N_trgsDropped, pN_trgsDropped, obj.N_trgsDroppedMaxMapCapacity, pN_trgsDMMC, obj.N_trgsDroppedMaxBufferSize, pN_trgsDMBS, obj.N_trgsReadError, pN_trgsReadE, obj.N_trgsUnknown, pN_trgsUnknown)
+	}
+
+	pCon := (float64(*c) / float64(total.N_trgs)) * 100
+	fmt.Fprintf(w, "\nTarian has consumed %d(%.2f%%) records of the total, since the application started %.2f seconds ago.\n", *c, pCon, time.Since(st).Seconds())
+	w.Flush()
+}
+
+func sumFields(objects []tarianTarianStatsT) tarianTarianStatsT {
+	// Initialize an empty object to store the sums
+	sum := tarianTarianStatsT{}
+	for _, obj := range objects {
+		sum.N_trgs += obj.N_trgs
+		sum.N_trgsSent += obj.N_trgsSent
+		sum.N_trgsDropped += obj.N_trgsDropped
+		sum.N_trgsDroppedMaxMapCapacity += obj.N_trgsDroppedMaxMapCapacity
+		sum.N_trgsDroppedMaxBufferSize += obj.N_trgsDroppedMaxBufferSize
+		sum.N_trgsReadError += obj.N_trgsReadError
+		sum.N_trgsUnknown += obj.N_trgsUnknown
+	}
+	return sum
 }
