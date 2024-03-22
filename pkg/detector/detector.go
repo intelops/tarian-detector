@@ -4,6 +4,7 @@
 package detector
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/intelops/tarian-detector/pkg/err"
@@ -166,7 +167,7 @@ func (t *EventsDetector) ReadAsInterface(resultChan chan<- Result) {
 	var mu sync.Mutex
 
 	// Define the number of goroutines to use for consumption
-	numConsumers := 2 //runtime.NumCPU()
+	numConsumers := runtime.NumCPU()
 
 	// Create a wait group to ensure all goroutines finish before closing the result channel
 	var wg sync.WaitGroup
