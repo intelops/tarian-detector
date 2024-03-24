@@ -41,7 +41,7 @@ func TestParam_processValue(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    arg
+		want    Arg
 		wantErr bool
 	}{
 		{
@@ -57,7 +57,7 @@ func TestParam_processValue(t *testing.T) {
 			args: args{
 				val: 123,
 			},
-			want:    arg{},
+			want:    Arg{},
 			wantErr: true,
 		},
 	}
