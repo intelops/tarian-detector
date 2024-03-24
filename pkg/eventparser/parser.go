@@ -77,13 +77,13 @@ func ParseByteArray(data []byte) (map[string]any, error) {
 }
 
 // parseParams parses the parameters of a TarianEvent from the ByteStream
-func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
+func (bs *ByteStream) parseParams(event TarianEvent) ([]Arg, error) {
 	tParams := event.params
 	if len(tParams) <= 0 {
 		return nil, parserErr.Throwf("missing event from 'var Events TarianEventMap'")
 	}
 
-	args := make([]arg, 0, bs.nparams)
+	args := make([]Arg, 0, bs.nparams)
 
 	for i := 0; i < int(bs.nparams); i++ {
 		// parseParams parses the parameters of a TarianEvent from the ByteStream
@@ -108,7 +108,7 @@ func (bs *ByteStream) parseParams(event TarianEvent) ([]arg, error) {
 }
 
 // parseParam parses the given parameter based on its type and returns the parsed value.
-func (bs *ByteStream) parseParam(p Param) (arg, error) {
+func (bs *ByteStream) parseParam(p Param) (Arg, error) {
 	var pVal any
 	var err error
 
@@ -139,7 +139,7 @@ func (bs *ByteStream) parseParam(p Param) (arg, error) {
 	}
 
 	if err != nil {
-		return arg{}, parserErr.Throwf("%v", err)
+		return Arg{}, parserErr.Throwf("%v", err)
 	}
 
 	return p.processValue(pVal)
