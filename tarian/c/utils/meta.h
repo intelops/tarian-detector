@@ -38,6 +38,10 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
     stats__add_buffer();
   }
 
+  resp = flush(te->tarian->meta_data.task.cwd, sizeof(te->tarian->meta_data.task.cwd));
+  if (resp != TDC_SUCCESS) {
+    return resp;
+  }
   bpf_probe_read_kernel_str(te->tarian->meta_data.task.cwd, len & (MAX_TARIAN_PATH - 1), filepath);
   
   return TDC_SUCCESS;

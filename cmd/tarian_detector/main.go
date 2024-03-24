@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/intelops/tarian-detector/pkg/detector"
+	"github.com/intelops/tarian-detector/pkg/utils"
 	"github.com/intelops/tarian-detector/tarian"
 )
 
@@ -76,9 +77,6 @@ func main() {
 			e, err := eventsDetector.ReadAsInterface()
 			if err != nil {
 				log.Print(err)
-			}
-
-			if len(e) == 0 {
 				continue
 			}
 
@@ -92,7 +90,7 @@ func main() {
 				e["kubernetes"] = k8sCtx
 			}
 
-			// utils.PrintEvent(e, eventsDetector.GetTotalCount())
+			utils.PrintEvent(e, eventsDetector.GetTotalCount())
 		}
 	}()
 
