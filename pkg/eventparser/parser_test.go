@@ -138,7 +138,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "",
 				"machine":             "",
 				"domainname":          "",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "fd",
 						Value:      "0",
@@ -194,7 +194,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "#107~20.04.1-Ubuntu SMP Fri Feb 9 14:20:11 UTC 2024",
 				"machine":             "x86_64",
 				"domainname":          "(none)",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "fd",
 						Value:      "1",
@@ -251,7 +251,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "#107~20.04.1-Ubuntu SMP Fri Feb 9 14:20:11 UTC 2024",
 				"machine":             "x86_64",
 				"domainname":          "(none)",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "family",
 						Value:      "AF_INET",
@@ -307,7 +307,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "#107~20.04.1-Ubuntu SMP Fri Feb 9 14:20:11 UTC 2024",
 				"machine":             "x86_64",
 				"domainname":          "(none)",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "fd",
 						Value:      "3",
@@ -362,7 +362,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "#107~20.04.1-Ubuntu SMP Fri Feb 9 14:20:11 UTC 2024",
 				"machine":             "x86_64",
 				"domainname":          "(none)",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "fd",
 						Value:      "3",
@@ -417,7 +417,7 @@ func TestParseByteArray(t *testing.T) {
 				"version":             "#107~20.04.1-Ubuntu SMP Fri Feb 9 14:20:11 UTC 2024",
 				"machine":             "x86_64",
 				"domainname":          "(none)",
-				"context": []arg{
+				"context": []Arg{
 					{
 						Name:       "fd",
 						Value:      "3",
@@ -466,7 +466,7 @@ func TestByteStream_parseParams(t *testing.T) {
 		name    string
 		fields  ByteStream
 		args    args
-		want    []arg
+		want    []Arg
 		wantErr bool
 	}{
 		{
@@ -488,7 +488,7 @@ func TestByteStream_parseParams(t *testing.T) {
 					},
 				},
 			},
-			want:    []arg{},
+			want:    []Arg{},
 			wantErr: false,
 		},
 	}
@@ -521,7 +521,7 @@ func TestByteStream_parseParam(t *testing.T) {
 		name    string
 		fields  ByteStream
 		args    args
-		want    arg
+		want    Arg
 		wantErr bool
 	}{
 		{
@@ -538,7 +538,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "uint8_t",
 				},
 			},
-			want: arg{
+			want: Arg{
 				Name:       "test",
 				Value:      "1",
 				TarianType: 1,
@@ -560,7 +560,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "uint16_t",
 				},
 			},
-			want: arg{
+			want: Arg{
 				Name:       "test",
 				Value:      "513",
 				TarianType: 2,
@@ -582,7 +582,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "uint64_t",
 				},
 			},
-			want: arg{
+			want: Arg{
 				Name:       "test",
 				Value:      "578437695752307201",
 				TarianType: 4,
@@ -604,7 +604,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "int8_t",
 				},
 			},
-			want:    arg{"test", "1", 5, "int8_t"},
+			want:    Arg{"test", "1", 5, "int8_t"},
 			wantErr: false,
 		},
 		{
@@ -621,7 +621,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "int16_t",
 				},
 			},
-			want:    arg{"test", "513", 6, "int16_t"},
+			want:    Arg{"test", "513", 6, "int16_t"},
 			wantErr: false,
 		},
 		{
@@ -638,7 +638,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "int64_t",
 				},
 			},
-			want:    arg{"test", "578437695752307201", 8, "int64_t"},
+			want:    Arg{"test", "578437695752307201", 8, "int64_t"},
 			wantErr: false,
 		},
 		{
@@ -655,7 +655,7 @@ func TestByteStream_parseParam(t *testing.T) {
 					linuxType: "string",
 				},
 			},
-			want:    arg{"test", "ABCD", 10, "string"},
+			want:    Arg{"test", "ABCD", 10, "string"},
 			wantErr: false,
 		},
 	}

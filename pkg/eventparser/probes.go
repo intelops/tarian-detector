@@ -11,8 +11,8 @@ import (
 
 var probesErr = err.New("eventparser.probes")
 
-// arg represents an argument with its name, value, and types for Tarian and Linux.
-type arg struct {
+// Arg represents an argument with its name, value, and types for Tarian and Linux.
+type Arg struct {
 	Name       string // Name is the name of the argument
 	Value      string // Value is the value of the argument
 	TarianType uint32 // TarianType is the Tarian type of the argument
@@ -263,8 +263,8 @@ func GenerateTarianEvents() TarianEventMap {
 }
 
 // processValue processes the value and returns the argument and an error, if any.
-func (p *Param) processValue(val interface{}) (arg, error) {
-	arg := arg{}
+func (p *Param) processValue(val interface{}) (Arg, error) {
+	arg := Arg{}
 
 	// If a function is provided, call it with the value and handle the parsed value and error
 	if p.function != nil {
