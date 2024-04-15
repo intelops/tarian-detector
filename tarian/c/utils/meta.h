@@ -14,7 +14,7 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
   stats__add_trigger();
 
   if (!can_proceed())
-    return TDCE_FILTER_IGNORE;
+    return TDC_FILTERED_OUT;
 
   te->allocation_mode = 0;
   te->ctx = ctx;

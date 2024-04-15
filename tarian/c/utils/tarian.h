@@ -17,14 +17,14 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
     te->allocation_mode = 2;
     store = map__reserve_space(&events, size);
     if (!store)
-      return TDCE_RESERVE_SPACE;
+      return TDCE_MAP_SPACE_ALLOCATION;
 
     sz = size;
   } else if (at == VARIABLE) {
     te->allocation_mode = 3;
     store = map__allocate_space(&pea_per_cpu_array);
     if (!store)
-      return TDCE_RESERVE_SPACE;
+      return TDCE_RTDCE_MAP_SPACE_ALLOCATIONESERVE_SPACE;
 
     sz = MAX_EVENT_SIZE;
   }
@@ -33,7 +33,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
   te->allocation_mode = 1;
   u8 *store = map__allocate_space(&pea_per_cpu_array);
   if (!store)
-    return TDCE_RESERVE_SPACE;
+    return TDCE_MAP_SPACE_ALLOCATION;
 
   u64 sz = MAX_EVENT_SIZE;
 #endif

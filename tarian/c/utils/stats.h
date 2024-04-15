@@ -36,12 +36,12 @@ stain void stats__add(int error_code) {
   case TDC_SUCCESS:
     ts->n_trgs_sent++;
     break;
-  case TDCE_RESERVE_SPACE:
+  case TDCE_MAP_SPACE_ALLOCATION:
   case TDCE_MAP_SUBMIT:
     ts->n_trgs_dropped_max_map_capacity++;
     ts->n_trgs_dropped++;
     break;
-  case TDCE_FILTER_IGNORE:
+  case TDC_FILTERED_OUT:
     ts->n_trgs_filter_drop++;
     ts->n_trgs_dropped++;
     break;
