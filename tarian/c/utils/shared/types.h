@@ -57,7 +57,7 @@ typedef struct __attribute__((__packed__)) task_meta_data {
   u64 parent_exec_id; /* user defined: parent execution id*/
 
   u8 comm[TASK_COMM_LEN]; /* task's process name*/
-} task_meta_data_t; /* 96B */
+} task_meta_data_t;       /* 96B */
 
 typedef struct __attribute__((__packed__)) event_meta_data {
   s32 event;     /* event id associated with the event */
@@ -111,6 +111,6 @@ typedef struct tarian_stats {
 
   /* count of untracked scenarios */
   u64 n_trgs_unknown;
-} tarian_stats_t;  /* 64B */
+} tarian_stats_t; /* 64B */
 
 #endif
