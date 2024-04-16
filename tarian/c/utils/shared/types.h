@@ -5,7 +5,7 @@
 #define __UTLIS_SHARED_TYPES_H__
 
 typedef struct {
-  uint8_t data[MAX_BUFFER_SIZE];
+  uint8_t data[MAX_CPU_BUFFER_SIZE];
 } per_cpu_buffer_t; /* 128KB */
 
 typedef struct {
@@ -14,7 +14,7 @@ typedef struct {
 } path_info_t; /* 16B */
 
 typedef struct {
-  uint8_t data[MAX_SCRATCH_SPACE];
+  uint8_t data[MAX_SCRATCH_SPACE_SIZE];
   uint64_t pos;
 } scratch_space_t; /* 8KB */
 

@@ -167,7 +167,7 @@ stain uint8_t *get__d_path(uint32_t *slen, scratch_space_t *s, struct path *p) {
   len += 1;
   bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]), 1, &slash);
 
-  bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(MAX_SCRATCH_SPACE - 1)]), 1, &terminator);
+  bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(MAX_SCRATCH_SPACE_SIZE - 1)]), 1, &terminator);
 
   *slen = len;
   return &(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]);
