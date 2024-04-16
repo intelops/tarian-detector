@@ -54,7 +54,7 @@ func LoadTarianEvents() {
 func GenerateTarianEvents() TarianEventMap {
 	events := make(TarianEventMap)
 
-	execve_e := NewTarianEvent(59, "sys_execve_entry", 16897,
+	execve_e := NewTarianEvent(59, "sys_execve_entry", 20995,
 		Param{name: "filename", paramType: TDT_STR, linuxType: "const char *"},
 		Param{name: "argv", paramType: TDT_STR_ARR, linuxType: "const char **"},
 		Param{name: "envp", paramType: TDT_STR_ARR, linuxType: "const char **"},
@@ -66,7 +66,7 @@ func GenerateTarianEvents() TarianEventMap {
 	)
 	events.AddTarianEvent(TDE_SYSCALL_EXECVE_R, execve_r)
 
-	execveat_e := NewTarianEvent(322, "sys_execveat_entry", 16905,
+	execveat_e := NewTarianEvent(322, "sys_execveat_entry", 21003,
 		Param{name: "fd", paramType: TDT_S32, linuxType: "int", function: parseExecveatDird},
 		Param{name: "filename", paramType: TDT_STR, linuxType: "const char *"},
 		Param{name: "argv", paramType: TDT_STR_ARR, linuxType: "char const **"},
