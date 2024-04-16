@@ -109,8 +109,7 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
 
 #pragma unroll
   for (; n < MAX_CHARBUF_POINTERS; ++n) {
-    bpf_probe_read_user(&charbuf_pointer, sizeof(charbuf_pointer),
-                        &data_ptr[n]);
+    bpf_probe_read_user(&charbuf_pointer, sizeof(charbuf_pointer), &data_ptr[n]);
     if (!charbuf_pointer)
       break;
 
@@ -119,8 +118,7 @@ stain int write_str_arr(uint8_t *buf, uint64_t *pos, u64 reserved_space, char **
       total_len++;
     }
 
-    arg_len = bpf_probe_read_user_str(&buf[SAFE_ACCESS(*pos)], MAX_STRING_SIZE,
-                                      (char *)charbuf_pointer);
+    arg_len = bpf_probe_read_user_str(&buf[SAFE_ACCESS(*pos)], MAX_STRING_SIZE, (char *)charbuf_pointer);
     if (arg_len <= 0)
       break;
 
