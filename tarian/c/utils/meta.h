@@ -6,14 +6,14 @@
 
 #include "index.h"
 
-stain int new_event(void *, int, tarian_event_t *, enum allocation_type, int);
+stain int new_tarian_event(void *, int, tarian_event_t *, enum allocation_type, int);
 stain int init_tarian_meta_data_t(tarian_event_t *, int);
 stain int init_task_meta_data_t(tarian_event_t *);
 stain int init_event_meta_data_t(tarian_event_t *, int);
 stain int init_cwd_and_exe(tarian_event_t *);
 stain int read_node_info_into(node_meta_data_t *ni, struct task_struct *t);
 
-stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at, int req_buf_sz) {
+stain int new_tarian_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at, int req_buf_sz) {
   stats__add_trigger();
 
   if (!can_proceed())
@@ -24,6 +24,10 @@ stain int new_event(void *ctx, int tarian_event, tarian_event_t *te, enum alloca
   te->task = (struct task_struct *)bpf_get_current_task();
 
   int resp = tdf_reserve_space(te, at, req_buf_sz);
+  if (resp != TDC_SUCCESS)
+    return resp;
+
+  resp = tdf_scratch_space(te);
   if (resp != TDC_SUCCESS)
     return resp;
 
@@ -114,23 +118,19 @@ stain int init_task_meta_data_t(tarian_event_t *te) {
 };
 
 stain int init_cwd_and_exe(tarian_event_t *te) {
-  scratch_space_t *ss = get__scratch_space();
-  if (!ss)
-    return TDCE_SCRATCH_SPACE_ALLOCATION;
-
   uint32_t len = 0;
   struct path path = get_task_directory(te->task);
-  u8 *filepath = get__d_path(&len, ss, &path);
+  u8 *filepath = get__d_path(&len, te->scratch, &path);
 
   // filepath
-  write_str(te->buf.data, &te->buf.pos, (unsigned long)filepath, len & (MAX_TARIAN_PATH - 1), KERNEL);
+  write_str(te->buf.data, &te->buf.pos, (unsigned long)filepath, len, KERNEL);
 
   uint32_t exe_len = 0;
   struct path exe_path = get_task_executable(te->task);
-  u8 *executable = get__d_path(&exe_len, ss, &exe_path);
+  u8 *executable = get__d_path(&exe_len, te->scratch, &exe_path);
 
   // executable
-  write_str(te->buf.data, &te->buf.pos, (unsigned long)executable, exe_len & (MAX_TARIAN_PATH - 1), KERNEL);
+  write_str(te->buf.data, &te->buf.pos, (unsigned long)executable, exe_len, KERNEL);
 
   return TDC_SUCCESS;
 }
