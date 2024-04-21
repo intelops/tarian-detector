@@ -6,7 +6,7 @@
 
 typedef struct {
   uint8_t data[MAX_CPU_BUFFER_SIZE];
-} per_cpu_buffer_t; /* 128KB */
+} per_cpu_buffer_t; /* 32KB */
 
 typedef struct {
   int len;
@@ -85,6 +85,7 @@ typedef struct event {
   struct pt_regs *ctx; /* pointer to register context */
   tarian_meta_data_t *tarian;
   event_buffer_t buf;
+  scratch_space_t *scratch;
 } tarian_event_t; /* 56B */
 
 typedef struct tarian_stats {
