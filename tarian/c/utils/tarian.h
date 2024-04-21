@@ -10,6 +10,7 @@ stain int tdf_reserve_space(tarian_event_t *, enum allocation_type, u64);
 stain int tdf_submit_event(tarian_event_t *);
 stain int tdf_discard_event(tarian_event_t *);
 stain int tdf_save(tarian_event_t *, int, void *);
+stain int tdf_scratch_space(tarian_event_t *);
 
 stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 size) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0) && false
@@ -119,21 +120,27 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_
     Data save format: [len 2B][...data...sizeB]
   */
   int16_t resp = 0;
+  uint32_t rlen = 0;
+  u8 *temp_buf = NULL;
+
   switch (type) {
   case TDT_STR:
     resp = write_str(te->buf.data, &te->buf.pos, src, MAX_STRING_SIZE, mem);
     break;
   case TDT_STR_ARR:
-    write_str_arr(te->buf.data, &te->buf.pos, te->buf.reserved_space, (char **)src, 0);
+    temp_buf = read_char_arr(&rlen, te->scratch, (char **)src, 0);
+    write_str(te->buf.data, &te->buf.pos, (unsigned long)temp_buf, (uint16_t)rlen, KERNEL);
     break;
   case TDT_BYTE_ARR:
     resp = write_byte_arr(te->buf.data, &te->buf.pos, src, n, mem);
     break;
   case TDT_IOVEC_ARR:
-    write_iovec_arr(te->buf.data, &te->buf.pos, src, n);
+    temp_buf = read_iovec_arr(&rlen, te->scratch, (unsigned long)src, n);
+    write_byte_arr(te->buf.data, &te->buf.pos, (unsigned long)temp_buf, (uint16_t)rlen, KERNEL);
     break;
   case TDT_SOCKADDR:
-    write_sockaddr(te->buf.data, &te->buf.pos, src, n);
+    temp_buf = read_sockaddr(&rlen, te->scratch, src, n);
+    write_byte_arr(te->buf.data, &te->buf.pos, (unsigned long)temp_buf, (uint16_t)rlen, KERNEL);
     break;
   default:
     return TDCE_UNKNOWN_TYPE;
@@ -146,5 +153,14 @@ stain int tdf_flex_save(tarian_event_t *te, int type, unsigned long src, uint64_
   te->tarian->meta_data.nparams++;
   return TDC_SUCCESS;
 };
+
+stain int tdf_scratch_space(tarian_event_t *te) {
+  if (!te) return TDCE_NULL_POINTER;
+
+  te->scratch = get__scratch_space();
+  if (!te->scratch) return TDCE_SCRATCH_SPACE_ALLOCATION;
+
+  return TDC_SUCCESS;
+}
 
 #endif
