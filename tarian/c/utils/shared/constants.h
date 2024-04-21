@@ -7,18 +7,28 @@
 #define MAX_NODE_FIELD_SIZE 65 /* 65B */
 #define MAX_STRING_SIZE 4096   /* 4KB */
 #define MAX_TARIAN_PATH 4096   /* 4KB */
-#define MAX_SCRATCH_SPACE_SIZE 8192 /* 8KB */
-#define MAX_CPU_BUFFER_SIZE 1024 * 128 /* 128KB */
+#define MAX_CPU_BUFFER_SIZE 1024 * 32 /* 32KB */
 
-#define MAX_EVENT_SIZE 64 * 1024 /* 64KB */
-#define MAX_PARAM_SIZE MAX_EVENT_SIZE - 1 /* 64KB */
+#define MAX_EVENT_SIZE 32 * 1024 /* 32KB */
+#define MAX_PARAM_SIZE MAX_EVENT_SIZE - 1 /* 32KB */
 
 #define TASK_COMM_LEN 16
-#define MAX_CHARBUF_POINTERS 16
-#define MAX_IOVEC_COUNT 32
+#define MAX_CHARBUF_POINTERS 128
 #define MAX_UNIX_SOCKET_PATH 108 + 1 /* for NULL termination */
 
-#define SAFE_ACCESS(x) x &(MAX_PARAM_SIZE)
+#define MAX_IOVEC_COUNT 32
+#define SAFE_IOVEC_COUNT(x) (x) & (MAX_IOVEC_COUNT - 1)
+
+#define SAFE_TARIAN_PATH_LEN(x) (x) & (MAX_TARIAN_PATH - 1)
+#define SAFE_STRING_LEN(x) x & (MAX_STRING_SIZE - 1)
+#define SAFE_ACCESS_PARAM(x) (x) & (MAX_PARAM_SIZE)
+#define SAFE_ACCESS_CPU_BUFFER(x) (x) & (MAX_CPU_BUFFER_SIZE - 1)
+#define SAFE_ACCESS_EVENT(x) (x) & (MAX_EVENT_SIZE - 1)
+
+#define MAX_SCRATCH_SPACE_ARRAY_LEN 1
+#define MAX_SCRATCH_SPACE_SIZE 1024 * 8 /* 8KB */
+#define SCRATCH_SPACE_HALF_INDEX (MAX_SCRATCH_SPACE_SIZE)/2
+#define SAFE_ACCESS_SCRATCH_SPACE(x) (x) & ((MAX_SCRATCH_SPACE_SIZE)/2 - 1)
 
 #ifndef LINUX_VERSION_CODE
 #define LINUX_VERSION_CODE                                                     \
@@ -99,7 +109,7 @@ enum tarian_param_type_e {
   TDT_BYTE_ARR,
   /**
    * Array of `struct iovec`. The maximum number of elements is
-   * `MAX_IOVEC_COUNT`.
+   * `MAX_STRING_SIZE`.
    */
   TDT_IOVEC_ARR,
   /**
