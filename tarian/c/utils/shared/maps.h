@@ -78,9 +78,9 @@ stain void *get__stats_counter() {
  */
 struct scratch {
   __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
-  __uint(max_entries, 1);  // 1 element in the map
-  __type(key, uint32_t);  // key is always 0
-  __type(value, scratch_space_t);  // value is a struct scratch_space_t
+  __uint(max_entries, MAX_SCRATCH_SPACE_ARRAY_LEN);
+  __type(key, uint32_t); 
+  __type(value, scratch_space_t);
 } scratch_space SEC(".maps");
 
 /**
@@ -96,7 +96,6 @@ struct scratch {
 stain void *get__scratch_space() {
   uint32_t index = 0;  // key is always 0
 
-  // Look up the scratch space for the current CPU
   void *ptr = bpf_map_lookup_elem(&scratch_space, &index);
 
   return ptr;
@@ -110,15 +109,18 @@ stain void *get__scratch_space() {
  *
  */
 struct {
-  __uint(type, BPF_MAP_TYPE_ARRAY);
-  __uint(max_entries, 16);
+  __uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+  __uint(max_entries, 1);  // 1 element in the map
   __type(key, uint32_t);
   __type(value, per_cpu_buffer_t);
 } pea_per_cpu_array SEC(".maps");
 
 stain void *get__current_cpu_buf(void *map) {
-  uint32_t cpu_id = (uint32_t)bpf_get_smp_processor_id();
-  return bpf_map_lookup_elem(map, &cpu_id);
+  uint32_t index = 0;
+
+  void *ptr = bpf_map_lookup_elem(map, &index);
+
+  return ptr;
 }
 
 /**
