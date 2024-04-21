@@ -45,7 +45,7 @@ func ParseByteArray(watcher *k8s.PodWatcher, data []byte) (TarianDetectorEvent, 
 	lenMetaData := binary.Size(metaData)
 	err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &metaData)
 	if err != nil {
-		return TarianDetectorEvent{}, parserErr.Throwf("%v", err)
+		return TarianDetectorEvent{}, parserErr.Throwf("%v\n, while processing following byte array: %v\n", err, data)
 	}
 
 	event, err := GetTarianEvent(TarianEventsE(metaData.Event()))
@@ -64,24 +64,24 @@ func ParseByteArray(watcher *k8s.PodWatcher, data []byte) (TarianDetectorEvent, 
 
 	record.Directory, err = bs.parseString()
 	if err != nil {
-		return TarianDetectorEvent{}, parserErr.Throwf("%v", err)
+		return TarianDetectorEvent{}, parserErr.Throwf("%v\n, while processing following byte array: %v\n", err, data)
 	}
 
 	record.Executable, err = bs.parseString()
 	if err != nil {
-		return TarianDetectorEvent{}, parserErr.Throwf("%v", err)
+		return TarianDetectorEvent{}, parserErr.Throwf("%v\n, while processing following byte array: %v\n", err, data)
 	}
 
 	if watcher != nil {
 		record.Kubernetes, err = GetK8sContext(watcher, uint32(metaData.HostPid()))
 		if err != nil {
-			return TarianDetectorEvent{}, parserErr.Throwf("%v", err)
+			return TarianDetectorEvent{}, parserErr.Throwf("%v\n, while processing following byte array: %v\n", err, data)
 		}
 	}
 
 	ps, err := bs.parseParams(event)
 	if err != nil {
-		return TarianDetectorEvent{}, parserErr.Throwf("%v", err)
+		return record, parserErr.Throwf("%v\n, while processing following byte array: %v\n", err, data)
 	}
 
 	record.Context = ps
@@ -145,7 +145,7 @@ func (bs *ByteStream) parseParam(p Param) (Arg, error) {
 		pVal, err = bs.parseInt64()
 	case TDT_STR, TDT_STR_ARR:
 		pVal, err = bs.parseString()
-	case TDT_BYTE_ARR:
+	case TDT_BYTE_ARR, TDT_IOVEC_ARR:
 		pVal, err = bs.parseRawArray()
 	case TDT_SOCKADDR:
 		pVal, err = bs.parseSocketAddress()
@@ -279,7 +279,8 @@ func (bs *ByteStream) parseRawArray() ([]byte, error) {
 // parseSocketAddress reads a socket address from the ByteStream and returns it.
 // It also increments the position by the length of the socket address.
 func (bs *ByteStream) parseSocketAddress() (any, error) {
-	family, err := bs.parseUint8()
+	_, _ = bs.parseUint16() /* ignore the length appended */
+	family, err := bs.parseUint16()
 	if err != nil {
 		return nil, parserErr.Throwf("%v", err)
 	}
