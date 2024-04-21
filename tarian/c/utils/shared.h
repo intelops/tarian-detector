@@ -96,7 +96,6 @@ stain void print_event(tarian_event_t *te) {
   bpf_printk("24. machine %s 25. domainname %s 26. nparams %d", te->tarian->system_info.machine, te->tarian->system_info.domainname, te->tarian->meta_data.nparams);
 };
 
-#define SCRATCH_SAFE_ACCESS(x) (x) & (MAX_STRING_SIZE - 1)
 stain uint8_t *get__d_path(uint32_t *slen, scratch_space_t *s, struct path *p) {
   struct path path = *p;
   struct dentry *dentry = path.dentry;
@@ -115,7 +114,7 @@ stain uint8_t *get__d_path(uint32_t *slen, scratch_space_t *s, struct path *p) {
   struct dentry *d_parent = NULL;
   struct qstr d_name = {};
   s->pos = 0;
-  int len = 0;
+  int total_len = 0;
   int effective_name_len = 0;
   char slash = '/';
   char terminator = '\0';
@@ -140,15 +139,17 @@ stain uint8_t *get__d_path(uint32_t *slen, scratch_space_t *s, struct path *p) {
 
     bpf_probe_read_kernel(&d_name, sizeof(struct qstr), &dentry->d_name);
 
-    len += (d_name.len + 1) & (MAX_STRING_SIZE - 1);
+    total_len += SAFE_STRING_LEN(d_name.len + 1);
 
+    if (total_len >= MAX_STRING_SIZE) break;
+    
     s->pos = max_buf_len - (d_name.len + 1);
-    effective_name_len = bpf_probe_read_kernel_str(&s->data[SCRATCH_SAFE_ACCESS(s->pos)], MAX_STRING_SIZE, (void *)d_name.name);
+    effective_name_len = bpf_probe_read_kernel_str(&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)], SAFE_STRING_LEN(MAX_STRING_SIZE - total_len), (void *)d_name.name);
     if (effective_name_len <= 1)
       break;
 
     max_buf_len -= 1;
-    bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]), 1, &slash);
+    bpf_probe_read_kernel(&(s->data[SAFE_ACCESS_SCRATCH_SPACE(max_buf_len)]), 1, &slash);
     max_buf_len -= (effective_name_len - 1);
 
     dentry = d_parent;
@@ -157,20 +158,170 @@ stain uint8_t *get__d_path(uint32_t *slen, scratch_space_t *s, struct path *p) {
   if (max_buf_len == MAX_STRING_SIZE) {
     bpf_probe_read_kernel(&d_name, sizeof(struct qstr), &(dentry->d_name));
     uint64_t sl = bpf_probe_read_kernel_str(&(s->data[0]), MAX_STRING_SIZE, (void *)d_name.name);
-    len += sl;
+    total_len += sl;
 
-    *slen = len;
+    *slen = total_len;
     return s->data;
   }
 
   max_buf_len -= 1;
-  len += 1;
-  bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]), 1, &slash);
+  total_len += 1;
+  bpf_probe_read_kernel(&(s->data[SAFE_ACCESS_SCRATCH_SPACE(max_buf_len)]), 1, &slash);
 
-  bpf_probe_read_kernel(&(s->data[SCRATCH_SAFE_ACCESS(MAX_SCRATCH_SPACE_SIZE - 1)]), 1, &terminator);
+  bpf_probe_read_kernel(&(s->data[SAFE_ACCESS_SCRATCH_SPACE(MAX_SCRATCH_SPACE_SIZE - 1)]), 1, &terminator);
 
-  *slen = len;
-  return &(s->data[SCRATCH_SAFE_ACCESS(max_buf_len)]);
+  *slen = total_len;
+  return &(s->data[SAFE_ACCESS_SCRATCH_SPACE(max_buf_len)]);
+}
+
+/**
+ * n - start index of char array
+*/
+stain uint8_t *read_char_arr(uint32_t *rlen, scratch_space_t *s, char **char_arr, uint16_t n) {
+  u8 space = 32, zero = 0;
+  unsigned long charbuf_pointer = 0;
+  uint16_t arg_len = 0;
+  uint16_t total_len = 0;
+  s->pos = 0;
+
+#pragma unroll
+  for (; n < MAX_CHARBUF_POINTERS; ++n) {
+    bpf_probe_read_user(&charbuf_pointer, sizeof(charbuf_pointer), &char_arr[n]);
+    if (!charbuf_pointer)
+      break;
+    
+    /* Replace null('\0') character with space(' ') */
+    if (total_len != 0) {
+      s->pos--;
+      
+      *((uint8_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = space;
+      s->pos += sizeof(uint8_t);      
+    }
+
+    arg_len = bpf_probe_read_user_str(&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)], MAX_STRING_SIZE, (char *)charbuf_pointer);
+    if (arg_len <= 0) {
+      break;
+    }
+    
+    // Wrong logic recheck this if element is of length 4096
+    if (total_len + arg_len >= MAX_STRING_SIZE) {
+      s->pos--;
+
+      *((uint8_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = zero;
+      s->pos += sizeof(uint8_t);
+
+      break;
+    };
+
+    total_len += arg_len;
+    s->pos += SAFE_STRING_LEN(arg_len);
+  }
+
+  *rlen = total_len;
+  return &(s->data[0]);
+}
+
+stain uint8_t *read_iovec_arr(uint32_t *rlen, scratch_space_t *s, unsigned long iovec_ptr, unsigned long iov_count){
+  uint32_t total_len = 0;
+  s->pos = 0;
+  *rlen = 0;
+
+  uint32_t total_iovec_size = iov_count * bpf_core_type_size(struct iovec);
+  if (bpf_probe_read_user((void *)&s->data[SCRATCH_SPACE_HALF_INDEX], SAFE_ACCESS_SCRATCH_SPACE(total_iovec_size), (void *)iovec_ptr) != 0)
+    return NULL;
+  
+  const struct iovec *iovecs = (const struct iovec *)&s->data[SCRATCH_SPACE_HALF_INDEX];
+  for (int i = 0; i < MAX_IOVEC_COUNT; i++) {
+    if (i == (SAFE_IOVEC_COUNT(iov_count)))
+      break;
+
+    int16_t bytes_read = bpf_probe_read_user(&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)], (iovecs[i].iov_len >= MAX_STRING_SIZE? MAX_STRING_SIZE: SAFE_STRING_LEN(iovecs[i].iov_len)), iovecs[i].iov_base);
+    if (bytes_read != 0)
+      break;
+    
+    if (iovecs[i].iov_len == MAX_STRING_SIZE) {
+      total_len += MAX_STRING_SIZE;
+      s->pos += MAX_STRING_SIZE;
+    } else {
+      total_len += SAFE_STRING_LEN(iovecs[i].iov_len);
+      s->pos += SAFE_ACCESS_SCRATCH_SPACE(iovecs[i].iov_len);
+    }
+
+    if (total_len >= MAX_STRING_SIZE) break;
+  }
+
+  *rlen = total_len;
+  return &(s->data[0]);
+}
+
+stain uint8_t *read_sockaddr(uint32_t *rlen, scratch_space_t *s, unsigned long data_ptr, uint16_t addrlen) {
+  uint32_t total_len = 0;
+  s->pos = 0;
+  *rlen = 0;
+
+  if (bpf_probe_read((void *)&s->data[SCRATCH_SPACE_HALF_INDEX], SAFE_ACCESS_SCRATCH_SPACE(addrlen), (void *)data_ptr) != 0)
+    return NULL;
+
+  struct sockaddr *sockaddr = (struct sockaddr *)&s->data[SCRATCH_SPACE_HALF_INDEX];
+  uint16_t socket_family = sockaddr->sa_family;
+
+  *((uint16_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = socket_family;
+  s->pos += sizeof(uint16_t);
+  total_len += sizeof(uint16_t);
+
+  switch(socket_family) {
+  case AF_INET: {
+    struct sockaddr_in *sin = (struct sockaddr_in*)sockaddr;
+
+    uint32_t ipv4 = sin->sin_addr.s_addr;
+    uint16_t port = sin->sin_port;
+
+    *((uint32_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = ipv4;
+    s->pos += sizeof(uint32_t);
+
+    *((uint16_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = port;
+    s->pos += sizeof(uint16_t);
+    
+    total_len += 6;
+    break;
+  }
+  case AF_INET6: {
+    struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sockaddr;
+    
+    uint16_t port = sin6->sin6_port;
+
+    __builtin_memcpy(&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)], sin6->sin6_addr.in6_u.u6_addr32, 16);
+    s->pos += 16;
+
+    *((uint16_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = port;
+    s->pos += sizeof(uint16_t);
+
+    total_len += 18;
+    break;
+  }
+  case AF_UNIX: {
+    struct sockaddr_un *sunix = (struct sockaddr_un*)sockaddr;
+
+    unsigned long start_reading_point;
+    char first_path_byte = *(char *)sunix->sun_path;
+    if  (first_path_byte == '\0')
+      start_reading_point = (unsigned long)sunix->sun_path + 1;
+    else 
+      start_reading_point = (unsigned long)sunix->sun_path;
+
+    
+    uint32_t sp_len = bpf_probe_read_kernel_str(&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos+2)], MAX_UNIX_SOCKET_PATH, (char *)start_reading_point);
+    
+    *((uint16_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = sp_len;
+    s->pos += sizeof(uint16_t);
+    
+    total_len += sp_len + 2;
+    break;    
+  }
+  }
+
+  *rlen = total_len;
+  return &(s->data[0]);
 }
 
 #endif
