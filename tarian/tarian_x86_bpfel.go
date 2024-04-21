@@ -12,7 +12,7 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type tarianPerCpuBufferT struct{ Data [131072]uint8 }
+type tarianPerCpuBufferT struct{ Data [32768]uint8 }
 
 type tarianScratchSpaceT struct {
 	Data [8192]uint8
