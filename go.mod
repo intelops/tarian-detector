@@ -1,9 +1,9 @@
 module github.com/intelops/tarian-detector
 
-go 1.22.0
+go 1.22.2
 
 require (
-	github.com/cilium/ebpf v0.14.0
+	github.com/cilium/ebpf v0.15.0
 	k8s.io/api v0.30.0
 	k8s.io/apimachinery v0.30.0
 	k8s.io/client-go v0.30.0
