@@ -11,7 +11,7 @@ stain int init_tarian_meta_data_t(tarian_event_t *, int);
 stain int init_task_meta_data_t(tarian_event_t *);
 stain int init_event_meta_data_t(tarian_event_t *, int);
 stain int init_cwd_and_exe(tarian_event_t *);
-stain int read_node_info_into(node_meta_data_t *ni, struct task_struct *t);
+stain int read_node_info_into(system_info_t *, struct task_struct *);
 
 stain int new_tarian_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at, int req_buf_sz) {
   stats__add_trigger();
@@ -135,12 +135,12 @@ stain int init_cwd_and_exe(tarian_event_t *te) {
   return TDC_SUCCESS;
 }
 
-stain int read_node_info_into(node_meta_data_t *nm, struct task_struct *t) {
-  if (nm == NULL)
+stain int read_node_info_into(system_info_t *si, struct task_struct *t) {
+  if (si == NULL)
     return TDCE_NULL_POINTER;
 
   struct uts_namespace *uts_ns = get_uts_ns(get_task_nsproxy(t));
-  BPF_CORE_READ_INTO(nm, uts_ns, name);
+  BPF_CORE_READ_INTO(si, uts_ns, name);
 
   return TDC_SUCCESS;
 };
