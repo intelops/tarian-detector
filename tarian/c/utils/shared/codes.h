@@ -46,8 +46,8 @@
 #define TDCE_NULL_POINTER 401
 
 /**
- * @brief This code represents the status of a failed call to bpf_perf_event_output
- * or bpf_ringbuf_output.
+ * @brief This code represents the status of a failed call to
+ *        `bpf_perf_event_output` or `bpf_ringbuf_output`.
  *
  * TDCE_MAP_SUBMIT is used to indicate that there was an error when trying to
  * submit data to an ebpf maps like perf event or ring buffer.
