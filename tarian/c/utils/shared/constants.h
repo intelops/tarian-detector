@@ -5,11 +5,14 @@
 #define __UTLIS_SHARED_CONSTANTS_H__
 
 /**
- * The maximum size is set to 32KB due to the limitations of `BPF_MAP_TYPE_PERCPU_ARRAY`.
- * For more information, refer to the following resources:
- * - Discussion on iovisor/bcc - https://github.com/iovisor/bcc/issues/2519#issuecomment-534359316
- * - Linux Source Code - https://github.com/torvalds/linux/blob/09688c0166e76ce2fb85e86b9d99be8b0084cdf9/mm/percpu.c#L1756
-*/
+ * The maximum size is set to 32KB due to the limitations of
+ * `BPF_MAP_TYPE_PERCPU_ARRAY`. For more information, refer to the following
+ * resources:
+ * - Discussion on iovisor/bcc -
+ * https://github.com/iovisor/bcc/issues/2519#issuecomment-534359316
+ * - Linux Source Code -
+ * https://github.com/torvalds/linux/blob/09688c0166e76ce2fb85e86b9d99be8b0084cdf9/mm/percpu.c#L1756
+ */
 #define MAX_CPU_BUFFER_SIZE 1024 * 32
 
 /**
@@ -27,17 +30,19 @@
  *
  * This constant defines the maximum size a parameter can be. It is used to
  * determine how much space is allocated for parameters in events. The value
- * is set to `MAX_TARIAN_EVENT_SIZE - 1` to ensure that the parameter will always
- * fit in the event.
+ * is set to `MAX_TARIAN_EVENT_SIZE - 1` to ensure that the parameter will
+ * always fit in the event.
  */
 #define MAX_TARIAN_PARAM_SIZE MAX_TARIAN_EVENT_SIZE - 1
 
 /**
- * @brief Adjusts a given length value to ensure it doesn't exceed `MAX_TARIAN_PARAM_SIZE`.
+ * @brief Adjusts a given length value to ensure it doesn't exceed
+ * `MAX_TARIAN_PARAM_SIZE`.
  *
- * This is achieved by applying a bitwise AND operation with `(MAX_TARIAN_PARAM_SIZE - 1)`.
- * This can help prevent potential buffer overflows when the length is used to size
- * a buffer, but it does not actually check or limit the length of any data.
+ * This is achieved by applying a bitwise AND operation with
+ * `(MAX_TARIAN_PARAM_SIZE - 1)`. This can help prevent potential buffer
+ * overflows when the length is used to size a buffer, but it does not actually
+ * check or limit the length of any data.
  *
  * @param x The original length value to be adjusted.
  * @return The adjusted length value, which will be less than or equal to
@@ -56,16 +61,18 @@
 #define MAX_STRING_SIZE 4096
 
 /**
- * @brief Adjusts a given length value to ensure it doesn't exceed `MAX_STRING_SIZE`.
- * 
- * This is achieved by applying a bitwise AND operation with `(MAX_STRING_SIZE - 1)`. 
- * This can help prevent potential buffer overflows when the length is used to size
- * a buffer, but it does not actually check or limit the length of any string.
+ * @brief Adjusts a given length value to ensure it doesn't exceed
+ * `MAX_STRING_SIZE`.
+ *
+ * This is achieved by applying a bitwise AND operation with `(MAX_STRING_SIZE -
+ * 1)`. This can help prevent potential buffer overflows when the length is used
+ * to size a buffer, but it does not actually check or limit the length of any
+ * string.
  *
  * @param x The original length value to be adjusted.
  * @return The adjusted length value, which will be less than `MAX_STRING_SIZE`.
  */
-#define SAFE_STRING_LEN(x) x & (MAX_STRING_SIZE - 1)
+#define SAFE_STRING_LEN(x) x &(MAX_STRING_SIZE - 1)
 
 /**
  * @brief The maximum length for a task command string.
@@ -75,145 +82,167 @@
 /**
  * @brief The maximum length for a UNIX socket path.
  *
- * This macro sets the maximum length to 109, accounting for the maximum UNIX socket path length (108 bytes) 
- * and an additional byte for the NULL termination character.
+ * This macro sets the maximum length to 109, accounting for the maximum UNIX
+ * socket path length (108 bytes) and an additional byte for the NULL
+ * termination character.
  */
 #define MAX_UNIX_SOCKET_PATH 108 + 1
 
 /**
- * @brief Defines the maximum number of iterations for looping over a char** parameter.
+ * @brief Defines the maximum number of iterations for looping over a char**
+ * parameter.
  *
  * This constant defines the maximum number of times the loop will iterate when
- * processing a char** parameter. The loop is used to read strings from all elements,
- * up to a maximum combined length of 4096 characters.
+ * processing a char** parameter. The loop is used to read strings from all
+ * elements, up to a maximum combined length of 4096 characters.
  */
 #define MAX_CHARBUF_POINTERS 64
 
 /**
- * @brief Defines the maximum number of iterations for looping over an array of struct iovec.
+ * @brief Defines the maximum number of iterations for looping over an array of
+ * struct iovec.
  *
  * This constant defines the maximum number of times the loop will iterate when
- * processing an array of iovecs. The loop is used to read iovecs from all elements,
- * up to a maximum combined length of 4096 iovecs.  
-*/
+ * processing an array of iovecs. The loop is used to read iovecs from all
+ * elements, up to a maximum combined length of 4096 iovecs.
+ */
 #define MAX_IOVEC_COUNT 32
 
 /**
- * @brief Adjusts a given length value to ensure it doesn't exceed `MAX_IOVEC_COUNT`.
- * 
- * This is achieved by applying a bitwise AND operation with `(MAX_IOVEC_COUNT - 1)`. 
- * This can help prevent potential buffer overflows when the length is used to size
- * a buffer, but it does not actually check or limit the length of any iovec.
+ * @brief Adjusts a given length value to ensure it doesn't exceed
+ * `MAX_IOVEC_COUNT`.
+ *
+ * This is achieved by applying a bitwise AND operation with `(MAX_IOVEC_COUNT -
+ * 1)`. This can help prevent potential buffer overflows when the length is used
+ * to size a buffer, but it does not actually check or limit the length of any
+ * iovec.
  *
  * @param x The original length value to be adjusted.
  * @return The adjusted length value, which will be less than `MAX_IOVEC_COUNT`.
-*/
+ */
 #define SAFE_IOVEC_COUNT(x) (x) & (MAX_IOVEC_COUNT - 1)
 
 /**
- * @brief Defines the maximum number of elements for the `scratch_space` BPF_MAP_TYPE_PERCPU_ARRAY map.
- * 
- * This constant defines the maximum number of elements in a BPF_MAP_TYPE_PERCPU_ARRAY map named `scratch_space`.
- * The value is set to `1`, meaning the `scratch_space` map can hold one element per CPU.
-*/
+ * @brief Defines the maximum number of elements for the `scratch_space`
+ * BPF_MAP_TYPE_PERCPU_ARRAY map.
+ *
+ * This constant defines the maximum number of elements in a
+ * BPF_MAP_TYPE_PERCPU_ARRAY map named `scratch_space`. The value is set to `1`,
+ * meaning the `scratch_space` map can hold one element per CPU.
+ */
 #define MAX_SCRATCH_SPACE_ARRAY_LEN 1
 
 /**
  * @brief Defines the maximum size of each element in the `scratch_space` map.
- * 
- * This constant defines the maximum size, in bytes, of each element in the BPF_MAP_TYPE_PERCPU_ARRAY `scratch_space` map.
- * The value is set to `1024 * 8`, meaning each element in the `scratch_space` map can hold up to `8192 bytes` of data.
-*/
+ *
+ * This constant defines the maximum size, in bytes, of each element in the
+ * BPF_MAP_TYPE_PERCPU_ARRAY `scratch_space` map. The value is set to `1024 *
+ * 8`, meaning each element in the `scratch_space` map can hold up to `8192
+ * bytes` of data.
+ */
 #define MAX_SCRATCH_SPACE_SIZE 1024 * 8
 
 /**
  * @brief Defines the half index of the `scratch_space` map.
- * 
+ *
  * This constant defines the half index of the `scratch_space` map.
- * The value is set to `MAX_SCRATCH_SPACE_SIZE/2`, meaning it represents the midpoint in the `scratch_space` map.
-*/
-#define HALF_SCRATCH_SPACE_SIZE (MAX_SCRATCH_SPACE_SIZE)/2
+ * The value is set to `MAX_SCRATCH_SPACE_SIZE/2`, meaning it represents the
+ * midpoint in the `scratch_space` map.
+ */
+#define HALF_SCRATCH_SPACE_SIZE (MAX_SCRATCH_SPACE_SIZE) / 2
 
 /**
- * @brief Adjusts a given length value to ensure it doesn't exceed `HALF_SCRATCH_SPACE_SIZE`.
- * 
+ * @brief Adjusts a given length value to ensure it doesn't exceed
+ * `HALF_SCRATCH_SPACE_SIZE`.
+ *
  * This macro is used to safely access the `scratch_space` map.
- * It takes an index (x) and ensures that the index is within the first half of the `scratch_space` map.
- * This is done by performing a bitwise AND operation with `(HALF_SCRATCH_SPACE_SIZE - 1)`.
- * This prevents out-of-bounds access to the `scratch_space` map.
- * 
+ * It takes an index (x) and ensures that the index is within the first half of
+ * the `scratch_space` map. This is done by performing a bitwise AND operation
+ * with `(HALF_SCRATCH_SPACE_SIZE - 1)`. This prevents out-of-bounds access to
+ * the `scratch_space` map.
+ *
  * @param x The original length value to be adjusted.
- * @return The adjusted length value, which will be less than `HALF_SCRATCH_SPACE_SIZE`.
-*/
+ * @return The adjusted length value, which will be less than
+ * `HALF_SCRATCH_SPACE_SIZE`.
+ */
 #define SAFE_ACCESS_SCRATCH_SPACE(x) (x) & (HALF_SCRATCH_SPACE_SIZE - 1)
 
 #ifndef LINUX_VERSION_CODE
 /**
  * @brief Defines the Linux kernel version code.
- * 
- * This macro is used to define the Linux kernel version code if it's not already defined.
- * The version code is constructed using the `KERNEL_VERSION` macro with `LINUX_VERSION_MAJOR`, 
- * `LINUX_VERSION_MINOR`, and `LINUX_VERSION_PATCH` as arguments.
- * 
- * The `KERNEL_VERSION` macro takes three numbers: the major version, the minor version, and the patch level, 
- * and combines them into a single number in a way that can be compared with other version numbers 
- * using the standard C comparison operators.
- * 
+ *
+ * This macro is used to define the Linux kernel version code if it's not
+ * already defined. The version code is constructed using the `KERNEL_VERSION`
+ * macro with `LINUX_VERSION_MAJOR`, `LINUX_VERSION_MINOR`, and
+ * `LINUX_VERSION_PATCH` as arguments.
+ *
+ * The `KERNEL_VERSION` macro takes three numbers: the major version, the minor
+ * version, and the patch level, and combines them into a single number in a way
+ * that can be compared with other version numbers using the standard C
+ * comparison operators.
+ *
  * Note: This macro is typically used in conditional compilation.
-*/
+ */
 #define LINUX_VERSION_CODE                                                     \
   KERNEL_VERSION(LINUX_VERSION_MAJOR, LINUX_VERSION_MINOR, LINUX_VERSION_PATCH)
 #endif
 
 /**
-  * @brief Defines the address family for Unix domain sockets.
-*/
+ * @brief Defines the address family for Unix domain sockets.
+ */
 #define AF_UNIX 1
 
 /**
-  * @brief Defines the address family for IPv4 Internet protocols.
-*/
+ * @brief Defines the address family for IPv4 Internet protocols.
+ */
 #define AF_INET 2
 
 /**
-  * @brief Defines the address family for IPv6 Internet protocols.
-*/
+ * @brief Defines the address family for IPv6 Internet protocols.
+ */
 #define AF_INET6 10
 
 /**
  * @brief Defines the maximum number of entries for the ring buffer.
- * 
- * This macro is used to specify the maximum number of entries that the ring buffer can hold.
- * The value is set to 1024 * 1024 * 128, meaning the ring buffer can hold up to 128MB of data.
-*/
+ *
+ * This macro is used to specify the maximum number of entries that the ring
+ * buffer can hold. The value is set to 1024 * 1024 * 128, meaning the ring
+ * buffer can hold up to 128MB of data.
+ */
 #define RINGBUF_MAX_ENTRIES 1024 * 1024 * 128
 
 /**
  * @brief Defines the maximum number of entries for an array of maps.
- * 
- * This macro is used to specify the maximum number of entries that an array of maps can hold.
- * The value is set to 16, meaning the array of maps can hold up to 16 map entries.
-*/
+ *
+ * This macro is used to specify the maximum number of entries that an array of
+ * maps can hold. The value is set to 16, meaning the array of maps can hold up
+ * to 16 map entries.
+ */
 #define ARRAY_OF_MAPS_MAX_ENTRIES 16
 
 /**
- * @brief A convenience macro for declaring functions as static and always inline.
- * 
- * This macro is a shorthand for the `static __always_inline` function specifier combination. 
- * Functions declared with `stain` are static, meaning they have internal linkage, 
- * and are always inlined by the compiler, which can potentially optimize the code.
-*/
+ * @brief A convenience macro for declaring functions as static and always
+ * inline.
+ *
+ * This macro is a shorthand for the `static __always_inline` function specifier
+ * combination. Functions declared with `stain` are static, meaning they have
+ * internal linkage, and are always inlined by the compiler, which can
+ * potentially optimize the code.
+ */
 #define stain static __always_inline
 
 /**
- * @brief Defines the maximum number of components based on the Linux kernel version.
- * 
- * This macro is used to specify the maximum number of components that can be handled.
- * If the Linux kernel version is 5.2.0 or later, the maximum number of components is set to 48.
- * For earlier versions of the Linux kernel, the maximum number of components is set to 24.
- * 
- * Note: This macro is typically used in conditional compilation based on the Linux kernel version.
-*/
+ * @brief Defines the maximum number of components based on the Linux kernel
+ * version.
+ *
+ * This macro is used to specify the maximum number of components that can be
+ * handled. If the Linux kernel version is 5.2.0 or later, the maximum number of
+ * components is set to 48. For earlier versions of the Linux kernel, the
+ * maximum number of components is set to 24.
+ *
+ * Note: This macro is typically used in conditional compilation based on the
+ * Linux kernel version.
+ */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0))
 #define MAX_NUM_COMPONENTS 48
 #else
@@ -222,9 +251,10 @@
 
 /**
  * @brief Defines the types of parameters that can be used in Tarian.
- * 
- * This enumeration is used to specify the type of a parameter in Tarian. 
- * Each type corresponds to a specific kind of data that can be handled in buffer.
+ *
+ * This enumeration is used to specify the type of a parameter in Tarian.
+ * Each type corresponds to a specific kind of data that can be handled in
+ * buffer.
  */
 enum tarian_param_type_e {
   /**
@@ -362,8 +392,8 @@ typedef enum tarian_events_e {
   /**
    * Execve event - exit.
    *
-   * This event is triggered when a process calls execve(2) and the call finishes.
-   * returns.
+   * This event is triggered when a process calls execve(2) and the call
+   * finishes. returns.
    */
   TDE_SYSCALL_EXECVE_R,
 
@@ -376,7 +406,8 @@ typedef enum tarian_events_e {
   /**
    * Execveat event - exit.
    *
-   * This event is triggered when a process calls execveat(2) and the call finishes.
+   * This event is triggered when a process calls execveat(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_EXECVEAT_R,
 
@@ -389,7 +420,8 @@ typedef enum tarian_events_e {
   /**
    * Clone event - exit.
    *
-   * This event is triggered when a process calls clone(2) and the call finishes.
+   * This event is triggered when a process calls clone(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_CLONE_R,
 
@@ -402,7 +434,8 @@ typedef enum tarian_events_e {
   /**
    * Close event - exit.
    *
-   * This event is triggered when a process calls close(2) and the call finishes.
+   * This event is triggered when a process calls close(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_CLOSE_R,
 
@@ -428,7 +461,8 @@ typedef enum tarian_events_e {
   /**
    * Write event - exit.
    *
-   * This event is triggered when a process calls write(2) and the call finishes.
+   * This event is triggered when a process calls write(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_WRITE_R,
 
@@ -454,7 +488,8 @@ typedef enum tarian_events_e {
   /**
    * Readv event - exit.
    *
-   * This event is triggered when a process calls readv(2) and the call finishes.
+   * This event is triggered when a process calls readv(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_READV_R,
 
@@ -467,7 +502,8 @@ typedef enum tarian_events_e {
   /**
    * Writev event - exit.
    *
-   * This event is triggered when a process calls writev(2) and the call finishes.
+   * This event is triggered when a process calls writev(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_WRITEV_R,
 
@@ -480,7 +516,8 @@ typedef enum tarian_events_e {
   /**
    * Openat event - exit.
    *
-   * This event is triggered when a process calls openat(2) and the call finishes.
+   * This event is triggered when a process calls openat(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_OPENAT_R,
 
@@ -493,7 +530,8 @@ typedef enum tarian_events_e {
   /**
    * Openat2 event - exit.
    *
-   * This event is triggered when a process calls openat2(2) and the call finishes.
+   * This event is triggered when a process calls openat2(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_OPENAT2_R,
 
@@ -506,7 +544,8 @@ typedef enum tarian_events_e {
   /**
    * Listen event - exit.
    *
-   * This event is triggered when a process calls listen(2) and the call finishes.
+   * This event is triggered when a process calls listen(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_LISTEN_R,
 
@@ -519,7 +558,8 @@ typedef enum tarian_events_e {
   /**
    * Socket event - exit.
    *
-   * This event is triggered when a process calls socket(2) and the call finishes.
+   * This event is triggered when a process calls socket(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_SOCKET_R,
 
@@ -532,7 +572,8 @@ typedef enum tarian_events_e {
   /**
    * Accept event - exit.
    *
-   * This event is triggered when a process calls accept(2) and the call finishes.
+   * This event is triggered when a process calls accept(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_ACCEPT_R,
 
@@ -558,7 +599,8 @@ typedef enum tarian_events_e {
   /**
    * Connect event - exit.
    *
-   * This event is triggered when a process calls connect(2) and the call finishes.
+   * This event is triggered when a process calls connect(2) and the call
+   * finishes.
    */
   TDE_SYSCALL_CONNECT_R,
 } tarian_event_code;
@@ -600,13 +642,14 @@ typedef enum tarian_events_e {
 #define PARAM_SIZE sizeof(uint16_t)
 
 /**
- * Tarian Metadata 
+ * Tarian Metadata
  * - sizeof(tarian_meta_data_t) - 505
  * - directory - 4098
  * - executable - 4098
  * Total size - 8701 bytes
  */
-#define TMD_SIZE (sizeof(tarian_meta_data_t) + (PARAM_SIZE + MAX_STRING_SIZE) * 2)
+#define TMD_SIZE                                                               \
+  (sizeof(tarian_meta_data_t) + (PARAM_SIZE + MAX_STRING_SIZE) * 2)
 
 /**
  * Execve entry
@@ -626,7 +669,7 @@ typedef enum tarian_events_e {
  */
 #define TDS_EXECVE_R (TMD_SIZE + sizeof(int32_t))
 
-/** 
+/**
  *  Execveat entry
  *  - metadata - 8701
  *  - fd - 4
@@ -636,7 +679,8 @@ typedef enum tarian_events_e {
  *  - flags - 4
  *  Total size: 21003 bytes
  */
-#define TDS_EXECVEAT_E (TMD_SIZE + (sizeof(int32_t) * 2) + (PARAM_SIZE + MAX_STRING_SIZE) * 3)
+#define TDS_EXECVEAT_E                                                         \
+  (TMD_SIZE + (sizeof(int32_t) * 2) + (PARAM_SIZE + MAX_STRING_SIZE) * 3)
 
 /**
  *  Execveat exit
@@ -646,7 +690,7 @@ typedef enum tarian_events_e {
  */
 #define TDS_EXECVEAT_R (TMD_SIZE + sizeof(int32_t))
 
-/** 
+/**
  * Clone entry
  * - metadata - 8701
  * - clone_flags - 8
@@ -658,7 +702,7 @@ typedef enum tarian_events_e {
  */
 #define TDS_CLONE_E (TMD_SIZE + sizeof(uint64_t) * 3 + sizeof(int32_t) * 2)
 
-/** 
+/**
  * Clone exit
  * - metadata - 8701
  * - return value - 4
@@ -667,14 +711,14 @@ typedef enum tarian_events_e {
 #define TDS_CLONE_R (TMD_SIZE + sizeof(int32_t))
 
 /**
- * Close entry 
+ * Close entry
  * - metadata - 8701
  * - file descriptor - 4
  * Total size: 8705 bytes
  */
 #define TDS_CLOSE_E (TMD_SIZE + sizeof(int32_t))
 
-/** 
+/**
  * Close exit
  * - metadata - 8701
  * - return value - 4
@@ -682,7 +726,7 @@ typedef enum tarian_events_e {
  */
 #define TDS_CLOSE_R (TMD_SIZE + sizeof(int32_t))
 
-/** 
+/**
  * Read entry
  * - metadata - 8701
  * - file descriptor - 4
@@ -690,7 +734,9 @@ typedef enum tarian_events_e {
  * - count - 4
  * Total size: 12807 bytes
  */
-#define TDS_READ_E (TMD_SIZE + sizeof(int32_t) + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(uint32_t))
+#define TDS_READ_E                                                             \
+  (TMD_SIZE + sizeof(int32_t) + (PARAM_SIZE + MAX_STRING_SIZE) +               \
+   sizeof(uint32_t))
 
 /**
  *  READ exit
@@ -707,8 +753,10 @@ typedef enum tarian_events_e {
  * - buf - 4098
  * - count - 4
  * Total size: 12807 bytes
-*/
-#define TDS_WRITE_E (TMD_SIZE + sizeof(int32_t) + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(uint32_t))
+ */
+#define TDS_WRITE_E                                                            \
+  (TMD_SIZE + sizeof(int32_t) + (PARAM_SIZE + MAX_STRING_SIZE) +               \
+   sizeof(uint32_t))
 
 /**
  *  Write exit
@@ -726,9 +774,11 @@ typedef enum tarian_events_e {
  * - mode - 4
  * Total size: 12807 bytes
  */
-#define TDS_OPEN_E (TMD_SIZE + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(int32_t) + sizeof(uint32_t))
+#define TDS_OPEN_E                                                             \
+  (TMD_SIZE + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(int32_t) +               \
+   sizeof(uint32_t))
 
-/** 
+/**
  * Open exit
  * - metadata - 8701
  * - return value - 4
@@ -743,15 +793,16 @@ typedef enum tarian_events_e {
  * - vec - 4098
  * - vlen - 4
  * Total size: 12807 bytes
-*/
-#define TDS_READV_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE))
+ */
+#define TDS_READV_E                                                            \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE))
 
 /**
  * Readv exit
  * - metadata - 8701
  * - return value - 8
  * Total size: 8709 bytes
-*/
+ */
 #define TDS_READV_R (TMD_SIZE + sizeof(long))
 
 /**
@@ -761,18 +812,19 @@ typedef enum tarian_events_e {
  * - vec - 4098
  * - vlen - 4
  * Total size: 12807 bytes
-*/
-#define TDS_WRITEV_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE))
+ */
+#define TDS_WRITEV_E                                                           \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE))
 
 /**
  * Writev exit
  * - metadata - 8701
  * - return value - 8
  * Total size: 8709 bytes
-*/
+ */
 #define TDS_WRITEV_R (TMD_SIZE + sizeof(long))
 
-/** 
+/**
  * Openat entry
  * - metadata - 8701
  * - dirfd - 4
@@ -780,15 +832,17 @@ typedef enum tarian_events_e {
  * - flags - 4
  * - mode - 4
  * Total size: 12811 bytes
-*/
-#define TDS_OPENAT_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(uint32_t))
+ */
+#define TDS_OPENAT_E                                                           \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE) +           \
+   sizeof(uint32_t))
 
 /**
  * Openat exit
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_OPENAT_R (TMD_SIZE + sizeof(int32_t))
 
 /**
@@ -801,15 +855,17 @@ typedef enum tarian_events_e {
  * - resolve - 8
  * - usize - 4
  * Total size: 12831 bytes
-*/
-#define TDS_OPENAT2_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE) + sizeof(uint64_t) * 3)
+ */
+#define TDS_OPENAT2_E                                                          \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_STRING_SIZE) +           \
+   sizeof(uint64_t) * 3)
 
 /**
  * Openat2 exit
  * - metadata - 8701
  * - return value - 8
  * Total size: 8709 bytes
-*/
+ */
 #define TDS_OPENAT2_R (TMD_SIZE + sizeof(long))
 
 /**
@@ -818,7 +874,7 @@ typedef enum tarian_events_e {
  * - fd - 4
  * - backlog - 4
  * Total size: 8709 bytes
-*/
+ */
 #define TDS_LISTEN_E (TMD_SIZE + sizeof(int32_t) * 2)
 
 /**
@@ -826,7 +882,7 @@ typedef enum tarian_events_e {
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_LISTEN_R (TMD_SIZE + sizeof(int32_t))
 
 /**
@@ -836,7 +892,7 @@ typedef enum tarian_events_e {
  * - type - 4
  * - protocol - 4
  * Total size: 8713
-*/
+ */
 #define TDS_SOCKET_E (TMD_SIZE + sizeof(int32_t) * 3)
 
 /**
@@ -844,7 +900,7 @@ typedef enum tarian_events_e {
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_SOCKET_R (TMD_SIZE + sizeof(int32_t))
 
 /**
@@ -854,15 +910,16 @@ typedef enum tarian_events_e {
  * - upeer_sockaddr - 111
  * - upeer_addrlen - 4
  * Total size: 8820 bytes
-*/
-#define TDS_ACCEPT_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_UNIX_SOCKET_PATH))
+ */
+#define TDS_ACCEPT_E                                                           \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_UNIX_SOCKET_PATH))
 
 /**
  * Accept exit
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_ACCEPT_R (TMD_SIZE + sizeof(int32_t))
 
 /**
@@ -872,15 +929,16 @@ typedef enum tarian_events_e {
  * - umyaddr - 111
  * - addrlen - 4
  * Total size: 8820 bytes
-*/
-#define TDS_BIND_E (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_UNIX_SOCKET_PATH))
+ */
+#define TDS_BIND_E                                                             \
+  (TMD_SIZE + sizeof(int32_t) * 2 + (PARAM_SIZE + MAX_UNIX_SOCKET_PATH))
 
 /**
  * Bind exit
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_BIND_R (TMD_SIZE + sizeof(int32_t))
 
 /**
@@ -890,16 +948,18 @@ typedef enum tarian_events_e {
  * - uservaddr - 111
  * - addrlen - 4
  * Total size: 8820 bytes
-*/
-#define TDS_CONNECT_E (TMD_SIZE + sizeof(int32_t) * 2 + MAX_UNIX_SOCKET_PATH + PARAM_SIZE)
+ */
+#define TDS_CONNECT_E                                                          \
+  (TMD_SIZE + sizeof(int32_t) * 2 + MAX_UNIX_SOCKET_PATH + PARAM_SIZE)
 
 /**
  * Connect exit
  * - metadata - 8701
  * - return value - 4
  * Total size: 8705 bytes
-*/
+ */
 #define TDS_CONNECT_R (TMD_SIZE + sizeof(int32_t))
-/*********************************** Event Data Size - END ************************************/
+
+/*************************** Event Data Size - END ***************************/
 
 #endif
