@@ -30,7 +30,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
     if (!store)
       return TDCE_MAP_SPACE_ALLOCATION;
 
-    sz = MAX_EVENT_SIZE;
+    sz = MAX_TARIAN_EVENT_SIZE;
   }
 
 #else
@@ -39,7 +39,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
   if (!store)
     return TDCE_MAP_SPACE_ALLOCATION;
 
-  u64 sz = MAX_EVENT_SIZE;
+  u64 sz = MAX_TARIAN_EVENT_SIZE;
 #endif
 
   te->buf.reserved_space = sz;
