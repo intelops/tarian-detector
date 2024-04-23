@@ -227,10 +227,10 @@ stain uint8_t *read_iovec_arr(uint32_t *rlen, scratch_space_t *s, unsigned long 
   *rlen = 0;
 
   uint32_t total_iovec_size = iov_count * bpf_core_type_size(struct iovec);
-  if (bpf_probe_read_user((void *)&s->data[SCRATCH_SPACE_HALF_INDEX], SAFE_ACCESS_SCRATCH_SPACE(total_iovec_size), (void *)iovec_ptr) != 0)
+  if (bpf_probe_read_user((void *)&s->data[HALF_SCRATCH_SPACE_SIZE], SAFE_ACCESS_SCRATCH_SPACE(total_iovec_size), (void *)iovec_ptr) != 0)
     return NULL;
   
-  const struct iovec *iovecs = (const struct iovec *)&s->data[SCRATCH_SPACE_HALF_INDEX];
+  const struct iovec *iovecs = (const struct iovec *)&s->data[HALF_SCRATCH_SPACE_SIZE];
   for (int i = 0; i < MAX_IOVEC_COUNT; i++) {
     if (i == (SAFE_IOVEC_COUNT(iov_count)))
       break;
@@ -259,10 +259,10 @@ stain uint8_t *read_sockaddr(uint32_t *rlen, scratch_space_t *s, unsigned long d
   s->pos = 0;
   *rlen = 0;
 
-  if (bpf_probe_read((void *)&s->data[SCRATCH_SPACE_HALF_INDEX], SAFE_ACCESS_SCRATCH_SPACE(addrlen), (void *)data_ptr) != 0)
+  if (bpf_probe_read((void *)&s->data[HALF_SCRATCH_SPACE_SIZE], SAFE_ACCESS_SCRATCH_SPACE(addrlen), (void *)data_ptr) != 0)
     return NULL;
 
-  struct sockaddr *sockaddr = (struct sockaddr *)&s->data[SCRATCH_SPACE_HALF_INDEX];
+  struct sockaddr *sockaddr = (struct sockaddr *)&s->data[HALF_SCRATCH_SPACE_SIZE];
   uint16_t socket_family = sockaddr->sa_family;
 
   *((uint16_t *)&s->data[SAFE_ACCESS_SCRATCH_SPACE(s->pos)]) = socket_family;
