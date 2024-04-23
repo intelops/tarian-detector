@@ -24,14 +24,7 @@ typedef struct __attribute__((__packed__)) event_buffer {
   u8 *data;           /* array for storing syscall data*/
 } event_buffer_t;     /* 24B */
 
-typedef struct node_meta_data {
-  u8 sysname[MAX_NODE_FIELD_SIZE];    /* operating system */
-  u8 nodename[MAX_NODE_FIELD_SIZE];   /* hostname */
-  u8 release[MAX_NODE_FIELD_SIZE];    /* os version */
-  u8 version[MAX_NODE_FIELD_SIZE];    /* additional version info of os*/
-  u8 machine[MAX_NODE_FIELD_SIZE];    /* architecture of system */
-  u8 domainname[MAX_NODE_FIELD_SIZE]; /* domain of system */
-} node_meta_data_t;                   /* 390B */
+typedef struct new_utsname system_info_t; /* 390B */
 
 typedef struct __attribute__((__packed__)) task_meta_data {
   u64 start_time; /* task's start time */
@@ -71,7 +64,7 @@ typedef struct __attribute__((__packed__)) event_meta_data {
 
 typedef struct __attribute__((__packed__)) tarian_meta_data {
   event_meta_data_t meta_data;
-  node_meta_data_t system_info; /* system information */
+  system_info_t system_info; /* system information */
 } tarian_meta_data_t;           /* 505B */
 
 typedef struct event {
