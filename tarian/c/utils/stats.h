@@ -7,7 +7,7 @@
 #include "index.h"
 
 stain void stats__add_trigger() {
-  tarian_stats_t *ts = (tarian_stats_t *)get__stats_counter();
+  tarian_stats_t *ts = (tarian_stats_t *)get__tarian_stats_counter();
   if (!ts)
     return;
 
@@ -15,7 +15,7 @@ stain void stats__add_trigger() {
 }
 
 stain void stats_add_read() {
-  tarian_stats_t *ts = (tarian_stats_t *)get__stats_counter();
+  tarian_stats_t *ts = (tarian_stats_t *)get__tarian_stats_counter();
   if (!ts)
     return;
 
@@ -23,7 +23,7 @@ stain void stats_add_read() {
 }
 
 stain void stats__add_buffer() {
-  tarian_stats_t *ts = (tarian_stats_t *)get__stats_counter();
+  tarian_stats_t *ts = (tarian_stats_t *)get__tarian_stats_counter();
   if (!ts)
     return;
 
@@ -31,7 +31,7 @@ stain void stats__add_buffer() {
 }
 
 stain void stats__add(int error_code) {
-  tarian_stats_t *ts = (tarian_stats_t *)get__stats_counter();
+  tarian_stats_t *ts = (tarian_stats_t *)get__tarian_stats_counter();
   if (!ts)
     return;
 
