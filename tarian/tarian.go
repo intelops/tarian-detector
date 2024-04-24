@@ -43,9 +43,9 @@ func GetModule() (*ebpf.Module, error) {
 	}
 
 	if ckv >= utils.KernelVersion(5, 8, 0) && false {
-		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.Events))
+		tarianDetectorModule.Map(ebpf.NewArrayOfRingBuf(bpfObjs.TarianEvents))
 	} else {
-		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.Events, bpfObjs.PeaPerCpuArray))
+		tarianDetectorModule.Map(ebpf.NewPerfEventWithBuffer(bpfObjs.TarianEvents, bpfObjs.Buffer))
 	}
 
 	// kprobe & kretprobe execve

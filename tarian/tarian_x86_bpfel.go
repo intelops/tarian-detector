@@ -109,10 +109,10 @@ type tarianProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tarianMapSpecs struct {
-	Events                       *ebpf.MapSpec `ebpf:"events"`
-	PeaPerCpuArray               *ebpf.MapSpec `ebpf:"pea_per_cpu_array"`
+	Buffer                       *ebpf.MapSpec `ebpf:"buffer"`
 	ScratchSpace                 *ebpf.MapSpec `ebpf:"scratch_space"`
 	TarianDetectorApplicationPid *ebpf.MapSpec `ebpf:"tarian_detector_application_pid"`
+	TarianEvents                 *ebpf.MapSpec `ebpf:"tarian_events"`
 	TarianStats                  *ebpf.MapSpec `ebpf:"tarian_stats"`
 }
 
@@ -135,19 +135,19 @@ func (o *tarianObjects) Close() error {
 //
 // It can be passed to loadTarianObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tarianMaps struct {
-	Events                       *ebpf.Map `ebpf:"events"`
-	PeaPerCpuArray               *ebpf.Map `ebpf:"pea_per_cpu_array"`
+	Buffer                       *ebpf.Map `ebpf:"buffer"`
 	ScratchSpace                 *ebpf.Map `ebpf:"scratch_space"`
 	TarianDetectorApplicationPid *ebpf.Map `ebpf:"tarian_detector_application_pid"`
+	TarianEvents                 *ebpf.Map `ebpf:"tarian_events"`
 	TarianStats                  *ebpf.Map `ebpf:"tarian_stats"`
 }
 
 func (m *tarianMaps) Close() error {
 	return _TarianClose(
-		m.Events,
-		m.PeaPerCpuArray,
+		m.Buffer,
 		m.ScratchSpace,
 		m.TarianDetectorApplicationPid,
+		m.TarianEvents,
 		m.TarianStats,
 	)
 }

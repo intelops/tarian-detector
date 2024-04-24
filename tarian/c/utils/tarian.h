@@ -19,14 +19,14 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
 
   if (at == FIXED) {
     te->allocation_mode = 2;
-    store = map__reserve_space(&events, size);
+    store = map__reserve_space(&tarian_events, size);
     if (!store)
       return TDCE_MAP_SPACE_ALLOCATION;
 
     sz = size;
   } else if (at == VARIABLE) {
     te->allocation_mode = 3;
-    store = map__allocate_space(&pea_per_cpu_array);
+    store = map__allocate_space(&buffer);
     if (!store)
       return TDCE_MAP_SPACE_ALLOCATION;
 
@@ -35,7 +35,7 @@ stain int tdf_reserve_space(tarian_event_t *te, enum allocation_type at, u64 siz
 
 #else
   te->allocation_mode = 1;
-  u8 *store = map__allocate_space(&pea_per_cpu_array);
+  u8 *store = map__allocate_space(&buffer);
   if (!store)
     return TDCE_MAP_SPACE_ALLOCATION;
 
@@ -55,10 +55,10 @@ stain int tdf_submit_event(tarian_event_t *te) {
   if (te->allocation_mode == 2) {
     resp = map__reserve_submit(te->buf.data);
   } else if (te->allocation_mode == 3) {
-    resp = map__pringbuf_submit(&events, te->buf.data, te->buf.pos);
+    resp = map__pringbuf_submit(&tarian_events, te->buf.data, te->buf.pos);
   }
 #else
-  int resp = map__submit(te->ctx, &events, te->buf.data, te->buf.pos);
+  int resp = map__submit(te->ctx, &tarian_events, te->buf.data, te->buf.pos);
 #endif
   stats__add(resp);
   if (resp != TDC_SUCCESS)
