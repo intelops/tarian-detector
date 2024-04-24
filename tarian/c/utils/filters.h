@@ -58,7 +58,7 @@ stain bool has_same_comm(char *comm, int len) {
 }
 
 stain bool is_self_generated() {
-  uint32_t pid = get_application_pid();
+  uint32_t pid = get__tarian_app_pid();
   if (pid == -1)
     return false; // dont want to lose events due to errors
 
