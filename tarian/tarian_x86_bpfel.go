@@ -15,8 +15,8 @@ import (
 type tarianPerCpuBufferT struct{ Data [32768]uint8 }
 
 type tarianScratchSpaceT struct {
-	Data [8192]uint8
 	Pos  uint64
+	Data [8192]uint8
 }
 
 type tarianTarianStatsT struct {
