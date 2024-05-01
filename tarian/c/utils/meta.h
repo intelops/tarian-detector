@@ -16,7 +16,7 @@ stain int read_node_info_into(system_info_t *, struct task_struct *);
 stain int new_tarian_event(void *ctx, int tarian_event, tarian_event_t *te, enum allocation_type at, int req_buf_sz) {
   stats__add_trigger();
 
-  if (!can_proceed())
+  if (!does_event_qualify())
     return TDC_FILTERED_OUT;
 
   te->allocation_mode = 0;
