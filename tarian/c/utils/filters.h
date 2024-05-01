@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-#ifndef __UTLIS_FILTERS_H__
-#define __UTLIS_FILTERS_H__
+#ifndef __UTILS_FILTERS_H__
+#define __UTILS_FILTERS_H__
 
 #include "index.h"
 

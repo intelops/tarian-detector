@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-#ifndef __UTLIS_SHARED_NSPROXY_H__
-#define __UTLIS_SHARED_NSPROXY_H__
+#ifndef __UTILS_SHARED_NSPROXY_H__
+#define __UTILS_SHARED_NSPROXY_H__
 
 stain int get_mts_id(struct nsproxy *);
 stain struct uts_namespace * get_uts_ns(struct nsproxy *);

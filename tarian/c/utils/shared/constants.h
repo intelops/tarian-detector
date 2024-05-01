@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright 2024 Authors of Tarian & the Organization created Tarian
 
-#ifndef __UTLIS_SHARED_CONSTANTS_H__
-#define __UTLIS_SHARED_CONSTANTS_H__
+#ifndef __UTILS_SHARED_CONSTANTS_H__
+#define __UTILS_SHARED_CONSTANTS_H__
 
 /**
  * The maximum size is set to 32KB due to the limitations of
