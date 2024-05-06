@@ -251,7 +251,7 @@ func Test_parseOpenFlags(t *testing.T) {
 			args: args{
 				flags: int32(0 | 64),
 			},
-			want:    "O_RDONLY|O_CREAT",
+			want:    "O_RDONLY|O_CREATE",
 			wantErr: false,
 		},
 		{
@@ -259,7 +259,7 @@ func Test_parseOpenFlags(t *testing.T) {
 			args: args{
 				flags: int32(2 | 64),
 			},
-			want:    "O_RDWR|O_CREAT",
+			want:    "O_RDWR|O_CREATE",
 			wantErr: false,
 		},
 	}
@@ -302,7 +302,7 @@ func Test_parseOpenat2Flags(t *testing.T) {
 			args: args{
 				flags: int64(0 | 64),
 			},
-			want:    "O_RDONLY|O_CREAT",
+			want:    "O_RDONLY|O_CREATE",
 			wantErr: false,
 		},
 	}

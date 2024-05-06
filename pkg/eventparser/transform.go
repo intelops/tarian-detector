@@ -226,7 +226,7 @@ const (
 	O_RDONLY    = 00        // Open for read-only.
 	O_WRONLY    = 01        // Open for write-only.
 	O_RDWR      = 02        // Open for read-write.
-	O_CREAT     = 0100      // Create the file if it does not exist.
+	O_CREATE    = 0100      // Create the file if it does not exist.
 	O_EXCL      = 0200      // Exclusive use: fail if file already exists.
 	O_NOCTTY    = 0400      // Do not make the file a controlling terminal.
 	O_TRUNC     = 01000     // Truncate the file if it already exists.
@@ -248,7 +248,7 @@ const (
 // openFlags represents various file open flags.
 var openFlags = map[int32]string{
 	O_ACCMODE:   "O_ACCMODE",
-	O_CREAT:     "O_CREAT",
+	O_CREATE:    "O_CREATE",
 	O_EXCL:      "O_EXCL",
 	O_NOCTTY:    "O_NOCTTY",
 	O_TRUNC:     "O_TRUNC",
