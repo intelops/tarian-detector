@@ -18,7 +18,7 @@ typedef struct per_cpu_buffer {
 } per_cpu_buffer_t;
 
 /**
- * @struct path_data
+ * @struct path_info
  * @brief A structure to hold path information.
  *
  * This structure is used to store the path string and its length that a
@@ -27,10 +27,10 @@ typedef struct per_cpu_buffer {
  * - `len`: an integer to hold the length of the path.
  * - `data`: a pointer to hold the path string.
  */
-typedef struct path_data {
+typedef struct path_info {
   int32_t len;
   uint8_t *data;
-} path_data_t;
+} path_info_t;
 
 /**
  * @struct scratch_space
@@ -69,7 +69,6 @@ typedef struct __attribute__((__packed__)) event_buffer {
  * @struct system_info_t
  * @brief A structure to hold system information.
  *
- *
  * - `sysname`: the name of the operating system.
  * - `nodename`: the name of the node.
  * - `release`: the release of the operating system.
@@ -77,7 +76,14 @@ typedef struct __attribute__((__packed__)) event_buffer {
  * - `machine`: the machine type.
  * - `domainname`: the domain name.
  */
-typedef struct new_utsname system_info_t;
+typedef struct {
+	char sysname[65];
+	char nodename[65];
+	char release[65];
+	char version[65];
+	char machine[65];
+	char domainname[65];
+} system_info_t;
 
 
 /**
@@ -158,28 +164,28 @@ typedef struct __attribute__((__packed__)) tarian_meta_data {
 
 /**
  * @struct tarian_event
- * @brief A structure to hold an event.
+ * @brief A structure to hold an event and its associated metadata.
  *
- * This structure is used to store an event and its metadata.
- *
- * - `allocation_mode`: the mode used to allocate the buffer.
- * - `task`: a pointer to the task_struct representing the task.
- * - `ctx`: a pointer to the register context.
- * - `tarian`: a pointer to the tarian metadata associated with the event.
+ * - `task`: a pointer to the task_struct representing the task that generated
+ *   the event.
+ * - `ctx`: a pointer to the register context of the event.
+ * - `tarian`: a pointer to the tarian metadata associated with the event,
+ *   which is stored in the `buf` field.
  * - `buf`: an event_buffer_t struct containing the event buffer.
- * - `scratch`: a pointer to the scratch space associated with the event (if any).
+ * - `scratch`: a pointer to the scratch space associated with the event.
+ * - `directory`: a path_info_t struct containing the event directory path,
+ *   stored in the `buf` field.
+ * - `executable`: a path_info_t struct containing the event executable path,
+ *   stored in the `buf` field.
  */
 typedef struct event {
-  /** 1 - buf on per cpu array for perf event
-    * 2 - ringbuf map
-    * 3 - buf on per cpu array for ringbuf
-  */
-  u8 allocation_mode;
   struct task_struct *task;
   struct pt_regs *ctx;
   tarian_meta_data_t *tarian;
   event_buffer_t buf;
   scratch_space_t *scratch;
+  path_info_t directory;
+  path_info_t executable;
 } tarian_event_t;
 
 /**
